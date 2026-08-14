@@ -35,7 +35,8 @@ also work with the `vduels:` prefix, e.g. `/vduels:createarena`.
 | `/deletearena <name>` | Deletes an arena. |
 | `/kitcreate <name>` | Saves your **current inventory + armor** as a kit. |
 | `/deletekit <name>` | Deletes a kit. |
-| `/adminduel` | Opens the **kit-menu editor** (decorate the kit picker). |
+| `/editgui <menu>` | Customise a GUI's layout (`duelconfirm`, `kitmenu`, `mapselect`). |
+| `/adminduel` | Shortcut for `/editgui kitmenu`. |
 | `/vduels <arena> copy` | Copies the arena region to your clipboard (duplicator). |
 | `/vduels <arena> paste` | Pastes your clipboard at your feet (duplicator). |
 | `/vduels:scoreboardip <ip>` | Sets the server IP shown on the duel scoreboard. |
@@ -93,13 +94,24 @@ colour (BLUE / RED), ping, elapsed time and the server IP. Set the IP with
 
 ---
 
-## Customising the /duel menu
+## Customising the GUIs
 
-Run `/adminduel` to open the layout editor. The top five rows are freely
-editable — drag the kit icons around, and click **Decoration** to grab black
-stained-glass panes to arrange around them. The bottom row holds the controls.
-Click **Save Layout** (or just close the menu) and players will see your layout
-when they run `/duel`.
+Every duel-flow GUI has an editor: `/editgui <menu>` where `<menu>` is one of
+`duelconfirm`, `kitmenu` or `mapselect` (`/adminduel` is a shortcut for
+`kitmenu`).
+
+The editor's top area is freely editable — drag the buttons / kit icons / arena
+icons around, and click **Decoration** to grab black stained-glass panes to
+arrange around them. The bottom row holds the controls: **Save Layout**,
+**Cancel**, the decoration palette, and **Reset to Default**. Closing the menu
+also saves. Players then see your arrangement, with each button showing its live
+content (selected kit, arena, rounds, etc.).
+
+- On **duelconfirm** the four buttons (map / kit / clock / confirm) can be moved;
+  any button you drag out is restored at save so the menu can't break.
+- On **kitmenu** / **mapselect** you arrange the kit / arena icons and decoration;
+  the Back and Random buttons stay on the fixed bottom row. (Kits/arenas added
+  after you save a custom layout won't appear until you edit again or Reset.)
 
 ---
 

@@ -1,6 +1,7 @@
 package com.vduels.gui;
 
 import com.vduels.VDuels;
+import com.vduels.managers.GuiLayoutManager;
 import com.vduels.model.Kit;
 import com.vduels.util.Items;
 import com.vduels.util.Text;
@@ -9,17 +10,18 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * The GUI opened by {@code /duel <player>}: DUEL CONFIRM. Compact controls -
- * a map (arena), a kit, a clock (rounds) and a green pane to confirm.
+ * The GUI opened after picking a kit: DUEL CONFIRM. Its four buttons (map, kit,
+ * clock, confirm) can be rearranged and decorated with {@code /editgui
+ * duelconfirm}; the button slots come from the saved layout, the live contents
+ * come from here.
  */
 public class DuelConfirmMenu extends Menu {
 
     private static final int[] ROUND_OPTIONS = {1, 2, 3, 5};
-    private static final int SLOT_MAP = 10;
-    private static final int SLOT_KIT = 12;
-    private static final int SLOT_CLOCK = 14;
-    private static final int SLOT_CONFIRM = 16;
 
     private final VDuels plugin;
     private final Player target;
@@ -42,7 +44,6 @@ public class DuelConfirmMenu extends Menu {
 
     public void setSelectedKit(String kit) {
         this.selectedKit = kit;
-        // A newly chosen kit may not be supported by the previously chosen arena.
         if (selectedArena != null) {
             var arena = plugin.getArenaManager().get(selectedArena);
             if (arena == null || !arena.supportsKit(kit)) {
@@ -71,52 +72,82 @@ public class DuelConfirmMenu extends Menu {
     @Override
     public void build() {
         create(3, "&8DUEL CONFIRM: &b" + target.getName());
-        ItemStack filler = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
-        for (int i = 0; i < 27; i++) {
-            inventory.setItem(i, filler);
+        Map<String, Integer> buttonSlots = new HashMap<>();
+
+        if (plugin.getGuiLayoutManager().has(GuiLayoutManager.DUEL_CONFIRM)) {
+            for (Map.Entry<Integer, ItemStack> e : plugin.getGuiLayoutManager().get(GuiLayoutManager.DUEL_CONFIRM).entrySet()) {
+                if (e.getKey() >= 27) {
+                    continue;
+                }
+                String id = Items.readTag(e.getValue(), plugin.keyButton());
+                if (id != null) {
+                    buttonSlots.put(id, e.getKey());
+                } else {
+                    inventory.setItem(e.getKey(), e.getValue());
+                }
+            }
+        } else {
+            ItemStack gray = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
+            for (int i = 0; i < 27; i++) {
+                inventory.setItem(i, gray);
+            }
         }
 
-        inventory.setItem(SLOT_MAP, Items.of(Material.FILLED_MAP)
-                .name("&bArena")
-                .lore("&7Selected: &f" + (selectedArena == null ? "Random" : selectedArena),
-                        "",
-                        "&eClick to choose the map.")
-                .build());
+        inventory.setItem(buttonSlots.getOrDefault("map", 10), renderButton("map"));
+        inventory.setItem(buttonSlots.getOrDefault("kit", 12), renderButton("kit"));
+        inventory.setItem(buttonSlots.getOrDefault("clock", 14), renderButton("clock"));
+        inventory.setItem(buttonSlots.getOrDefault("confirm", 16), renderButton("confirm"));
+    }
 
-        Kit kit = selectedKit == null ? null : plugin.getKitManager().get(selectedKit);
-        inventory.setItem(SLOT_KIT, Items.of(kit != null ? kit.getIcon() : Material.GOLDEN_APPLE)
-                .name("&6Kit")
-                .lore("&7Selected: &f" + (selectedKit == null ? "none" : selectedKit),
-                        "",
-                        "&eClick to choose a kit.")
-                .glow(selectedKit != null)
-                .build());
-
-        inventory.setItem(SLOT_CLOCK, Items.of(Material.CLOCK)
-                .name("&eRounds")
-                .lore("&7First to &f" + currentRounds(),
-                        "",
-                        "&eClick to change.")
-                .build());
-
-        boolean ready = selectedKit != null;
-        inventory.setItem(SLOT_CONFIRM, Items.of(ready ? Material.GREEN_STAINED_GLASS_PANE : Material.GRAY_STAINED_GLASS_PANE)
-                .name(ready ? "&a&lCONFIRM & SEND" : "&7Select a kit first")
-                .lore("&7Challenge &f" + target.getName() + "&7.")
-                .glow(ready)
-                .build());
+    private ItemStack renderButton(String id) {
+        return switch (id) {
+            case "map" -> Items.of(Material.FILLED_MAP)
+                    .name("&bArena")
+                    .lore("&7Selected: &f" + (selectedArena == null ? "Random" : selectedArena),
+                            "", "&eClick to choose the map.")
+                    .tag(plugin.keyButton(), "map")
+                    .build();
+            case "kit" -> {
+                Kit kit = selectedKit == null ? null : plugin.getKitManager().get(selectedKit);
+                yield Items.of(kit != null ? kit.getIcon() : Material.GOLDEN_APPLE)
+                        .name("&6Kit")
+                        .lore("&7Selected: &f" + (selectedKit == null ? "none" : selectedKit),
+                                "", "&eClick to choose a kit.")
+                        .glow(selectedKit != null)
+                        .tag(plugin.keyButton(), "kit")
+                        .build();
+            }
+            case "clock" -> Items.of(Material.CLOCK)
+                    .name("&eRounds")
+                    .lore("&7First to &f" + currentRounds(), "", "&eClick to change.")
+                    .tag(plugin.keyButton(), "clock")
+                    .build();
+            default -> {
+                boolean ready = selectedKit != null;
+                yield Items.of(ready ? Material.GREEN_STAINED_GLASS_PANE : Material.GRAY_STAINED_GLASS_PANE)
+                        .name(ready ? "&a&lCONFIRM & SEND" : "&7Select a kit first")
+                        .lore("&7Challenge &f" + target.getName() + "&7.")
+                        .glow(ready)
+                        .tag(plugin.keyButton(), "confirm")
+                        .build();
+            }
+        };
     }
 
     @Override
     public void onClick(Player player, InventoryClickEvent event) {
-        switch (event.getRawSlot()) {
-            case SLOT_MAP -> new MapSelectMenu(plugin, this).open(player);
-            case SLOT_KIT -> new KitPickMenu(plugin, this).open(player);
-            case SLOT_CLOCK -> {
+        String id = Items.readTag(event.getCurrentItem(), plugin.keyButton());
+        if (id == null) {
+            return;
+        }
+        switch (id) {
+            case "map" -> new MapSelectMenu(plugin, this).open(player);
+            case "kit" -> new KitPickMenu(plugin, this).open(player);
+            case "clock" -> {
                 roundsIndex = (roundsIndex + 1) % ROUND_OPTIONS.length;
                 reopen(player);
             }
-            case SLOT_CONFIRM -> {
+            case "confirm" -> {
                 if (selectedKit == null) {
                     player.sendMessage(Text.prefixed("&cSelect a kit first."));
                     return;

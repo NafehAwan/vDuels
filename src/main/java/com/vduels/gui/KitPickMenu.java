@@ -1,7 +1,7 @@
 package com.vduels.gui;
 
 import com.vduels.VDuels;
-import com.vduels.managers.MenuLayoutManager;
+import com.vduels.managers.GuiLayoutManager;
 import com.vduels.model.Kit;
 import com.vduels.util.Items;
 import org.bukkit.Material;
@@ -12,11 +12,13 @@ import org.bukkit.inventory.ItemStack;
 import java.util.Map;
 
 /**
- * The kit picker opened from the DUEL CONFIRM menu. Uses the admin-customised
- * layout (see {@code /adminduel}) if one exists, otherwise a default grid.
- * Clicking a kit selects it and returns to the confirm menu.
+ * The kit picker opened first by {@code /duel}. Kit icons and decoration can be
+ * arranged with {@code /editgui kitmenu} (or {@code /adminduel}); the saved
+ * layout decides placement. Clicking a kit selects it and opens DUEL CONFIRM.
  */
 public class KitPickMenu extends Menu {
+
+    private static final int BACK_SLOT = 49;
 
     private final VDuels plugin;
     private final DuelConfirmMenu confirm;
@@ -30,22 +32,28 @@ public class KitPickMenu extends Menu {
     public void build() {
         create(6, "&8Select a Kit");
 
-        if (plugin.getMenuLayoutManager().hasLayout()) {
-            Map<Integer, ItemStack> layout = plugin.getMenuLayoutManager().getLayout();
-            for (Map.Entry<Integer, ItemStack> entry : layout.entrySet()) {
-                inventory.setItem(entry.getKey(), entry.getValue());
+        if (plugin.getGuiLayoutManager().has(GuiLayoutManager.KIT_MENU)) {
+            for (Map.Entry<Integer, ItemStack> e : plugin.getGuiLayoutManager().get(GuiLayoutManager.KIT_MENU).entrySet()) {
+                if (e.getKey() >= 45) {
+                    continue;
+                }
+                String kitName = Items.readTag(e.getValue(), plugin.keyKit());
+                if (kitName != null) {
+                    ItemStack icon = liveKitIcon(kitName);
+                    if (icon != null) {
+                        inventory.setItem(e.getKey(), icon);
+                    }
+                } else {
+                    inventory.setItem(e.getKey(), e.getValue());
+                }
             }
         } else {
             int slot = 0;
             for (Kit kit : plugin.getKitManager().all()) {
-                if (slot >= MenuLayoutManager.EDITABLE_SLOTS) {
+                if (slot >= 45) {
                     break;
                 }
-                inventory.setItem(slot++, Items.of(kit.getIcon())
-                        .name("&e" + kit.getName())
-                        .lore("", "&7Click to select")
-                        .tag(plugin.keyKit(), kit.getName())
-                        .build());
+                inventory.setItem(slot++, liveKitIcon(kit.getName()));
             }
         }
 
@@ -53,25 +61,30 @@ public class KitPickMenu extends Menu {
         for (int i = 45; i < 54; i++) {
             inventory.setItem(i, filler);
         }
-        inventory.setItem(49, Items.of(Material.ARROW)
-                .name("&eBack")
-                .lore("&7Return to the duel menu.")
-                .build());
+        inventory.setItem(BACK_SLOT, Items.of(Material.ARROW)
+                .name("&eBack").lore("&7Close the duel menu.").build());
+    }
+
+    private ItemStack liveKitIcon(String name) {
+        Kit kit = plugin.getKitManager().get(name);
+        if (kit == null) {
+            return null;
+        }
+        return Items.of(kit.getIcon())
+                .name("&e" + kit.getName())
+                .lore("", "&7Click to select")
+                .tag(plugin.keyKit(), kit.getName())
+                .build();
     }
 
     @Override
     public void onClick(Player player, InventoryClickEvent event) {
-        int slot = event.getRawSlot();
-        if (slot == 49) {
-            // Entry point (no kit chosen yet) -> close; otherwise back to confirm.
+        if (event.getRawSlot() == BACK_SLOT) {
             if (confirm.getSelectedKit() == null) {
                 player.closeInventory();
             } else {
                 confirm.reopen(player);
             }
-            return;
-        }
-        if (slot < 0 || slot >= MenuLayoutManager.EDITABLE_SLOTS) {
             return;
         }
         String kitName = Items.readTag(event.getCurrentItem(), plugin.keyKit());

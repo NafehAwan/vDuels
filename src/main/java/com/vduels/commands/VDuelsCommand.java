@@ -1,10 +1,11 @@
 package com.vduels.commands;
 
 import com.vduels.VDuels;
-import com.vduels.gui.AdminDuelMenu;
 import com.vduels.gui.ArenaMenu;
 import com.vduels.gui.DuelConfirmMenu;
+import com.vduels.gui.GuiEditorMenu;
 import com.vduels.gui.KitPickMenu;
+import com.vduels.managers.GuiLayoutManager;
 import com.vduels.model.Arena;
 import com.vduels.model.DuelRequest;
 import com.vduels.model.Kit;
@@ -40,7 +41,8 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             case "deletearena" -> deleteArena(sender, args);
             case "kitcreate" -> createKit(sender, args);
             case "deletekit" -> deleteKit(sender, args);
-            case "adminduel" -> adminDuel(sender);
+            case "adminduel" -> editGui(sender, new String[]{GuiLayoutManager.KIT_MENU});
+            case "editgui" -> editGui(sender, args);
             case "duel" -> duel(sender, args);
             case "scoreboardip" -> scoreboardIp(sender, args);
             case "vduels" -> root(sender, args);
@@ -139,11 +141,15 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(Text.prefixed("&aKit &b" + args[0] + "&a deleted."));
     }
 
-    private void adminDuel(CommandSender sender) {
+    private void editGui(CommandSender sender, String[] args) {
         if (!requireAdmin(sender) || !requirePlayer(sender)) {
             return;
         }
-        new AdminDuelMenu(plugin).open((Player) sender);
+        if (args.length < 1 || !GuiLayoutManager.isValidMenu(args[0].toLowerCase(Locale.ROOT))) {
+            sender.sendMessage(Text.prefixed("&cUsage: /editgui <duelconfirm|kitmenu|mapselect>"));
+            return;
+        }
+        new GuiEditorMenu(plugin, args[0].toLowerCase(Locale.ROOT)).open((Player) sender);
     }
 
     private void scoreboardIp(CommandSender sender, String[] args) {
@@ -269,7 +275,8 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(Text.color("&e/deletearena <name> &7- delete an arena"));
             sender.sendMessage(Text.color("&e/kitcreate <name> &7- save a kit from inventory"));
             sender.sendMessage(Text.color("&e/deletekit <name> &7- delete a kit"));
-            sender.sendMessage(Text.color("&e/adminduel &7- edit the duel menu layout"));
+            sender.sendMessage(Text.color("&e/editgui <menu> &7- customise a GUI layout"));
+            sender.sendMessage(Text.color("&e/adminduel &7- customise the kit menu"));
             sender.sendMessage(Text.color("&e/vduels <arena> copy|paste &7- duplicator"));
             sender.sendMessage(Text.color("&e/vduels:scoreboardip <ip> &7- set scoreboard IP"));
         }
@@ -311,6 +318,12 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             for (Kit kit : plugin.getKitManager().all()) {
                 if (startsWith(kit.getName(), args[0])) {
                     out.add(kit.getName());
+                }
+            }
+        } else if (name.equals("editgui") && args.length == 1) {
+            for (String menu : List.of("duelconfirm", "kitmenu", "mapselect")) {
+                if (startsWith(menu, args[0])) {
+                    out.add(menu);
                 }
             }
         } else if (name.equals("duel") && args.length == 1) {

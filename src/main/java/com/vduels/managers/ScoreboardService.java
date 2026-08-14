@@ -26,7 +26,13 @@ public class ScoreboardService {
 
     // One unique, (visually empty) entry string per line.
     private static final ChatColor[] LINE_KEYS = ChatColor.values();
-    private static final int LINES = 7;
+    private static final int LINES = 8;
+
+    // Monochrome unicode glyphs (coloured by legacy codes) matching the design.
+    private static final String ICON_SCORE = "ⓘ"; // circled i
+    private static final String ICON_TEAM = "■";  // filled square
+    private static final String ICON_PING = "✦";  // four-point star
+    private static final String ICON_TIME = "⌚";  // watch
 
     private final VDuels plugin;
     private final Map<UUID, DuelBoard> boards = new HashMap<>();
@@ -69,18 +75,21 @@ public class ScoreboardService {
 
     private void update(Player player, ActiveDuel duel, DuelBoard board) {
         UUID id = player.getUniqueId();
-        String team = duel.isBlue(id) ? "&9&lBLUE" : "&c&lRED";
-        String score = "&f" + duel.getScoreFor(id) + " &7- &f" + duel.getScoreAgainst(id);
+        boolean blue = duel.isBlue(id);
+        String teamColor = blue ? "&9" : "&c";
+        String teamName = blue ? "BLUE" : "RED";
         long seconds = Math.max(0, (System.currentTimeMillis() - duel.getStartedAt()) / 1000L);
         String time = String.format("%02d:%02d", seconds / 60, seconds % 60);
 
-        board.setLine(0, "&7&m                    ");
-        board.setLine(1, "&aScore: " + score);
-        board.setLine(2, "&bTeam: " + team);
-        board.setLine(3, "&aPing: &f" + player.getPing() + "ms");
-        board.setLine(4, "&eTime: &f" + time);
-        board.setLine(5, "&7&m                    ");
-        board.setLine(6, "&e" + plugin.getScoreboardIp());
+        board.setLine(0, "");
+        board.setLine(1, "&8" + ICON_SCORE + " &fScore: &b" + duel.getScoreFor(id)
+                + " &7- &b" + duel.getScoreAgainst(id));
+        board.setLine(2, "");
+        board.setLine(3, teamColor + ICON_TEAM + " &fTeam: " + teamColor + teamName);
+        board.setLine(4, "&a" + ICON_PING + " &fPing: &f" + player.getPing() + "&7ms");
+        board.setLine(5, "&6" + ICON_TIME + " &fTime: &f" + time);
+        board.setLine(6, "");
+        board.setLine(7, "&e" + plugin.getScoreboardIp());
     }
 
     /** Holds one player's scoreboard and its per-line teams. */

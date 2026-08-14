@@ -32,8 +32,12 @@ commands:
     usage: /deletekit <name>
     permission: vduels.admin
   adminduel:
-    description: Edit the duel menu layout / decoration.
+    description: Edit the kit menu layout / decoration.
     usage: /adminduel
+    permission: vduels.admin
+  editgui:
+    description: Customise a GUI layout (duelconfirm, kitmenu, mapselect).
+    usage: /editgui <menu>
     permission: vduels.admin
   scoreboardip:
     description: Set the server IP shown on the duel scoreboard.

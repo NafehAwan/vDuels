@@ -7,8 +7,8 @@ import com.vduels.listeners.GuiListener;
 import com.vduels.listeners.SetupChatListener;
 import com.vduels.managers.ArenaManager;
 import com.vduels.managers.DuelManager;
+import com.vduels.managers.GuiLayoutManager;
 import com.vduels.managers.KitManager;
-import com.vduels.managers.MenuLayoutManager;
 import com.vduels.managers.ScoreboardService;
 import com.vduels.managers.SetupManager;
 import org.bukkit.NamespacedKey;
@@ -25,10 +25,12 @@ public final class VDuels extends JavaPlugin {
     private KitManager kitManager;
     private DuelManager duelManager;
     private SetupManager setupManager;
-    private MenuLayoutManager menuLayoutManager;
+    private GuiLayoutManager guiLayoutManager;
     private ScoreboardService scoreboardService;
 
     private NamespacedKey keyKit;
+    private NamespacedKey keyButton;
+    private NamespacedKey keyArena;
     private String scoreboardIp = "play.example.net";
 
     @Override
@@ -39,11 +41,13 @@ public final class VDuels extends JavaPlugin {
         }
 
         this.keyKit = new NamespacedKey(this, "kit");
+        this.keyButton = new NamespacedKey(this, "button");
+        this.keyArena = new NamespacedKey(this, "arena");
         this.scoreboardIp = getConfig().getString("scoreboard-ip", "play.example.net");
 
         this.arenaManager = new ArenaManager(this);
         this.kitManager = new KitManager(this);
-        this.menuLayoutManager = new MenuLayoutManager(this);
+        this.guiLayoutManager = new GuiLayoutManager(this);
         this.setupManager = new SetupManager(this);
         this.scoreboardService = new ScoreboardService(this);
         this.duelManager = new DuelManager(this);
@@ -73,7 +77,7 @@ public final class VDuels extends JavaPlugin {
     private void registerCommands() {
         VDuelsCommand handler = new VDuelsCommand(this);
         for (String name : new String[]{"vduels", "createarena", "arena", "deletearena",
-                "kitcreate", "deletekit", "adminduel", "scoreboardip", "duel"}) {
+                "kitcreate", "deletekit", "adminduel", "editgui", "scoreboardip", "duel"}) {
             PluginCommand command = getCommand(name);
             if (command != null) {
                 command.setExecutor(handler);
@@ -107,8 +111,8 @@ public final class VDuels extends JavaPlugin {
         return setupManager;
     }
 
-    public MenuLayoutManager getMenuLayoutManager() {
-        return menuLayoutManager;
+    public GuiLayoutManager getGuiLayoutManager() {
+        return guiLayoutManager;
     }
 
     public ScoreboardService getScoreboardService() {
@@ -117,6 +121,14 @@ public final class VDuels extends JavaPlugin {
 
     public NamespacedKey keyKit() {
         return keyKit;
+    }
+
+    public NamespacedKey keyButton() {
+        return keyButton;
+    }
+
+    public NamespacedKey keyArena() {
+        return keyArena;
     }
 
     public String getScoreboardIp() {
