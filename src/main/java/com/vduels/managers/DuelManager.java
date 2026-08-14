@@ -71,19 +71,23 @@ public class DuelManager {
         sender.sendMessage(Text.prefixed("&aChallenge sent to &e" + target.getName()
                 + "&a (&f" + kit + "&a, first to &f" + rounds + "&a)."));
 
-        target.sendMessage(Text.prefixed("&e" + sender.getName() + "&f has challenged you to a duel!"));
-        target.sendMessage(Text.prefixed("&7Kit: &f" + kit + "  &7Rounds: &ffirst to " + rounds));
-        sendAcceptButton(target, sender);
+        sendRequestCard(target, sender, kit, rounds);
     }
 
-    private void sendAcceptButton(Player target, Player sender) {
-        TextComponent component = new TextComponent(Text.color("&8» "));
-        TextComponent accept = new TextComponent(Text.color("&a&l[ CLICK TO ACCEPT ]"));
-        accept.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/duel accept " + sender.getName()));
-        accept.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                new ComponentBuilder(Text.color("&7Accept the duel from &f" + sender.getName())).create()));
-        component.addExtra(accept);
-        target.spigot().sendMessage(component);
+    /** Renders the duel-request card in chat, matching the requested style. */
+    private void sendRequestCard(Player target, Player sender, String kit, int rounds) {
+        target.sendMessage("");
+        target.sendMessage(Text.color("&6&lDUEL REQUEST FROM &b&l" + sender.getName()));
+        target.sendMessage(Text.color("&fKit: &a&l" + kit.toUpperCase(java.util.Locale.ROOT)));
+        target.sendMessage(Text.color("&fRounds: &e" + rounds));
+        target.sendMessage(Text.color("&fRanked: &c&lDISABLED"));
+
+        TextComponent click = new TextComponent(Text.color("&6&l[CLICK HERE]"));
+        click.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/duel accept " + sender.getName()));
+        click.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                new ComponentBuilder(Text.color("&aClick to accept the duel from &f" + sender.getName())).create()));
+        target.spigot().sendMessage(click);
+        target.sendMessage("");
     }
 
     public void acceptRequest(Player target, UUID senderId) {

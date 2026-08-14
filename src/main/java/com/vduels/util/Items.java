@@ -62,8 +62,9 @@ public final class Items {
 
     public Items glow(boolean glow) {
         if (meta != null && glow) {
-            meta.addEnchant(org.bukkit.enchantments.Enchantment.UNBREAKING, 1, true);
-            meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
+            // Glint override (1.20.5+) adds the enchant shimmer without a real
+            // enchantment, avoiding the version-churn around Enchantment fields.
+            meta.setEnchantmentGlintOverride(true);
         }
         return this;
     }

@@ -23,7 +23,7 @@ public class GuiListener implements Listener {
         if (!(event.getWhoClicked() instanceof Player player)) {
             return;
         }
-        Inventory top = event.getView().getTopInventory();
+        Inventory top = event.getInventory();
         InventoryHolder holder = top.getHolder();
         if (!(holder instanceof Menu menu)) {
             return;
@@ -55,7 +55,7 @@ public class GuiListener implements Listener {
 
     @EventHandler
     public void onDrag(InventoryDragEvent event) {
-        Inventory top = event.getView().getTopInventory();
+        Inventory top = event.getInventory();
         if (!(top.getHolder() instanceof Menu menu)) {
             return;
         }

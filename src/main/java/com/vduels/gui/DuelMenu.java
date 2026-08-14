@@ -110,8 +110,7 @@ public class DuelMenu extends Menu {
             ItemStack clone = layoutItem.clone();
             org.bukkit.inventory.meta.ItemMeta meta = clone.getItemMeta();
             if (meta != null) {
-                meta.addEnchant(org.bukkit.enchantments.Enchantment.UNBREAKING, 1, true);
-                meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
+                meta.setEnchantmentGlintOverride(true);
                 clone.setItemMeta(meta);
             }
             return clone;
