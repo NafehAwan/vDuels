@@ -4,6 +4,7 @@ import com.vduels.VDuels;
 import com.vduels.gui.AdminDuelMenu;
 import com.vduels.gui.ArenaMenu;
 import com.vduels.gui.DuelConfirmMenu;
+import com.vduels.gui.KitPickMenu;
 import com.vduels.model.Arena;
 import com.vduels.model.DuelRequest;
 import com.vduels.model.Kit;
@@ -192,7 +193,9 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(Text.prefixed("&cYou cannot duel yourself."));
             return;
         }
-        new DuelConfirmMenu(plugin, target).open(player);
+        // Kit selection comes first; picking a kit opens the DUEL CONFIRM menu.
+        DuelConfirmMenu confirm = new DuelConfirmMenu(plugin, target);
+        new KitPickMenu(plugin, confirm).open(player);
     }
 
     private void handleAccept(Player player, String[] args) {

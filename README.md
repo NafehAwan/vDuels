@@ -70,10 +70,11 @@ also work with the `vduels:` prefix, e.g. `/vduels:createarena`.
 
 | Command | What it does |
 | --- | --- |
-| `/duel <player>` | Opens the **DUEL CONFIRM** GUI. |
+| `/duel <player>` | Opens the **kit picker**; choosing a kit opens **DUEL CONFIRM**. |
 | `/duel accept [player]` | Accepts a pending challenge (or click the **[CLICK HERE]** message). |
 
-**The DUEL CONFIRM menu** has four controls:
+`/duel <player>` first shows the **kit selection** grid (the layout you set with
+`/adminduel`). Pick a kit and the **DUEL CONFIRM** menu opens with four controls:
 - 🗺️ **Map** – opens the map/arena selector (or leave it on **Random**).
 - 🎒 **Kit** – opens the kit picker (the layout you set with `/adminduel`).
 - ⏰ **Clock** – cycles the number of rounds (first to 1/2/3/5).

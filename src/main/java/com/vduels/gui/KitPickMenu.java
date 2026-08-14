@@ -63,7 +63,12 @@ public class KitPickMenu extends Menu {
     public void onClick(Player player, InventoryClickEvent event) {
         int slot = event.getRawSlot();
         if (slot == 49) {
-            confirm.reopen(player);
+            // Entry point (no kit chosen yet) -> close; otherwise back to confirm.
+            if (confirm.getSelectedKit() == null) {
+                player.closeInventory();
+            } else {
+                confirm.reopen(player);
+            }
             return;
         }
         if (slot < 0 || slot >= MenuLayoutManager.EDITABLE_SLOTS) {
