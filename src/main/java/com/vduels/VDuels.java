@@ -9,6 +9,7 @@ import com.vduels.managers.ArenaManager;
 import com.vduels.managers.DuelManager;
 import com.vduels.managers.KitManager;
 import com.vduels.managers.MenuLayoutManager;
+import com.vduels.managers.ScoreboardService;
 import com.vduels.managers.SetupManager;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.PluginCommand;
@@ -25,8 +26,10 @@ public final class VDuels extends JavaPlugin {
     private DuelManager duelManager;
     private SetupManager setupManager;
     private MenuLayoutManager menuLayoutManager;
+    private ScoreboardService scoreboardService;
 
     private NamespacedKey keyKit;
+    private String scoreboardIp = "play.example.net";
 
     @Override
     public void onEnable() {
@@ -36,15 +39,20 @@ public final class VDuels extends JavaPlugin {
         }
 
         this.keyKit = new NamespacedKey(this, "kit");
+        this.scoreboardIp = getConfig().getString("scoreboard-ip", "play.example.net");
 
         this.arenaManager = new ArenaManager(this);
         this.kitManager = new KitManager(this);
         this.menuLayoutManager = new MenuLayoutManager(this);
         this.setupManager = new SetupManager(this);
+        this.scoreboardService = new ScoreboardService(this);
         this.duelManager = new DuelManager(this);
 
         registerCommands();
         registerListeners();
+
+        // Refresh in-duel scoreboards once per second.
+        getServer().getScheduler().runTaskTimer(this, () -> scoreboardService.tick(), 20L, 20L);
 
         getLogger().info("vDuels enabled.");
     }
@@ -65,7 +73,7 @@ public final class VDuels extends JavaPlugin {
     private void registerCommands() {
         VDuelsCommand handler = new VDuelsCommand(this);
         for (String name : new String[]{"vduels", "createarena", "arena", "deletearena",
-                "kitcreate", "deletekit", "adminduel", "duel"}) {
+                "kitcreate", "deletekit", "adminduel", "scoreboardip", "duel"}) {
             PluginCommand command = getCommand(name);
             if (command != null) {
                 command.setExecutor(handler);
@@ -103,7 +111,21 @@ public final class VDuels extends JavaPlugin {
         return menuLayoutManager;
     }
 
+    public ScoreboardService getScoreboardService() {
+        return scoreboardService;
+    }
+
     public NamespacedKey keyKit() {
         return keyKit;
+    }
+
+    public String getScoreboardIp() {
+        return scoreboardIp;
+    }
+
+    public void setScoreboardIp(String ip) {
+        this.scoreboardIp = ip;
+        getConfig().set("scoreboard-ip", ip);
+        saveConfig();
     }
 }

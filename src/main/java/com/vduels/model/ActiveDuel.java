@@ -30,6 +30,7 @@ public class ActiveDuel {
     private int score2;
     private int currentRound = 1;
     private State state = State.STARTING;
+    private final long startedAt = System.currentTimeMillis();
 
     // Blocks changed during the fight -> their ORIGINAL data, for regeneration.
     private final Map<Location, BlockData> changedBlocks = new HashMap<>();
@@ -84,6 +85,24 @@ public class ActiveDuel {
 
     public void nextRound() {
         currentRound++;
+    }
+
+    public long getStartedAt() {
+        return startedAt;
+    }
+
+    /** BLUE for player 1, RED for player 2 (used by the scoreboard). */
+    public boolean isBlue(UUID player) {
+        return player.equals(player1);
+    }
+
+    /** This player's own score first, then the opponent's. */
+    public int getScoreFor(UUID player) {
+        return player.equals(player1) ? score1 : score2;
+    }
+
+    public int getScoreAgainst(UUID player) {
+        return player.equals(player1) ? score2 : score1;
     }
 
     public State getState() {

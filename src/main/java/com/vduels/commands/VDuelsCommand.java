@@ -3,7 +3,7 @@ package com.vduels.commands;
 import com.vduels.VDuels;
 import com.vduels.gui.AdminDuelMenu;
 import com.vduels.gui.ArenaMenu;
-import com.vduels.gui.DuelMenu;
+import com.vduels.gui.DuelConfirmMenu;
 import com.vduels.model.Arena;
 import com.vduels.model.DuelRequest;
 import com.vduels.model.Kit;
@@ -41,6 +41,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             case "deletekit" -> deleteKit(sender, args);
             case "adminduel" -> adminDuel(sender);
             case "duel" -> duel(sender, args);
+            case "scoreboardip" -> scoreboardIp(sender, args);
             case "vduels" -> root(sender, args);
             default -> {
                 return false;
@@ -144,6 +145,19 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
         new AdminDuelMenu(plugin).open((Player) sender);
     }
 
+    private void scoreboardIp(CommandSender sender, String[] args) {
+        if (!requireAdmin(sender)) {
+            return;
+        }
+        if (args.length < 1) {
+            sender.sendMessage(Text.prefixed("&7Current scoreboard IP: &f" + plugin.getScoreboardIp()));
+            sender.sendMessage(Text.prefixed("&cUsage: /vduels:scoreboardip <ip>"));
+            return;
+        }
+        plugin.setScoreboardIp(args[0]);
+        sender.sendMessage(Text.prefixed("&aScoreboard IP set to &f" + args[0] + "&a."));
+    }
+
     // --- player: duel -----------------------------------------------------
 
     private void duel(CommandSender sender, String[] args) {
@@ -178,7 +192,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(Text.prefixed("&cYou cannot duel yourself."));
             return;
         }
-        new DuelMenu(plugin, target).open(player);
+        new DuelConfirmMenu(plugin, target).open(player);
     }
 
     private void handleAccept(Player player, String[] args) {
@@ -204,6 +218,10 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
     // --- root: copy/paste + help -----------------------------------------
 
     private void root(CommandSender sender, String[] args) {
+        if (args.length >= 1 && args[0].equalsIgnoreCase("scoreboardip")) {
+            scoreboardIp(sender, java.util.Arrays.copyOfRange(args, 1, args.length));
+            return;
+        }
         if (args.length >= 2 && (args[1].equalsIgnoreCase("copy") || args[1].equalsIgnoreCase("paste"))) {
             duplicator(sender, args[0], args[1]);
             return;
@@ -250,6 +268,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(Text.color("&e/deletekit <name> &7- delete a kit"));
             sender.sendMessage(Text.color("&e/adminduel &7- edit the duel menu layout"));
             sender.sendMessage(Text.color("&e/vduels <arena> copy|paste &7- duplicator"));
+            sender.sendMessage(Text.color("&e/vduels:scoreboardip <ip> &7- set scoreboard IP"));
         }
         sender.sendMessage(Text.color("&8&m----------------------------------------"));
     }

@@ -35,6 +35,10 @@ commands:
     description: Edit the duel menu layout / decoration.
     usage: /adminduel
     permission: vduels.admin
+  scoreboardip:
+    description: Set the server IP shown on the duel scoreboard.
+    usage: /scoreboardip <ip>
+    permission: vduels.admin
   duel:
     description: Challenge a player to a duel.
     usage: /duel <player>

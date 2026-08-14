@@ -8,3 +8,7 @@ request-expiry-seconds: 60
 
 # Countdown length (in seconds) before each round begins.
 round-countdown-seconds: 3
+
+# Server IP shown on the bottom of the in-duel scoreboard.
+# Also settable in-game with /vduels:scoreboardip <ip>
+scoreboard-ip: "play.example.net"

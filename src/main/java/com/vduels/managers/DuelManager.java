@@ -46,7 +46,7 @@ public class DuelManager {
 
     // --- requests ---------------------------------------------------------
 
-    public void sendRequest(Player sender, Player target, String kit, int rounds) {
+    public void sendRequest(Player sender, Player target, String kit, int rounds, String arena) {
         if (sender.equals(target)) {
             sender.sendMessage(Text.prefixed("&cYou cannot duel yourself."));
             return;
@@ -64,7 +64,7 @@ public class DuelManager {
             return;
         }
 
-        DuelRequest request = new DuelRequest(sender.getUniqueId(), target.getUniqueId(), kit, rounds);
+        DuelRequest request = new DuelRequest(sender.getUniqueId(), target.getUniqueId(), kit, rounds, arena);
         requests.computeIfAbsent(target.getUniqueId(), k -> new HashMap<>())
                 .put(sender.getUniqueId(), request);
 
@@ -111,8 +111,7 @@ public class DuelManager {
             return;
         }
 
-        Arena arena = plugin.getArenaManager().findFreeArena(
-                a -> arenasInUse.contains(a.getName().toLowerCase()) || !a.supportsKit(request.getKit()));
+        Arena arena = resolveArena(request);
         if (arena == null) {
             target.sendMessage(Text.prefixed("&cNo free arena is available for that kit right now."));
             sender.sendMessage(Text.prefixed("&cNo free arena is available for that kit right now."));
@@ -121,6 +120,24 @@ public class DuelManager {
 
         targeted.remove(senderId);
         startDuel(sender, target, arena, request.getKit(), request.getRounds());
+    }
+
+    /**
+     * Picks the arena for a request: the challenger's chosen arena if it is
+     * configured, supports the kit and is free; otherwise any free compatible
+     * arena.
+     */
+    private Arena resolveArena(DuelRequest request) {
+        if (request.getArena() != null) {
+            Arena chosen = plugin.getArenaManager().get(request.getArena());
+            if (chosen != null && chosen.isConfigured()
+                    && chosen.supportsKit(request.getKit())
+                    && !arenasInUse.contains(chosen.getName().toLowerCase())) {
+                return chosen;
+            }
+        }
+        return plugin.getArenaManager().findFreeArena(
+                a -> arenasInUse.contains(a.getName().toLowerCase()) || !a.supportsKit(request.getKit()));
     }
 
     public DuelRequest getMostRecentRequest(Player target) {
@@ -147,6 +164,9 @@ public class DuelManager {
         ActiveDuel duel = new ActiveDuel(p1.getUniqueId(), p2.getUniqueId(), arena, kit, rounds);
         playerDuels.put(p1.getUniqueId(), duel);
         playerDuels.put(p2.getUniqueId(), duel);
+
+        plugin.getScoreboardService().attach(p1, duel);
+        plugin.getScoreboardService().attach(p2, duel);
 
         p1.sendMessage(Text.prefixed("&aDuel starting against &e" + p2.getName() + "&a!"));
         p2.sendMessage(Text.prefixed("&aDuel starting against &e" + p1.getName() + "&a!"));
@@ -265,8 +285,11 @@ public class DuelManager {
             duel.getChangedBlocks().clear();
         }
 
-        restorePlayer(duel.getPlayer1());
-        restorePlayer(duel.getPlayer2());
+        restorePlayer(duel.getPlayer1(), true);
+        restorePlayer(duel.getPlayer2(), true);
+
+        plugin.getScoreboardService().detach(duel.getPlayer1());
+        plugin.getScoreboardService().detach(duel.getPlayer2());
 
         arenasInUse.remove(duel.getArena().getName().toLowerCase());
         playerDuels.remove(duel.getPlayer1());
@@ -289,12 +312,14 @@ public class DuelManager {
         }
     }
 
-    private void restorePlayer(UUID id) {
+    private void restorePlayer(UUID id, boolean teleport) {
         Player player = Bukkit.getPlayer(id);
         PlayerSnapshot snapshot = snapshots.remove(id);
         if (player != null && snapshot != null) {
             snapshot.restore(player);
-            player.teleport(snapshot.getLocation());
+            if (teleport) {
+                player.teleport(snapshot.getLocation());
+            }
         }
     }
 
@@ -305,13 +330,17 @@ public class DuelManager {
             return;
         }
         UUID winnerId = duel.getOpponent(quitterId);
+        // Restore the quitter's real inventory now (they are still valid during
+        // the quit event) so they don't keep the kit on rejoin. No teleport -
+        // teleporting a leaving player is rejected by the server.
+        restorePlayer(quitterId, false);
+        plugin.getScoreboardService().detach(quitterId);
         // Ensure the winner reaches the target score for messaging.
         while (duel.getMatchWinner() == null) {
             if (duel.awardRound(winnerId)) {
                 break;
             }
         }
-        snapshots.remove(quitterId); // quitter is gone; nothing to restore live
         endMatch(duel, winnerId, false);
     }
 
@@ -326,7 +355,8 @@ public class DuelManager {
     /** Restores everyone and cleans up; used on plugin disable. */
     public void shutdown() {
         for (UUID id : new HashSet<>(snapshots.keySet())) {
-            restorePlayer(id);
+            restorePlayer(id, true);
+            plugin.getScoreboardService().detach(id);
         }
         playerDuels.clear();
         arenasInUse.clear();

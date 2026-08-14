@@ -1,11 +1,15 @@
-# vDuels — planned features (not yet implemented)
+# vDuels — roadmap
 
-A running backlog of features to build together. Nothing here is implemented
-yet; it's captured so the design is agreed before we batch the work.
+A running backlog. Items marked ✅ are now implemented; the rest are pending.
+
+- ✅ Per-player duel scoreboard + `/vduels:scoreboardip`
+- ✅ Duel-confirm GUI redesign (map / clock / kit / green-glass confirm)
+- ✅ Map selector GUI + challenger-chosen arena
+- ⏳ Parties + party matches (needs a spec — see bottom)
 
 ---
 
-## Per-player duel scoreboard
+## ✅ Per-player duel scoreboard
 
 A sidebar scoreboard shown **only to players who are currently in a duel**.
 Each player sees **their own** view of the match (own team, own ping, score and
@@ -47,7 +51,7 @@ not in a duel sees no vDuels board at all.
 
 ---
 
-## Duel confirm GUI redesign
+## ✅ Duel confirm GUI redesign
 
 Rework the `/duel <player>` menu into a **DUEL CONFIRM: <opponent>** GUI.
 
@@ -59,7 +63,7 @@ Rework the `/duel <player>` menu into a **DUEL CONFIRM: <opponent>** GUI.
 - **Green stained glass** → **confirm & send** the challenge.
 - **Remove the book** item that's there now.
 
-## Map selector GUI
+## ✅ Map selector GUI
 
 A **DUEL MAP: <name>** GUI opened from the map icon above.
 - Lists the available arenas as icons (map / representative block, e.g. grass).
@@ -71,7 +75,15 @@ A **DUEL MAP: <name>** GUI opened from the map icon above.
 (or "random"); `DuelManager.acceptRequest` uses that specific arena instead of
 `findFreeArena`, falling back to a free compatible arena if it's taken.
 
-## Other requested features (to be detailed)
+## ⏳ Parties + party matches (needs spec)
 
-- Parties + party matches.
-- (More coming — user is batching requests.)
+Not built yet — the flow is open-ended. To implement, we need:
+- Commands: create/disband, invite/accept, kick, leave, list.
+- How party-vs-party matches are started and teams are formed.
+- Whether party matches reuse the arena/kit selection or a new "PARTY MATCH" UI.
+
+## Bug fixes done alongside this batch
+
+- Players who quit mid-duel now get their real inventory restored (previously
+  they could keep the kit on rejoin).
+- Duel state restore no longer tries to teleport a leaving player.

@@ -35,9 +35,10 @@ also work with the `vduels:` prefix, e.g. `/vduels:createarena`.
 | `/deletearena <name>` | Deletes an arena. |
 | `/kitcreate <name>` | Saves your **current inventory + armor** as a kit. |
 | `/deletekit <name>` | Deletes a kit. |
-| `/adminduel` | Opens the **duel-menu editor** (decorate the /duel GUI). |
+| `/adminduel` | Opens the **kit-menu editor** (decorate the kit picker). |
 | `/vduels <arena> copy` | Copies the arena region to your clipboard (duplicator). |
 | `/vduels <arena> paste` | Pastes your clipboard at your feet (duplicator). |
+| `/vduels:scoreboardip <ip>` | Sets the server IP shown on the duel scoreboard. |
 
 ### Setting up an arena
 
@@ -69,14 +70,25 @@ also work with the `vduels:` prefix, e.g. `/vduels:createarena`.
 
 | Command | What it does |
 | --- | --- |
-| `/duel <player>` | Opens the duel GUI: pick a kit, choose the number of rounds, click **Send**. |
-| `/duel accept [player]` | Accepts a pending challenge (or click the **[ CLICK TO ACCEPT ]** message). |
+| `/duel <player>` | Opens the **DUEL CONFIRM** GUI. |
+| `/duel accept [player]` | Accepts a pending challenge (or click the **[CLICK HERE]** message). |
 
-When you send a challenge the opponent gets a clickable **accept** message.
-Once accepted, both players are teleported into a free arena that supports the
-chosen kit, given the kit, and a short countdown starts. First player to the
-selected number of round wins takes the match, after which everyone is restored
-to exactly where and how they were before.
+**The DUEL CONFIRM menu** has four controls:
+- 🗺️ **Map** – opens the map/arena selector (or leave it on **Random**).
+- 🎒 **Kit** – opens the kit picker (the layout you set with `/adminduel`).
+- ⏰ **Clock** – cycles the number of rounds (first to 1/2/3/5).
+- 🟩 **Green pane** – confirms and sends the challenge.
+
+The opponent gets the request card with a clickable **[CLICK HERE]**. Once
+accepted, both players go into the chosen arena (or a free compatible one),
+get the kit, and a countdown starts. First to the selected round wins takes the
+match, after which everyone is restored to exactly where and how they were.
+
+### In-duel scoreboard
+
+While a duel is running each player sees their own sidebar: score, their team
+colour (BLUE / RED), ping, elapsed time and the server IP. Set the IP with
+`/vduels:scoreboardip <ip>`.
 
 ---
 

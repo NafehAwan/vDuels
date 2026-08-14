@@ -12,14 +12,20 @@ public class DuelRequest {
     private final UUID target;
     private final String kit;
     private final int rounds;
+    private final String arena; // chosen arena name, or null for "random / any free"
     private final long createdAt;
 
-    public DuelRequest(UUID sender, UUID target, String kit, int rounds) {
+    public DuelRequest(UUID sender, UUID target, String kit, int rounds, String arena) {
         this.sender = sender;
         this.target = target;
         this.kit = kit;
         this.rounds = rounds;
+        this.arena = arena;
         this.createdAt = System.currentTimeMillis();
+    }
+
+    public String getArena() {
+        return arena;
     }
 
     public UUID getSender() {
