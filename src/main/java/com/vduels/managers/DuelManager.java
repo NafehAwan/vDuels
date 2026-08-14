@@ -76,11 +76,13 @@ public class DuelManager {
 
     /** Renders the duel-request card in chat, matching the requested style. */
     private void sendRequestCard(Player target, Player sender, String kit, int rounds) {
+        String kitLabel = kit.replace('_', ' ').toUpperCase(java.util.Locale.ROOT);
         target.sendMessage("");
-        target.sendMessage(Text.color("&6&lDUEL REQUEST FROM &b&l" + sender.getName()));
-        target.sendMessage(Text.color("&fKit: &a&l" + kit.toUpperCase(java.util.Locale.ROOT)));
-        target.sendMessage(Text.color("&fRounds: &e" + rounds));
-        target.sendMessage(Text.color("&fRanked: &c&lDISABLED"));
+        target.sendMessage(Text.color("&6DUEL REQUEST FROM &e&l" + sender.getName()));
+        target.sendMessage(Text.color("&eKit: &e&l" + kitLabel));
+        target.sendMessage(Text.color("&eRounds: &f" + rounds));
+        target.sendMessage(Text.color("&eRanked: &c&lDISABLED"));
+        target.sendMessage("");
 
         TextComponent click = new TextComponent(Text.color("&6&l[CLICK HERE]"));
         click.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/duel accept " + sender.getName()));
