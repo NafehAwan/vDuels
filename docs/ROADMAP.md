@@ -47,6 +47,30 @@ not in a duel sees no vDuels board at all.
 
 ---
 
+## Duel confirm GUI redesign
+
+Rework the `/duel <player>` menu into a **DUEL CONFIRM: <opponent>** GUI.
+
+**Icons (from the screenshots):**
+- **Map** (`FILLED_MAP`) → **arena / map selector** — opens the Map Selector GUI
+  below so the challenger picks which map to play on (instead of auto-choosing).
+- **Clock** (`CLOCK`) → **rounds selector** — click to cycle the round count.
+- **Kit** icon → kit selector (keep; the gold icon in the screenshot).
+- **Green stained glass** → **confirm & send** the challenge.
+- **Remove the book** item that's there now.
+
+## Map selector GUI
+
+A **DUEL MAP: <name>** GUI opened from the map icon above.
+- Lists the available arenas as icons (map / representative block, e.g. grass).
+- Click an arena to pick it as the duel's map.
+- **Arrow** = back to the confirm GUI.
+- Only show arenas that are configured and compatible with the chosen kit.
+
+**Implementation note:** the duel request must then carry the chosen arena
+(or "random"); `DuelManager.acceptRequest` uses that specific arena instead of
+`findFreeArena`, falling back to a free compatible arena if it's taken.
+
 ## Other requested features (to be detailed)
 
 - Parties + party matches.
