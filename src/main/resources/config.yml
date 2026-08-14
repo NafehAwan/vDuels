@@ -1,0 +1,10 @@
+# vDuels configuration
+# Most settings are configured per-arena through the in-game GUI
+# (/arena <name>) and per-kit via /kitcreate. This file is reserved for
+# future global options.
+
+# How long (in seconds) a duel request stays valid before it expires.
+request-expiry-seconds: 60
+
+# Countdown length (in seconds) before each round begins.
+round-countdown-seconds: 3

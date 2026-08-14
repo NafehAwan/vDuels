@@ -1,0 +1,48 @@
+name: vDuels
+version: ${project.version}
+main: com.vduels.VDuels
+api-version: '1.21'
+author: nafehawan
+description: GUI-based Duels and Party plugin.
+softdepend:
+  - FastAsyncWorldEdit
+
+commands:
+  vduels:
+    description: vDuels root command (copy/paste, help).
+    usage: /vduels <arena> <copy|paste> | /vduels help
+  createarena:
+    description: Create a new arena.
+    usage: /createarena <name>
+    permission: vduels.admin
+  arena:
+    description: Open the arena setup/settings GUI.
+    usage: /arena <name>
+    permission: vduels.admin
+  deletearena:
+    description: Delete an arena.
+    usage: /deletearena <name>
+    permission: vduels.admin
+  kitcreate:
+    description: Create a kit from your current inventory.
+    usage: /kitcreate <name>
+    permission: vduels.admin
+  deletekit:
+    description: Delete a kit.
+    usage: /deletekit <name>
+    permission: vduels.admin
+  adminduel:
+    description: Edit the duel menu layout / decoration.
+    usage: /adminduel
+    permission: vduels.admin
+  duel:
+    description: Challenge a player to a duel.
+    usage: /duel <player>
+
+permissions:
+  vduels.admin:
+    description: Access to vDuels administration commands.
+    default: op
+  vduels.use:
+    description: Access to the /duel command.
+    default: true
