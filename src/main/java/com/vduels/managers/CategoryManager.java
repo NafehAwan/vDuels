@@ -74,11 +74,7 @@ public class CategoryManager {
                 }
             }
         }
-        if (categories.isEmpty()) {
-            Category def = new Category("duels", "example.net");
-            categories.put("duels", def);
-            save();
-        }
+        // No default category is seeded - admins create their own.
     }
 
     public void save() {
@@ -115,9 +111,6 @@ public class CategoryManager {
 
     public void delete(String id) {
         categories.remove(id.toLowerCase(Locale.ROOT));
-        if (categories.isEmpty()) {
-            categories.put("duels", new Category("duels", "example.net"));
-        }
         save();
     }
 

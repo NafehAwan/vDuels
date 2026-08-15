@@ -40,8 +40,12 @@ commands:
     usage: /adminduel
     permission: vduels.admin
   editgui:
-    description: Customise a GUI layout (duelconfirm, kitmenu, mapselect).
+    description: Customise a GUI layout (duelconfirm, mapselect).
     usage: /editgui <menu>
+    permission: vduels.admin
+  category:
+    description: Manage kit-menu categories.
+    usage: /category <list|create|delete|header|addkit|removekit> ...
     permission: vduels.admin
   scoreboardip:
     description: Set the server IP shown on the duel scoreboard.
