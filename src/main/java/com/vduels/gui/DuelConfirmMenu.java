@@ -71,12 +71,12 @@ public class DuelConfirmMenu extends Menu {
 
     @Override
     public void build() {
-        create(3, "&8DUEL CONFIRM: &b" + target.getName());
+        create(4, "&8DUEL CONFIRM: &b" + target.getName());
         Map<String, Integer> buttonSlots = new HashMap<>();
 
         if (plugin.getGuiLayoutManager().has(GuiLayoutManager.DUEL_CONFIRM)) {
             for (Map.Entry<Integer, ItemStack> e : plugin.getGuiLayoutManager().get(GuiLayoutManager.DUEL_CONFIRM).entrySet()) {
-                if (e.getKey() >= 27) {
+                if (e.getKey() >= 36) {
                     continue;
                 }
                 String id = Items.readTag(e.getValue(), plugin.keyButton());
@@ -88,7 +88,7 @@ public class DuelConfirmMenu extends Menu {
             }
         } else {
             ItemStack gray = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
-            for (int i = 0; i < 27; i++) {
+            for (int i = 0; i < 36; i++) {
                 inventory.setItem(i, gray);
             }
         }

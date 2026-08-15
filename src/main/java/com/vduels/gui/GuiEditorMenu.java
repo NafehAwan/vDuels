@@ -95,7 +95,7 @@ public class GuiEditorMenu extends Menu {
         switch (menuId) {
             case GuiLayoutManager.DUEL_CONFIRM -> {
                 ItemStack gray = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
-                for (int i = 0; i < 27; i++) {
+                for (int i = 0; i < editableSize; i++) {
                     inventory.setItem(i, gray);
                 }
                 inventory.setItem(10, buttonMarker("map", Material.FILLED_MAP, "&bArena button"));

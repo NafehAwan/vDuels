@@ -22,7 +22,7 @@ import java.util.Map;
  */
 public class KitPickMenu extends Menu {
 
-    private static final int ARROW_SLOT = 26;
+    private static final int ARROW_SLOT = 35;
 
     private final VDuels plugin;
     private final DuelConfirmMenu confirm;
@@ -38,7 +38,7 @@ public class KitPickMenu extends Menu {
         List<CategoryManager.Category> categories = plugin.getCategoryManager().all();
 
         if (categories.isEmpty()) {
-            create(3, "&8DUELS");
+            create(4, "&7DUELS");
             List<String> all = new ArrayList<>();
             for (Kit kit : plugin.getKitManager().all()) {
                 all.add(kit.getName());
@@ -52,12 +52,12 @@ public class KitPickMenu extends Menu {
         }
         CategoryManager.Category category = categories.get(categoryIndex);
         boolean multi = categories.size() > 1;
-        create(3, "&8DUELS &8→ &7" + category.getHeader());
+        create(4, "&7DUELS &7→ &7" + category.getHeader());
 
         String layoutId = GuiLayoutManager.categoryMenuId(category.getId());
         if (plugin.getGuiLayoutManager().has(layoutId)) {
             for (Map.Entry<Integer, ItemStack> e : plugin.getGuiLayoutManager().get(layoutId).entrySet()) {
-                if (e.getKey() >= 27) {
+                if (e.getKey() >= 36) {
                     continue;
                 }
                 if ("next-cat".equals(Items.readTag(e.getValue(), plugin.keyButton()))) {
@@ -84,10 +84,10 @@ public class KitPickMenu extends Menu {
     /** Default gray-filled grid of kit icons, with the arrow when relevant. */
     private void grid(List<String> kitNames, boolean multi) {
         ItemStack filler = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
-        for (int i = 0; i < 27; i++) {
+        for (int i = 0; i < 36; i++) {
             inventory.setItem(i, filler);
         }
-        int limit = multi ? ARROW_SLOT : 27;
+        int limit = multi ? ARROW_SLOT : 36;
         int slot = 0;
         for (String kitName : kitNames) {
             if (slot >= limit) {

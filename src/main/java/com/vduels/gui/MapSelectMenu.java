@@ -28,12 +28,12 @@ public class MapSelectMenu extends Menu {
 
     @Override
     public void build() {
-        create(3, "&8DUEL MAP: &b" + confirm.getTarget().getName());
+        create(4, "&8DUEL MAP: &b" + confirm.getTarget().getName());
         String kit = confirm.getSelectedKit();
 
         if (plugin.getGuiLayoutManager().has(GuiLayoutManager.MAP_SELECT)) {
             for (Map.Entry<Integer, ItemStack> e : plugin.getGuiLayoutManager().get(GuiLayoutManager.MAP_SELECT).entrySet()) {
-                if (e.getKey() >= 27) {
+                if (e.getKey() >= 36) {
                     continue;
                 }
                 if ("random".equals(Items.readTag(e.getValue(), plugin.keyButton()))) {
@@ -53,14 +53,14 @@ public class MapSelectMenu extends Menu {
         } else {
             int slot = 0;
             for (Arena arena : plugin.getArenaManager().all()) {
-                if (slot >= 26) {
+                if (slot >= 35) {
                     break;
                 }
                 if (arena.isConfigured() && (kit == null || arena.supportsKit(kit))) {
                     inventory.setItem(slot++, liveArenaIcon(arena.getName(), kit));
                 }
             }
-            inventory.setItem(26, randomButton());
+            inventory.setItem(35, randomButton());
         }
     }
 
