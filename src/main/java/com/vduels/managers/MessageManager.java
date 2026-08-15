@@ -34,9 +34,9 @@ public class MessageManager {
         DEFAULTS.put("duel.target-offline", "{prefix}&cPlayer {name} is not online.");
         DEFAULTS.put("duel.sent", "{prefix}&aChallenge sent to &e{target} &a(&e{kit}&a, first to &e{rounds}&a).");
         DEFAULTS.put("duel.starting", "{prefix}&aDuel starting against &e{opponent}&a!");
-        DEFAULTS.put("duel.round", "{prefix}&fRound &b{round} &7- first to {roundsToWin}");
-        DEFAULTS.put("duel.victory", "{prefix}&a&lVICTORY! &7You won the duel (&f{yourScore} &7- &f{theirScore}&7).");
-        DEFAULTS.put("duel.defeat", "{prefix}&c&lDEFEAT. &7{winner} won the duel.");
+        DEFAULTS.put("duel.round", "{prefix}&fRound &b{round} &f- first to {roundsToWin}");
+        DEFAULTS.put("duel.victory", "{prefix}&a&lVICTORY! &fYou won the duel (&e{yourScore} &f- &e{theirScore}&f).");
+        DEFAULTS.put("duel.defeat", "{prefix}&c&lDEFEAT. &f{winner} won the duel.");
 
         DEFAULTS.put("accept.no-requests", "{prefix}&cYou have no pending duel requests.");
         DEFAULTS.put("accept.target-offline", "{prefix}&cThat player is not online.");
@@ -59,13 +59,13 @@ public class MessageManager {
         DEFAULTS.put("arena.cannot-edit", "{prefix}&cYou cannot edit an arena here.");
 
         DEFAULTS.put("titles.countdown.title", "&e{seconds}");
-        DEFAULTS.put("titles.countdown.subtitle", "&7Get ready...");
+        DEFAULTS.put("titles.countdown.subtitle", "&fGet ready...");
         DEFAULTS.put("titles.fight.title", "&c&lFIGHT!");
         DEFAULTS.put("titles.fight.subtitle", "");
         DEFAULTS.put("titles.round-won.title", "&aRound won!");
-        DEFAULTS.put("titles.round-won.subtitle", "&e{yourScore} &7- &e{theirScore}");
+        DEFAULTS.put("titles.round-won.subtitle", "&e{yourScore} &f- &e{theirScore}");
         DEFAULTS.put("titles.round-lost.title", "&cRound lost");
-        DEFAULTS.put("titles.round-lost.subtitle", "&e{yourScore} &7- &e{theirScore}");
+        DEFAULTS.put("titles.round-lost.subtitle", "&e{yourScore} &f- &e{theirScore}");
         DEFAULTS.put("titles.victory.title", "&a&lVICTORY");
         DEFAULTS.put("titles.victory.subtitle", "");
         DEFAULTS.put("titles.defeat.title", "&c&lDEFEAT");

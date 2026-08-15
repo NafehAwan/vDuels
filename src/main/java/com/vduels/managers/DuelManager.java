@@ -249,12 +249,10 @@ public class DuelManager {
         duel.setState(ActiveDuel.State.ENDING);
         UUID winnerId = duel.getOpponent(loserId);
 
+        // The loser has already died and respawned (see DuelListener); no need
+        // to touch their health here.
         Player loser = Bukkit.getPlayer(loserId);
         Player winner = Bukkit.getPlayer(winnerId);
-        if (loser != null) {
-            loser.setHealth(Math.min(20.0, loser.getHealth() <= 0 ? 20.0 : loser.getHealth()));
-            loser.setFireTicks(0);
-        }
 
         boolean matchOver = duel.awardRound(winnerId);
 

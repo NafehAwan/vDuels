@@ -2,17 +2,24 @@ package com.vduels.listeners;
 
 import com.vduels.VDuels;
 import com.vduels.model.ActiveDuel;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
+
+import java.util.UUID;
 
 /**
- * Duel combat rules: converts lethal damage into a round loss, keeps players
- * invulnerable outside the FIGHTING phase, and cleans up on disconnect.
+ * Duel combat rules. Players actually die (real death animation, totems pop
+ * naturally); the death is what ends the round. Outside the FIGHTING phase they
+ * are invulnerable, and quitting mid-duel forfeits.
  */
 public class DuelListener implements Listener {
 
@@ -31,14 +38,45 @@ public class DuelListener implements Listener {
         if (duel == null) {
             return;
         }
+        // Only invulnerable before the fight and while a round is wrapping up.
+        // During FIGHTING damage is left alone so lethal hits actually kill.
         if (duel.getState() != ActiveDuel.State.FIGHTING) {
             event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onDeath(PlayerDeathEvent event) {
+        Player victim = event.getEntity();
+        ActiveDuel duel = plugin.getDuelManager().getDuel(victim.getUniqueId());
+        if (duel == null) {
             return;
         }
-        double finalDamage = event.getFinalDamage();
-        if (player.getHealth() - finalDamage <= 0) {
-            event.setCancelled(true);
-            plugin.getDuelManager().handleRoundLoss(player.getUniqueId());
+        // Keep the kit on the body, drop nothing, no death spam.
+        event.setKeepInventory(true);
+        event.getDrops().clear();
+        event.setDroppedExp(0);
+        event.setDeathMessage(null);
+
+        UUID loserId = victim.getUniqueId();
+        // Respawn immediately (skip the death screen), then award the round.
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            victim.spigot().respawn();
+            plugin.getDuelManager().handleRoundLoss(loserId);
+        });
+    }
+
+    @EventHandler
+    public void onRespawn(PlayerRespawnEvent event) {
+        Player player = event.getPlayer();
+        ActiveDuel duel = plugin.getDuelManager().getDuel(player.getUniqueId());
+        if (duel == null) {
+            return;
+        }
+        Location spawn = player.getUniqueId().equals(duel.getPlayer1())
+                ? duel.getArena().getSpawn1() : duel.getArena().getSpawn2();
+        if (spawn != null) {
+            event.setRespawnLocation(spawn);
         }
     }
 
@@ -46,7 +84,6 @@ public class DuelListener implements Listener {
     public void onHunger(FoodLevelChangeEvent event) {
         if (event.getEntity() instanceof Player player
                 && plugin.getDuelManager().isInDuel(player.getUniqueId())) {
-            // Keep hunger stable during matches.
             event.setCancelled(true);
         }
     }

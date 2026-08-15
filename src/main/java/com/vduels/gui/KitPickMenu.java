@@ -57,7 +57,7 @@ public class KitPickMenu extends Menu {
             }
         }
 
-        ItemStack filler = Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build();
+        ItemStack filler = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
         for (int i = 45; i < 54; i++) {
             inventory.setItem(i, filler);
         }

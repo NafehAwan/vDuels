@@ -72,13 +72,13 @@ public class GuiEditorMenu extends Menu {
         }
 
         // Control row.
-        ItemStack bar = Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build();
+        ItemStack bar = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
         for (int i = 45; i < 54; i++) {
             inventory.setItem(i, bar);
         }
         inventory.setItem(CANCEL_SLOT, Items.of(Material.BARRIER)
                 .name("&cCancel").lore("&7Close without saving.").build());
-        inventory.setItem(PALETTE_SLOT, Items.of(Material.BLACK_STAINED_GLASS_PANE)
+        inventory.setItem(PALETTE_SLOT, Items.of(Material.GRAY_STAINED_GLASS_PANE)
                 .name("&8Decoration").lore("&7Click for decoration panes to place.").build());
         inventory.setItem(SAVE_SLOT, Items.of(Material.LIME_DYE)
                 .name("&a&lSave Layout").lore("&7Save this arrangement.").build());
@@ -152,7 +152,7 @@ public class GuiEditorMenu extends Menu {
                 player.closeInventory();
             }
             case PALETTE_SLOT -> {
-                player.getInventory().addItem(Items.of(Material.BLACK_STAINED_GLASS_PANE, 16)
+                player.getInventory().addItem(Items.of(Material.GRAY_STAINED_GLASS_PANE, 16)
                         .name("&8Decoration").build());
                 player.sendMessage(Text.prefixed("&7Added decoration panes to your inventory."));
             }

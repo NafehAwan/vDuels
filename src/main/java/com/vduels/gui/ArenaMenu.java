@@ -40,7 +40,6 @@ public class ArenaMenu extends Menu {
                     .lore("&7Click to start arena setup.",
                             "&7You'll be asked to walk to each",
                             "&7spawn and corner and type &edone&7.")
-                    .glow(true)
                     .build());
             return;
         }
@@ -49,7 +48,6 @@ public class ArenaMenu extends Menu {
         inventory.setItem(10, Items.of(Material.GREEN_STAINED_GLASS_PANE)
                 .name("&a&lSetup")
                 .lore("&7Re-run the position setup wizard.")
-                .glow(true)
                 .build());
 
         inventory.setItem(11, toggle("&bAuto-Regenerate",
