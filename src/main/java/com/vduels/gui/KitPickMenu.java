@@ -12,13 +12,11 @@ import org.bukkit.inventory.ItemStack;
 import java.util.Map;
 
 /**
- * The kit picker opened first by {@code /duel}. Kit icons and decoration can be
- * arranged with {@code /editgui kitmenu} (or {@code /adminduel}); the saved
- * layout decides placement. Clicking a kit selects it and opens DUEL CONFIRM.
+ * The kit picker (small chest) opened first by {@code /duel}. Clicking a kit
+ * selects it; the admin-placed &quot;next&quot; arrow advances to DUEL CONFIRM.
+ * Layout is editable with {@code /editgui kitmenu}.
  */
 public class KitPickMenu extends Menu {
-
-    private static final int BACK_SLOT = 49;
 
     private final VDuels plugin;
     private final DuelConfirmMenu confirm;
@@ -28,13 +26,23 @@ public class KitPickMenu extends Menu {
         this.confirm = confirm;
     }
 
+    public void reopen(Player player) {
+        build();
+        player.openInventory(inventory);
+    }
+
     @Override
     public void build() {
-        create(6, "&8Select a Kit");
+        create(3, "&8Select a Kit");
 
         if (plugin.getGuiLayoutManager().has(GuiLayoutManager.KIT_MENU)) {
             for (Map.Entry<Integer, ItemStack> e : plugin.getGuiLayoutManager().get(GuiLayoutManager.KIT_MENU).entrySet()) {
-                if (e.getKey() >= 45) {
+                if (e.getKey() >= 27) {
+                    continue;
+                }
+                String button = Items.readTag(e.getValue(), plugin.keyButton());
+                if (button != null) {
+                    inventory.setItem(e.getKey(), renderButton(button));
                     continue;
                 }
                 String kitName = Items.readTag(e.getValue(), plugin.keyKit());
@@ -50,19 +58,24 @@ public class KitPickMenu extends Menu {
         } else {
             int slot = 0;
             for (Kit kit : plugin.getKitManager().all()) {
-                if (slot >= 45) {
+                if (slot >= 26) {
                     break;
                 }
                 inventory.setItem(slot++, liveKitIcon(kit.getName()));
             }
+            inventory.setItem(26, renderButton("next"));
         }
+    }
 
-        ItemStack filler = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
-        for (int i = 45; i < 54; i++) {
-            inventory.setItem(i, filler);
+    private ItemStack renderButton(String id) {
+        if (id.equals("next")) {
+            return Items.of(Material.ARROW)
+                    .name("&eNext")
+                    .lore("&fContinue to the duel menu.")
+                    .tag(plugin.keyButton(), "next")
+                    .build();
         }
-        inventory.setItem(BACK_SLOT, Items.of(Material.ARROW)
-                .name("&eBack").lore("&7Close the duel menu.").build());
+        return Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
     }
 
     private ItemStack liveKitIcon(String name) {
@@ -70,27 +83,31 @@ public class KitPickMenu extends Menu {
         if (kit == null) {
             return null;
         }
+        boolean selected = kit.getName().equalsIgnoreCase(confirm.getSelectedKit());
         return Items.of(kit.getIcon())
-                .name("&e" + kit.getName())
-                .lore("", "&7Click to select")
+                .name((selected ? "&a" : "&e") + kit.getName())
+                .lore("", selected ? "&aSelected" : "&fClick to select")
+                .glow(selected)
                 .tag(plugin.keyKit(), kit.getName())
                 .build();
     }
 
     @Override
     public void onClick(Player player, InventoryClickEvent event) {
-        if (event.getRawSlot() == BACK_SLOT) {
+        ItemStack clicked = event.getCurrentItem();
+        String button = Items.readTag(clicked, plugin.keyButton());
+        if ("next".equals(button)) {
             if (confirm.getSelectedKit() == null) {
-                player.closeInventory();
-            } else {
-                confirm.reopen(player);
+                player.sendMessage(plugin.messages().get("menu.select-kit-first"));
+                return;
             }
+            confirm.reopen(player);
             return;
         }
-        String kitName = Items.readTag(event.getCurrentItem(), plugin.keyKit());
+        String kitName = Items.readTag(clicked, plugin.keyKit());
         if (kitName != null && plugin.getKitManager().exists(kitName)) {
             confirm.setSelectedKit(kitName);
-            confirm.reopen(player);
+            reopen(player);
         }
     }
 }

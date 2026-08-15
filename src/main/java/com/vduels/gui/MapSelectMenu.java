@@ -4,7 +4,6 @@ import com.vduels.VDuels;
 import com.vduels.managers.GuiLayoutManager;
 import com.vduels.model.Arena;
 import com.vduels.util.Items;
-import com.vduels.util.Text;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -13,14 +12,11 @@ import org.bukkit.inventory.ItemStack;
 import java.util.Map;
 
 /**
- * The arena picker (DUEL MAP) opened from DUEL CONFIRM. Arena icons and
- * decoration can be arranged with {@code /editgui mapselect}; the Random and
- * Back buttons stay on the fixed bottom row.
+ * The arena picker (DUEL MAP, small chest). Clicking an arena (or Random)
+ * selects it; the admin-placed &quot;next&quot; arrow returns to DUEL CONFIRM.
+ * Layout is editable with {@code /editgui mapselect}.
  */
 public class MapSelectMenu extends Menu {
-
-    private static final int SLOT_RANDOM = 47;
-    private static final int SLOT_BACK = 49;
 
     private final VDuels plugin;
     private final DuelConfirmMenu confirm;
@@ -30,14 +26,24 @@ public class MapSelectMenu extends Menu {
         this.confirm = confirm;
     }
 
+    public void reopen(Player player) {
+        build();
+        player.openInventory(inventory);
+    }
+
     @Override
     public void build() {
-        create(6, "&8DUEL MAP: &b" + confirm.getTarget().getName());
+        create(3, "&8DUEL MAP: &b" + confirm.getTarget().getName());
         String kit = confirm.getSelectedKit();
 
         if (plugin.getGuiLayoutManager().has(GuiLayoutManager.MAP_SELECT)) {
             for (Map.Entry<Integer, ItemStack> e : plugin.getGuiLayoutManager().get(GuiLayoutManager.MAP_SELECT).entrySet()) {
-                if (e.getKey() >= 45) {
+                if (e.getKey() >= 27) {
+                    continue;
+                }
+                String button = Items.readTag(e.getValue(), plugin.keyButton());
+                if (button != null) {
+                    inventory.setItem(e.getKey(), renderButton(button));
                     continue;
                 }
                 String arenaName = Items.readTag(e.getValue(), plugin.keyArena());
@@ -53,27 +59,36 @@ public class MapSelectMenu extends Menu {
         } else {
             int slot = 0;
             for (Arena arena : plugin.getArenaManager().all()) {
-                if (slot >= 45) {
+                if (slot >= 25) {
                     break;
                 }
                 if (arena.isConfigured() && (kit == null || arena.supportsKit(kit))) {
                     inventory.setItem(slot++, liveArenaIcon(arena.getName(), kit));
                 }
             }
+            inventory.setItem(25, renderButton("random"));
+            inventory.setItem(26, renderButton("next"));
         }
+    }
 
-        ItemStack filler = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
-        for (int i = 45; i < 54; i++) {
-            inventory.setItem(i, filler);
+    private ItemStack renderButton(String id) {
+        if (id.equals("next")) {
+            return Items.of(Material.ARROW)
+                    .name("&eNext")
+                    .lore("&fBack to the duel menu.")
+                    .tag(plugin.keyButton(), "next")
+                    .build();
         }
-        boolean randomSel = confirm.getSelectedArena() == null;
-        inventory.setItem(SLOT_RANDOM, Items.of(Material.ENDER_PEARL)
-                .name((randomSel ? "&a" : "&e") + "Random")
-                .lore("", randomSel ? "&aSelected" : "&7Pick any free compatible arena")
-                .glow(randomSel)
-                .build());
-        inventory.setItem(SLOT_BACK, Items.of(Material.ARROW)
-                .name("&eBack").lore("&7Return to the duel menu.").build());
+        if (id.equals("random")) {
+            boolean sel = confirm.getSelectedArena() == null;
+            return Items.of(Material.ENDER_PEARL)
+                    .name((sel ? "&a" : "&e") + "Random")
+                    .lore("", sel ? "&aSelected" : "&fPick any free compatible arena")
+                    .glow(sel)
+                    .tag(plugin.keyButton(), "random")
+                    .build();
+        }
+        return Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
     }
 
     private ItemStack liveArenaIcon(String name, String kit) {
@@ -85,7 +100,7 @@ public class MapSelectMenu extends Menu {
         boolean compatible = kit == null || arena.supportsKit(kit);
         return Items.of(Material.FILLED_MAP)
                 .name((sel ? "&a" : compatible ? "&e" : "&c") + arena.getName())
-                .lore("", sel ? "&aSelected" : compatible ? "&7Click to pick this map" : "&cIncompatible with this kit")
+                .lore("", sel ? "&aSelected" : compatible ? "&fClick to pick this map" : "&cIncompatible with this kit")
                 .glow(sel)
                 .tag(plugin.keyArena(), arena.getName())
                 .build();
@@ -93,17 +108,18 @@ public class MapSelectMenu extends Menu {
 
     @Override
     public void onClick(Player player, InventoryClickEvent event) {
-        int slot = event.getRawSlot();
-        if (slot == SLOT_BACK) {
+        ItemStack clicked = event.getCurrentItem();
+        String button = Items.readTag(clicked, plugin.keyButton());
+        if ("next".equals(button)) {
             confirm.reopen(player);
             return;
         }
-        if (slot == SLOT_RANDOM) {
+        if ("random".equals(button)) {
             confirm.setSelectedArena(null);
-            confirm.reopen(player);
+            reopen(player);
             return;
         }
-        String arenaName = Items.readTag(event.getCurrentItem(), plugin.keyArena());
+        String arenaName = Items.readTag(clicked, plugin.keyArena());
         if (arenaName == null) {
             return;
         }
@@ -117,6 +133,6 @@ public class MapSelectMenu extends Menu {
             return;
         }
         confirm.setSelectedArena(arena.getName());
-        confirm.reopen(player);
+        reopen(player);
     }
 }

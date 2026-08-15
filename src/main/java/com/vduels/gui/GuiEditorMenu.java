@@ -102,28 +102,33 @@ public class GuiEditorMenu extends Menu {
             case GuiLayoutManager.KIT_MENU -> {
                 int slot = 0;
                 for (Kit kit : plugin.getKitManager().all()) {
-                    if (slot >= editableSize) {
+                    if (slot >= editableSize - 1) {
                         break;
                     }
                     inventory.setItem(slot++, Items.of(kit.getIcon())
                             .name("&e" + kit.getName())
-                            .lore("&7Kit icon - drag to arrange.")
+                            .lore("&fKit icon - drag to arrange.")
                             .tag(plugin.keyKit(), kit.getName())
                             .build());
                 }
+                inventory.setItem(editableSize - 1, buttonMarker("next", Material.ARROW, "&eNext button"));
             }
             case GuiLayoutManager.MAP_SELECT -> {
                 int slot = 0;
                 for (Arena arena : plugin.getArenaManager().all()) {
-                    if (!arena.isConfigured() || slot >= editableSize) {
-                        continue;
+                    if (slot >= editableSize - 2) {
+                        break;
                     }
-                    inventory.setItem(slot++, Items.of(Material.FILLED_MAP)
-                            .name("&e" + arena.getName())
-                            .lore("&7Arena icon - drag to arrange.")
-                            .tag(plugin.keyArena(), arena.getName())
-                            .build());
+                    if (arena.isConfigured()) {
+                        inventory.setItem(slot++, Items.of(Material.FILLED_MAP)
+                                .name("&e" + arena.getName())
+                                .lore("&fArena icon - drag to arrange.")
+                                .tag(plugin.keyArena(), arena.getName())
+                                .build());
+                    }
                 }
+                inventory.setItem(editableSize - 2, buttonMarker("random", Material.ENDER_PEARL, "&eRandom button"));
+                inventory.setItem(editableSize - 1, buttonMarker("next", Material.ARROW, "&eNext button"));
             }
             default -> {
             }
@@ -191,12 +196,22 @@ public class GuiEditorMenu extends Menu {
                 layout.put(i, item.clone());
             }
         }
-        // Keep DUEL CONFIRM functional: re-add any missing button at a free slot.
-        if (menuId.equals(GuiLayoutManager.DUEL_CONFIRM)) {
-            ensureButton(layout, "map", Material.FILLED_MAP, "&bArena button", 10);
-            ensureButton(layout, "kit", Material.GOLDEN_APPLE, "&6Kit button", 12);
-            ensureButton(layout, "clock", Material.CLOCK, "&eRounds button", 14);
-            ensureButton(layout, "confirm", Material.GREEN_STAINED_GLASS_PANE, "&aConfirm button", 16);
+        // Keep each menu functional: re-add any missing button at a free slot.
+        switch (menuId) {
+            case GuiLayoutManager.DUEL_CONFIRM -> {
+                ensureButton(layout, "map", Material.FILLED_MAP, "&bArena button", 10);
+                ensureButton(layout, "kit", Material.GOLDEN_APPLE, "&6Kit button", 12);
+                ensureButton(layout, "clock", Material.CLOCK, "&eRounds button", 14);
+                ensureButton(layout, "confirm", Material.GREEN_STAINED_GLASS_PANE, "&aConfirm button", 16);
+            }
+            case GuiLayoutManager.KIT_MENU ->
+                    ensureButton(layout, "next", Material.ARROW, "&eNext button", editableSize - 1);
+            case GuiLayoutManager.MAP_SELECT -> {
+                ensureButton(layout, "random", Material.ENDER_PEARL, "&eRandom button", editableSize - 2);
+                ensureButton(layout, "next", Material.ARROW, "&eNext button", editableSize - 1);
+            }
+            default -> {
+            }
         }
         plugin.getGuiLayoutManager().set(menuId, layout);
     }

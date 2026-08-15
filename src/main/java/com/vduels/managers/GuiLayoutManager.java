@@ -35,12 +35,12 @@ public class GuiLayoutManager {
 
     /** Player-facing rows for a menu (the editor is always 6 rows). */
     public static int rows(String menuId) {
-        return menuId.equals(DUEL_CONFIRM) ? 3 : 6;
+        return 3; // all duel menus are small (single) chests
     }
 
     /** Editable slot count in the editor (the last row holds controls). */
     public static int editableSize(String menuId) {
-        return menuId.equals(DUEL_CONFIRM) ? 27 : 45;
+        return 27;
     }
 
     public static boolean isValidMenu(String menuId) {
