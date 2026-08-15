@@ -69,7 +69,7 @@ public class DuelManager {
                 .put(sender.getUniqueId(), request);
 
         sender.sendMessage(Text.prefixed("&aChallenge sent to &e" + target.getName()
-                + "&a (&f" + kit + "&a, first to &f" + rounds + "&a)."));
+                + " &a(&e" + kit + "&a, first to &e" + rounds + "&a)."));
 
         sendRequestCard(target, sender, kit, rounds);
     }
@@ -219,8 +219,8 @@ public class DuelManager {
         }
         if (secondsLeft <= 0) {
             duel.setState(ActiveDuel.State.FIGHTING);
-            sendTitle(p1, "&a&lFIGHT!", "");
-            sendTitle(p2, "&a&lFIGHT!", "");
+            sendTitle(p1, "&c&lFIGHT!", "");
+            sendTitle(p2, "&c&lFIGHT!", "");
             return;
         }
         sendTitle(p1, "&e" + secondsLeft, "&7Get ready...");
@@ -258,12 +258,13 @@ public class DuelManager {
             duel.getChangedBlocks().clear();
         }
 
-        String score = "&b" + duel.getScore1() + " &7- &b" + duel.getScore2();
         if (winner != null) {
-            sendTitle(winner, "&aRound won!", score);
+            sendTitle(winner, "&aRound won!",
+                    "&e" + duel.getScoreFor(winnerId) + " &7- &e" + duel.getScoreAgainst(winnerId));
         }
         if (loser != null) {
-            sendTitle(loser, "&cRound lost", score);
+            sendTitle(loser, "&cRound lost",
+                    "&e" + duel.getScoreFor(loserId) + " &7- &e" + duel.getScoreAgainst(loserId));
         }
 
         if (matchOver) {

@@ -192,7 +192,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
         }
         Player target = plugin.getServer().getPlayerExact(args[0]);
         if (target == null) {
-            sender.sendMessage(Text.prefixed("&cPlayer &f" + args[0] + "&c is not online."));
+            sender.sendMessage(Text.prefixed("&cPlayer " + args[0] + " is not online."));
             return;
         }
         if (target.equals(player)) {

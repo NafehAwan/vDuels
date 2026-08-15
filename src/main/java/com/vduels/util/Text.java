@@ -17,7 +17,7 @@ public final class Text {
             'ɴ', 'ᴏ', 'ᴘ', 'ꞯ', 'ʀ', 'ꜱ', 'ᴛ', 'ᴜ', 'ᴠ', 'ᴡ', 'x', 'ʏ', 'ᴢ'
     };
 
-    public static final String PREFIX = color("&8[&bvDuels&8] &r");
+    public static final String PREFIX = color("&fⓘ ");
 
     private Text() {
     }
