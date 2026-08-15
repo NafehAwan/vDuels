@@ -292,7 +292,23 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
                     return;
                 }
                 cats.delete(args[1]);
+                plugin.getGuiLayoutManager().clear(GuiLayoutManager.categoryMenuId(args[1]));
                 sender.sendMessage(Text.prefixed("&aDeleted category &b" + args[1] + "&a."));
+            }
+            case "edit" -> {
+                if (!requirePlayer(sender)) {
+                    return;
+                }
+                if (args.length < 2) {
+                    sender.sendMessage(Text.prefixed("&cUsage: /category edit <id>"));
+                    return;
+                }
+                CategoryManager.Category c = cats.get(args[1]);
+                if (c == null) {
+                    sender.sendMessage(Text.prefixed("&cNo category named &f" + args[1] + "&c."));
+                    return;
+                }
+                new GuiEditorMenu(plugin, GuiLayoutManager.categoryMenuId(c.getId())).open((Player) sender);
             }
             case "header" -> {
                 if (args.length < 3) {
@@ -331,7 +347,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
                 }
                 cats.save();
             }
-            default -> sender.sendMessage(Text.prefixed("&cSub-commands: list, create, delete, header, addkit, removekit"));
+            default -> sender.sendMessage(Text.prefixed("&cSub-commands: list, create, delete, edit, header, addkit, removekit"));
         }
     }
 
@@ -448,7 +464,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             }
         } else if (name.equals("category")) {
             if (args.length == 1) {
-                for (String sub : List.of("list", "create", "delete", "header", "addkit", "removekit")) {
+                for (String sub : List.of("list", "create", "delete", "edit", "header", "addkit", "removekit")) {
                     if (startsWith(sub, args[0])) {
                         out.add(sub);
                     }

@@ -2,6 +2,7 @@ package com.vduels.gui;
 
 import com.vduels.VDuels;
 import com.vduels.managers.CategoryManager;
+import com.vduels.managers.GuiLayoutManager;
 import com.vduels.model.Kit;
 import com.vduels.util.Items;
 import org.bukkit.Material;
@@ -11,6 +12,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The kit picker (small chest) opened first by {@code /duel}. When categories
@@ -34,31 +36,57 @@ public class KitPickMenu extends Menu {
     @Override
     public void build() {
         List<CategoryManager.Category> categories = plugin.getCategoryManager().all();
-        boolean hasCategories = !categories.isEmpty();
 
-        List<String> kitNames;
-        boolean multi = false;
-        if (hasCategories) {
-            if (categoryIndex >= categories.size()) {
-                categoryIndex = 0;
-            }
-            CategoryManager.Category category = categories.get(categoryIndex);
-            create(3, "&8DUELS &8→ &7" + category.getHeader());
-            kitNames = plugin.getCategoryManager().kitsFor(category);
-            multi = categories.size() > 1;
-        } else {
+        if (categories.isEmpty()) {
             create(3, "&8DUELS");
-            kitNames = new ArrayList<>();
+            List<String> all = new ArrayList<>();
             for (Kit kit : plugin.getKitManager().all()) {
-                kitNames.add(kit.getName());
+                all.add(kit.getName());
             }
+            grid(all, false);
+            return;
         }
 
+        if (categoryIndex >= categories.size()) {
+            categoryIndex = 0;
+        }
+        CategoryManager.Category category = categories.get(categoryIndex);
+        boolean multi = categories.size() > 1;
+        create(3, "&8DUELS &8→ &7" + category.getHeader());
+
+        String layoutId = GuiLayoutManager.categoryMenuId(category.getId());
+        if (plugin.getGuiLayoutManager().has(layoutId)) {
+            for (Map.Entry<Integer, ItemStack> e : plugin.getGuiLayoutManager().get(layoutId).entrySet()) {
+                if (e.getKey() >= 27) {
+                    continue;
+                }
+                if ("next-cat".equals(Items.readTag(e.getValue(), plugin.keyButton()))) {
+                    if (multi) {
+                        inventory.setItem(e.getKey(), arrowItem());
+                    }
+                    continue;
+                }
+                String kitName = Items.readTag(e.getValue(), plugin.keyKit());
+                if (kitName != null) {
+                    ItemStack icon = kitIcon(kitName);
+                    if (icon != null) {
+                        inventory.setItem(e.getKey(), icon);
+                    }
+                } else {
+                    inventory.setItem(e.getKey(), e.getValue());
+                }
+            }
+        } else {
+            grid(plugin.getCategoryManager().kitsFor(category), multi);
+        }
+    }
+
+    /** Default gray-filled grid of kit icons, with the arrow when relevant. */
+    private void grid(List<String> kitNames, boolean multi) {
         ItemStack filler = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
         for (int i = 0; i < 27; i++) {
             inventory.setItem(i, filler);
         }
-
         int limit = multi ? ARROW_SLOT : 27;
         int slot = 0;
         for (String kitName : kitNames) {
@@ -70,14 +98,17 @@ public class KitPickMenu extends Menu {
                 inventory.setItem(slot++, icon);
             }
         }
-
         if (multi) {
-            inventory.setItem(ARROW_SLOT, Items.of(Material.ARROW)
-                    .name("&eNext Category")
-                    .lore("&f→ another category")
-                    .tag(plugin.keyButton(), "next-cat")
-                    .build());
+            inventory.setItem(ARROW_SLOT, arrowItem());
         }
+    }
+
+    private ItemStack arrowItem() {
+        return Items.of(Material.ARROW)
+                .name("&eNext Category")
+                .lore("&f→ another category")
+                .tag(plugin.keyButton(), "next-cat")
+                .build();
     }
 
     private ItemStack kitIcon(String name) {

@@ -88,6 +88,10 @@ public class GuiEditorMenu extends Menu {
 
     /** Places the menu's default markers when there is no saved layout. */
     private void fillDefaults() {
+        if (GuiLayoutManager.isCategoryMenu(menuId)) {
+            fillCategoryDefaults();
+            return;
+        }
         switch (menuId) {
             case GuiLayoutManager.DUEL_CONFIRM -> {
                 ItemStack gray = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
@@ -118,6 +122,31 @@ public class GuiEditorMenu extends Menu {
             default -> {
             }
         }
+    }
+
+    /** Default markers for a category editor: its kits plus the arrow. */
+    private void fillCategoryDefaults() {
+        com.vduels.managers.CategoryManager.Category category =
+                plugin.getCategoryManager().get(menuId.substring("category:".length()));
+        if (category == null) {
+            return;
+        }
+        int slot = 0;
+        for (String kitName : plugin.getCategoryManager().kitsFor(category)) {
+            if (slot >= editableSize - 1) {
+                break;
+            }
+            Kit kit = plugin.getKitManager().get(kitName);
+            if (kit == null) {
+                continue;
+            }
+            inventory.setItem(slot++, Items.of(kit.getIcon())
+                    .name("&e" + kit.getName())
+                    .lore("&fKit icon - drag to arrange.")
+                    .tag(plugin.keyKit(), kit.getName())
+                    .build());
+        }
+        inventory.setItem(editableSize - 1, buttonMarker("next-cat", Material.ARROW, "&eNext-category arrow"));
     }
 
     private ItemStack buttonMarker(String id, Material icon, String name) {
@@ -182,16 +211,20 @@ public class GuiEditorMenu extends Menu {
             }
         }
         // Keep each menu functional: re-add any missing button at a free slot.
-        switch (menuId) {
-            case GuiLayoutManager.DUEL_CONFIRM -> {
-                ensureButton(layout, "map", Material.FILLED_MAP, "&bArena button", 10);
-                ensureButton(layout, "kit", Material.GOLDEN_APPLE, "&6Kit button", 12);
-                ensureButton(layout, "clock", Material.CLOCK, "&eRounds button", 14);
-                ensureButton(layout, "confirm", Material.GREEN_STAINED_GLASS_PANE, "&aConfirm button", 16);
-            }
-            case GuiLayoutManager.MAP_SELECT ->
-                    ensureButton(layout, "random", Material.ENDER_PEARL, "&eRandom button", editableSize - 1);
-            default -> {
+        if (GuiLayoutManager.isCategoryMenu(menuId)) {
+            ensureButton(layout, "next-cat", Material.ARROW, "&eNext-category arrow", editableSize - 1);
+        } else {
+            switch (menuId) {
+                case GuiLayoutManager.DUEL_CONFIRM -> {
+                    ensureButton(layout, "map", Material.FILLED_MAP, "&bArena button", 10);
+                    ensureButton(layout, "kit", Material.GOLDEN_APPLE, "&6Kit button", 12);
+                    ensureButton(layout, "clock", Material.CLOCK, "&eRounds button", 14);
+                    ensureButton(layout, "confirm", Material.GREEN_STAINED_GLASS_PANE, "&aConfirm button", 16);
+                }
+                case GuiLayoutManager.MAP_SELECT ->
+                        ensureButton(layout, "random", Material.ENDER_PEARL, "&eRandom button", editableSize - 1);
+                default -> {
+                }
             }
         }
         plugin.getGuiLayoutManager().set(menuId, layout);

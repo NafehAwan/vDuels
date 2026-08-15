@@ -48,6 +48,15 @@ public class GuiLayoutManager {
         return menuId.equals(DUEL_CONFIRM) || menuId.equals(MAP_SELECT);
     }
 
+    /** Layout id for a specific category's kit-menu layout. */
+    public static String categoryMenuId(String categoryId) {
+        return "category:" + categoryId.toLowerCase(java.util.Locale.ROOT);
+    }
+
+    public static boolean isCategoryMenu(String menuId) {
+        return menuId.startsWith("category:");
+    }
+
     public void load() {
         layouts.clear();
         if (!file.exists()) {
