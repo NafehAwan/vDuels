@@ -80,7 +80,7 @@ public final class VDuels extends JavaPlugin {
     private void registerCommands() {
         VDuelsCommand handler = new VDuelsCommand(this);
         for (String name : new String[]{"vduels", "createarena", "arena", "deletearena",
-                "kitcreate", "deletekit", "adminduel", "editgui", "scoreboardip", "duel"}) {
+                "kitcreate", "deletekit", "kiticon", "adminduel", "editgui", "scoreboardip", "duel"}) {
             PluginCommand command = getCommand(name);
             if (command != null) {
                 command.setExecutor(handler);

@@ -31,6 +31,10 @@ commands:
     description: Delete a kit.
     usage: /deletekit <name>
     permission: vduels.admin
+  kiticon:
+    description: Set a kit's menu icon to the item in your hand.
+    usage: /kiticon <name>
+    permission: vduels.admin
   adminduel:
     description: Edit the kit menu layout / decoration.
     usage: /adminduel

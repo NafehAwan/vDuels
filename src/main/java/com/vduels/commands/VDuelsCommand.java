@@ -7,6 +7,8 @@ import com.vduels.gui.GuiEditorMenu;
 import com.vduels.gui.KitPickMenu;
 import com.vduels.managers.GuiLayoutManager;
 import com.vduels.model.Arena;
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 import com.vduels.model.DuelRequest;
 import com.vduels.model.Kit;
 import com.vduels.util.Text;
@@ -41,6 +43,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             case "deletearena" -> deleteArena(sender, args);
             case "kitcreate" -> createKit(sender, args);
             case "deletekit" -> deleteKit(sender, args);
+            case "kiticon" -> kitIcon(sender, args);
             case "adminduel" -> editGui(sender, new String[]{GuiLayoutManager.KIT_MENU});
             case "editgui" -> editGui(sender, args);
             case "duel" -> duel(sender, args);
@@ -139,6 +142,29 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
         }
         plugin.getKitManager().delete(args[0]);
         sender.sendMessage(Text.prefixed("&aKit &b" + args[0] + "&a deleted."));
+    }
+
+    private void kitIcon(CommandSender sender, String[] args) {
+        if (!requireAdmin(sender) || !requirePlayer(sender)) {
+            return;
+        }
+        if (args.length < 1) {
+            sender.sendMessage(Text.prefixed("&cUsage: /kiticon <name>"));
+            return;
+        }
+        Kit kit = plugin.getKitManager().get(args[0]);
+        if (kit == null) {
+            sender.sendMessage(Text.prefixed("&cNo kit named &f" + args[0] + "&c."));
+            return;
+        }
+        ItemStack held = ((Player) sender).getInventory().getItemInMainHand();
+        if (held == null || held.getType() == Material.AIR) {
+            sender.sendMessage(Text.prefixed("&cHold the item you want to use as the icon."));
+            return;
+        }
+        kit.setIcon(held.getType());
+        plugin.getKitManager().save();
+        sender.sendMessage(Text.prefixed("&aKit &b" + kit.getName() + "&a icon set to &f" + held.getType().name() + "&a."));
     }
 
     private void editGui(CommandSender sender, String[] args) {
@@ -275,6 +301,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(Text.color("&e/deletearena <name> &7- delete an arena"));
             sender.sendMessage(Text.color("&e/kitcreate <name> &7- save a kit from inventory"));
             sender.sendMessage(Text.color("&e/deletekit <name> &7- delete a kit"));
+            sender.sendMessage(Text.color("&e/kiticon <name> &7- set a kit's icon to your held item"));
             sender.sendMessage(Text.color("&e/editgui <menu> &7- customise a GUI layout"));
             sender.sendMessage(Text.color("&e/adminduel &7- customise the kit menu"));
             sender.sendMessage(Text.color("&e/vduels <arena> copy|paste &7- duplicator"));
@@ -318,7 +345,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
                     out.add(arena.getName());
                 }
             }
-        } else if (name.equals("deletekit") && args.length == 1) {
+        } else if ((name.equals("deletekit") || name.equals("kiticon")) && args.length == 1) {
             for (Kit kit : plugin.getKitManager().all()) {
                 if (startsWith(kit.getName(), args[0])) {
                     out.add(kit.getName());
