@@ -149,12 +149,12 @@ public class DuelConfirmMenu extends Menu {
             }
             case "confirm" -> {
                 if (selectedKit == null) {
-                    player.sendMessage(Text.prefixed("&cSelect a kit first."));
+                    player.sendMessage(plugin.messages().get("menu.select-kit-first"));
                     return;
                 }
                 Player online = plugin.getServer().getPlayer(target.getUniqueId());
                 if (online == null) {
-                    player.sendMessage(Text.prefixed("&c" + target.getName() + " is no longer online."));
+                    player.sendMessage(plugin.messages().get("menu.target-offline", "target", target.getName()));
                     player.closeInventory();
                     return;
                 }

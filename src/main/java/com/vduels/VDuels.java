@@ -9,6 +9,7 @@ import com.vduels.managers.ArenaManager;
 import com.vduels.managers.DuelManager;
 import com.vduels.managers.GuiLayoutManager;
 import com.vduels.managers.KitManager;
+import com.vduels.managers.MessageManager;
 import com.vduels.managers.ScoreboardService;
 import com.vduels.managers.SetupManager;
 import org.bukkit.NamespacedKey;
@@ -27,6 +28,7 @@ public final class VDuels extends JavaPlugin {
     private SetupManager setupManager;
     private GuiLayoutManager guiLayoutManager;
     private ScoreboardService scoreboardService;
+    private MessageManager messageManager;
 
     private NamespacedKey keyKit;
     private NamespacedKey keyButton;
@@ -45,6 +47,7 @@ public final class VDuels extends JavaPlugin {
         this.keyArena = new NamespacedKey(this, "arena");
         this.scoreboardIp = getConfig().getString("scoreboard-ip", "play.example.net");
 
+        this.messageManager = new MessageManager(this);
         this.arenaManager = new ArenaManager(this);
         this.kitManager = new KitManager(this);
         this.guiLayoutManager = new GuiLayoutManager(this);
@@ -117,6 +120,10 @@ public final class VDuels extends JavaPlugin {
 
     public ScoreboardService getScoreboardService() {
         return scoreboardService;
+    }
+
+    public MessageManager messages() {
+        return messageManager;
     }
 
     public NamespacedKey keyKit() {

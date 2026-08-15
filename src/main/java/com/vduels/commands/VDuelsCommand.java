@@ -173,7 +173,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
         }
         Player player = (Player) sender;
         if (args.length == 0) {
-            sender.sendMessage(Text.prefixed("&cUsage: /duel <player>"));
+            sender.sendMessage(msg("duel.usage"));
             return;
         }
 
@@ -183,20 +183,20 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
         }
 
         if (plugin.getDuelManager().isInDuel(player.getUniqueId())) {
-            sender.sendMessage(Text.prefixed("&cYou are already in a duel."));
+            sender.sendMessage(msg("duel.already-in-duel"));
             return;
         }
         if (plugin.getKitManager().isEmpty()) {
-            sender.sendMessage(Text.prefixed("&cNo kits have been created yet."));
+            sender.sendMessage(msg("duel.no-kits"));
             return;
         }
         Player target = plugin.getServer().getPlayerExact(args[0]);
         if (target == null) {
-            sender.sendMessage(Text.prefixed("&cPlayer " + args[0] + " is not online."));
+            sender.sendMessage(msg("duel.target-offline", "name", args[0]));
             return;
         }
         if (target.equals(player)) {
-            sender.sendMessage(Text.prefixed("&cYou cannot duel yourself."));
+            sender.sendMessage(msg("duel.cannot-duel-self"));
             return;
         }
         // Kit selection comes first; picking a kit opens the DUEL CONFIRM menu.
@@ -209,14 +209,14 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
         if (args.length >= 2) {
             Player challenger = plugin.getServer().getPlayerExact(args[1]);
             if (challenger == null) {
-                player.sendMessage(Text.prefixed("&cThat player is not online."));
+                player.sendMessage(msg("accept.target-offline"));
                 return;
             }
             senderId = challenger.getUniqueId();
         } else {
             DuelRequest recent = plugin.getDuelManager().getMostRecentRequest(player);
             if (recent == null) {
-                player.sendMessage(Text.prefixed("&cYou have no pending duel requests."));
+                player.sendMessage(msg("accept.no-requests"));
                 return;
             }
             senderId = recent.getSender();
@@ -287,7 +287,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
 
     private boolean requireAdmin(CommandSender sender) {
         if (!sender.hasPermission("vduels.admin")) {
-            sender.sendMessage(Text.prefixed("&cYou don't have permission to do that."));
+            sender.sendMessage(msg("general.no-permission"));
             return false;
         }
         return true;
@@ -295,10 +295,14 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
 
     private boolean requirePlayer(CommandSender sender) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage(Text.prefixed("&cThis command can only be used by a player."));
+            sender.sendMessage(msg("general.players-only"));
             return false;
         }
         return true;
+    }
+
+    private String msg(String key, String... placeholders) {
+        return plugin.messages().get(key, placeholders);
     }
 
     // --- tab completion ---------------------------------------------------

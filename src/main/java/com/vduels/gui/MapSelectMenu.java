@@ -113,7 +113,7 @@ public class MapSelectMenu extends Menu {
             return;
         }
         if (kit != null && !arena.supportsKit(kit)) {
-            player.sendMessage(Text.prefixed("&cThat arena doesn't support the selected kit."));
+            player.sendMessage(plugin.messages().get("menu.arena-incompatible"));
             return;
         }
         confirm.setSelectedArena(arena.getName());

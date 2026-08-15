@@ -88,7 +88,7 @@ public class ArenaProtectionListener implements Listener {
         Arena arena = plugin.getArenaManager().findArenaAt(loc);
         if (arena != null) {
             cancel.accept(true);
-            player.sendMessage(Text.prefixed("&cYou cannot edit an arena here."));
+            player.sendMessage(plugin.messages().get("arena.cannot-edit"));
         }
     }
 }

@@ -48,19 +48,19 @@ public class DuelManager {
 
     public void sendRequest(Player sender, Player target, String kit, int rounds, String arena) {
         if (sender.equals(target)) {
-            sender.sendMessage(Text.prefixed("&cYou cannot duel yourself."));
+            sender.sendMessage(msg("duel.cannot-duel-self"));
             return;
         }
         if (isInDuel(sender.getUniqueId())) {
-            sender.sendMessage(Text.prefixed("&cYou are already in a duel."));
+            sender.sendMessage(msg("duel.already-in-duel"));
             return;
         }
         if (isInDuel(target.getUniqueId())) {
-            sender.sendMessage(Text.prefixed("&c" + target.getName() + " is already in a duel."));
+            sender.sendMessage(msg("duel.target-in-duel", "target", target.getName()));
             return;
         }
         if (plugin.getKitManager().get(kit) == null) {
-            sender.sendMessage(Text.prefixed("&cThat kit no longer exists."));
+            sender.sendMessage(msg("duel.kit-gone"));
             return;
         }
 
@@ -68,9 +68,7 @@ public class DuelManager {
         requests.computeIfAbsent(target.getUniqueId(), k -> new HashMap<>())
                 .put(sender.getUniqueId(), request);
 
-        sender.sendMessage(Text.prefixed("&aChallenge sent to &e" + target.getName()
-                + " &a(&e" + kit + "&a, first to &e" + rounds + "&a)."));
-
+        sender.sendMessage(msg("duel.sent", "target", target.getName(), "kit", kit, "rounds", String.valueOf(rounds)));
         sendRequestCard(target, sender, kit, rounds);
     }
 
@@ -78,25 +76,29 @@ public class DuelManager {
     private void sendRequestCard(Player target, Player sender, String kit, int rounds) {
         String kitLabel = kit.replace('_', ' ').toUpperCase(java.util.Locale.ROOT);
         target.sendMessage("");
-        target.sendMessage(Text.color("&6DUEL REQUEST FROM &e&l" + sender.getName()));
-        target.sendMessage(Text.color("&eKit: &e&l" + kitLabel));
-        target.sendMessage(Text.color("&eRounds: &f" + rounds));
-        target.sendMessage(Text.color("&eRanked: &c&lDISABLED"));
+        target.sendMessage(msg("request.header", "sender", sender.getName()));
+        target.sendMessage(msg("request.kit", "kit", kitLabel));
+        target.sendMessage(msg("request.rounds", "rounds", String.valueOf(rounds)));
+        target.sendMessage(msg("request.ranked"));
         target.sendMessage("");
 
-        TextComponent click = new TextComponent(Text.color("&6&l[CLICK HERE]"));
+        TextComponent click = new TextComponent(msg("request.click"));
         click.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/duel accept " + sender.getName()));
         click.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                new ComponentBuilder(Text.color("&aClick to accept the duel from &f" + sender.getName())).create()));
+                new ComponentBuilder(msg("request.click-hover", "sender", sender.getName())).create()));
         target.spigot().sendMessage(click);
         target.sendMessage("");
+    }
+
+    private String msg(String key, String... placeholders) {
+        return plugin.messages().get(key, placeholders);
     }
 
     public void acceptRequest(Player target, UUID senderId) {
         Map<UUID, DuelRequest> targeted = requests.get(target.getUniqueId());
         DuelRequest request = targeted == null ? null : targeted.get(senderId);
         if (request == null || request.isExpired(REQUEST_TTL)) {
-            target.sendMessage(Text.prefixed("&cThat duel request has expired."));
+            target.sendMessage(msg("accept.expired"));
             if (targeted != null) {
                 targeted.remove(senderId);
             }
@@ -104,19 +106,19 @@ public class DuelManager {
         }
         Player sender = Bukkit.getPlayer(senderId);
         if (sender == null) {
-            target.sendMessage(Text.prefixed("&cThat player is no longer online."));
+            target.sendMessage(msg("accept.sender-offline"));
             targeted.remove(senderId);
             return;
         }
         if (isInDuel(sender.getUniqueId()) || isInDuel(target.getUniqueId())) {
-            target.sendMessage(Text.prefixed("&cOne of you is already in a duel."));
+            target.sendMessage(msg("accept.one-in-duel"));
             return;
         }
 
         Arena arena = resolveArena(request);
         if (arena == null) {
-            target.sendMessage(Text.prefixed("&cNo free arena is available for that kit right now."));
-            sender.sendMessage(Text.prefixed("&cNo free arena is available for that kit right now."));
+            target.sendMessage(msg("accept.no-arena"));
+            sender.sendMessage(msg("accept.no-arena"));
             return;
         }
 
@@ -170,8 +172,8 @@ public class DuelManager {
         plugin.getScoreboardService().attach(p1, duel);
         plugin.getScoreboardService().attach(p2, duel);
 
-        p1.sendMessage(Text.prefixed("&aDuel starting against &e" + p2.getName() + "&a!"));
-        p2.sendMessage(Text.prefixed("&aDuel starting against &e" + p1.getName() + "&a!"));
+        p1.sendMessage(msg("duel.starting", "opponent", p2.getName()));
+        p2.sendMessage(msg("duel.starting", "opponent", p1.getName()));
         startRound(duel);
     }
 
@@ -188,9 +190,10 @@ public class DuelManager {
         prepare(p1, duel.getArena().getSpawn1(), kit);
         prepare(p2, duel.getArena().getSpawn2(), kit);
 
-        String roundLabel = "&fRound &b" + duel.getCurrentRound();
-        p1.sendMessage(Text.prefixed(roundLabel + " &7- first to " + duel.getRoundsToWin()));
-        p2.sendMessage(Text.prefixed(roundLabel + " &7- first to " + duel.getRoundsToWin()));
+        String round = String.valueOf(duel.getCurrentRound());
+        String toWin = String.valueOf(duel.getRoundsToWin());
+        p1.sendMessage(msg("duel.round", "round", round, "roundsToWin", toWin));
+        p2.sendMessage(msg("duel.round", "round", round, "roundsToWin", toWin));
 
         runCountdown(duel, COUNTDOWN);
     }
@@ -219,12 +222,15 @@ public class DuelManager {
         }
         if (secondsLeft <= 0) {
             duel.setState(ActiveDuel.State.FIGHTING);
-            sendTitle(p1, "&c&lFIGHT!", "");
-            sendTitle(p2, "&c&lFIGHT!", "");
+            sendTitle(p1, msg("titles.fight.title"), msg("titles.fight.subtitle"));
+            sendTitle(p2, msg("titles.fight.title"), msg("titles.fight.subtitle"));
             return;
         }
-        sendTitle(p1, "&e" + secondsLeft, "&7Get ready...");
-        sendTitle(p2, "&e" + secondsLeft, "&7Get ready...");
+        String secs = String.valueOf(secondsLeft);
+        String ctTitle = msg("titles.countdown.title", "seconds", secs);
+        String ctSub = msg("titles.countdown.subtitle", "seconds", secs);
+        sendTitle(p1, ctTitle, ctSub);
+        sendTitle(p2, ctTitle, ctSub);
         // Keep players in place during the countdown.
         p1.teleport(duel.getArena().getSpawn1());
         p2.teleport(duel.getArena().getSpawn2());
@@ -259,12 +265,16 @@ public class DuelManager {
         }
 
         if (winner != null) {
-            sendTitle(winner, "&aRound won!",
-                    "&e" + duel.getScoreFor(winnerId) + " &7- &e" + duel.getScoreAgainst(winnerId));
+            sendTitle(winner, msg("titles.round-won.title"),
+                    msg("titles.round-won.subtitle",
+                            "yourScore", String.valueOf(duel.getScoreFor(winnerId)),
+                            "theirScore", String.valueOf(duel.getScoreAgainst(winnerId))));
         }
         if (loser != null) {
-            sendTitle(loser, "&cRound lost",
-                    "&e" + duel.getScoreFor(loserId) + " &7- &e" + duel.getScoreAgainst(loserId));
+            sendTitle(loser, msg("titles.round-lost.title"),
+                    msg("titles.round-lost.subtitle",
+                            "yourScore", String.valueOf(duel.getScoreFor(loserId)),
+                            "theirScore", String.valueOf(duel.getScoreAgainst(loserId))));
         }
 
         if (matchOver) {
@@ -301,17 +311,19 @@ public class DuelManager {
         if (silent) {
             return;
         }
+        UUID loserId = duel.getOpponent(winnerId);
         Player winner = Bukkit.getPlayer(winnerId);
-        Player loser = Bukkit.getPlayer(duel.getOpponent(winnerId));
+        Player loser = Bukkit.getPlayer(loserId);
         String winnerName = winner != null ? winner.getName() : "A player";
         if (winner != null) {
-            winner.sendMessage(Text.prefixed("&a&lVICTORY! &7You won the duel "
-                    + "(" + duel.getScore1() + " - " + duel.getScore2() + ")."));
-            sendTitle(winner, "&a&lVICTORY", "");
+            winner.sendMessage(msg("duel.victory",
+                    "yourScore", String.valueOf(duel.getScoreFor(winnerId)),
+                    "theirScore", String.valueOf(duel.getScoreAgainst(winnerId))));
+            sendTitle(winner, msg("titles.victory.title"), msg("titles.victory.subtitle"));
         }
         if (loser != null) {
-            loser.sendMessage(Text.prefixed("&c&lDEFEAT. &7" + winnerName + " won the duel."));
-            sendTitle(loser, "&c&lDEFEAT", "");
+            loser.sendMessage(msg("duel.defeat", "winner", winnerName));
+            sendTitle(loser, msg("titles.defeat.title"), msg("titles.defeat.subtitle"));
         }
     }
 
@@ -367,6 +379,7 @@ public class DuelManager {
     }
 
     private void sendTitle(Player player, String title, String subtitle) {
-        player.sendTitle(Text.color(title), Text.color(subtitle), 5, 30, 10);
+        // title/subtitle are already coloured by the message manager.
+        player.sendTitle(title, subtitle, 5, 30, 10);
     }
 }

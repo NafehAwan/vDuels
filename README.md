@@ -121,8 +121,20 @@ Everything is stored as readable YAML inside `plugins/vDuels/`:
 
 - `arenas.yml` – arenas and their settings.
 - `kits.yml` – saved kits.
-- `duel-menu.yml` – the custom /duel layout.
-- `config.yml` – reserved for future global options.
+- `gui-layouts.yml` – the custom GUI layouts from `/editgui`.
+- `messages.yml` – every player-facing message and title (see below).
+- `config.yml` – global options (scoreboard IP, timings).
+
+### Editing messages
+
+`messages.yml` is generated on first run and holds all player-facing chat
+messages, the duel-request card and the duel titles. Edit any of them and
+reload the server — deleting a key just falls back to the built-in default.
+
+- `{prefix}` inserts the message prefix (default `&fⓘ `).
+- Placeholders like `{target}`, `{kit}`, `{rounds}`, `{opponent}`, `{winner}`,
+  `{yourScore}`, `{theirScore}`, `{seconds}`, `{name}` are filled in per message.
+- Colours use `&` codes; text is rendered in the small-caps font automatically.
 
 ---
 
