@@ -7,6 +7,7 @@ import com.vduels.listeners.GuiListener;
 import com.vduels.listeners.SetupChatListener;
 import com.vduels.managers.ArenaManager;
 import com.vduels.managers.DuelManager;
+import com.vduels.managers.CategoryManager;
 import com.vduels.managers.GuiLayoutManager;
 import com.vduels.managers.KitManager;
 import com.vduels.managers.MessageManager;
@@ -29,6 +30,7 @@ public final class VDuels extends JavaPlugin {
     private GuiLayoutManager guiLayoutManager;
     private ScoreboardService scoreboardService;
     private MessageManager messageManager;
+    private CategoryManager categoryManager;
 
     private NamespacedKey keyKit;
     private NamespacedKey keyButton;
@@ -50,6 +52,7 @@ public final class VDuels extends JavaPlugin {
         this.messageManager = new MessageManager(this);
         this.arenaManager = new ArenaManager(this);
         this.kitManager = new KitManager(this);
+        this.categoryManager = new CategoryManager(this);
         this.guiLayoutManager = new GuiLayoutManager(this);
         this.setupManager = new SetupManager(this);
         this.scoreboardService = new ScoreboardService(this);
@@ -124,6 +127,10 @@ public final class VDuels extends JavaPlugin {
 
     public MessageManager messages() {
         return messageManager;
+    }
+
+    public CategoryManager getCategoryManager() {
+        return categoryManager;
     }
 
     public NamespacedKey keyKit() {

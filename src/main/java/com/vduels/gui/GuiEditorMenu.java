@@ -99,24 +99,10 @@ public class GuiEditorMenu extends Menu {
                 inventory.setItem(14, buttonMarker("clock", Material.CLOCK, "&eRounds button"));
                 inventory.setItem(16, buttonMarker("confirm", Material.GREEN_STAINED_GLASS_PANE, "&aConfirm button"));
             }
-            case GuiLayoutManager.KIT_MENU -> {
-                int slot = 0;
-                for (Kit kit : plugin.getKitManager().all()) {
-                    if (slot >= editableSize - 1) {
-                        break;
-                    }
-                    inventory.setItem(slot++, Items.of(kit.getIcon())
-                            .name("&e" + kit.getName())
-                            .lore("&fKit icon - drag to arrange.")
-                            .tag(plugin.keyKit(), kit.getName())
-                            .build());
-                }
-                inventory.setItem(editableSize - 1, buttonMarker("next", Material.ARROW, "&eNext button"));
-            }
             case GuiLayoutManager.MAP_SELECT -> {
                 int slot = 0;
                 for (Arena arena : plugin.getArenaManager().all()) {
-                    if (slot >= editableSize - 2) {
+                    if (slot >= editableSize - 1) {
                         break;
                     }
                     if (arena.isConfigured()) {
@@ -127,8 +113,7 @@ public class GuiEditorMenu extends Menu {
                                 .build());
                     }
                 }
-                inventory.setItem(editableSize - 2, buttonMarker("random", Material.ENDER_PEARL, "&eRandom button"));
-                inventory.setItem(editableSize - 1, buttonMarker("next", Material.ARROW, "&eNext button"));
+                inventory.setItem(editableSize - 1, buttonMarker("random", Material.ENDER_PEARL, "&eRandom button"));
             }
             default -> {
             }
@@ -204,12 +189,8 @@ public class GuiEditorMenu extends Menu {
                 ensureButton(layout, "clock", Material.CLOCK, "&eRounds button", 14);
                 ensureButton(layout, "confirm", Material.GREEN_STAINED_GLASS_PANE, "&aConfirm button", 16);
             }
-            case GuiLayoutManager.KIT_MENU ->
-                    ensureButton(layout, "next", Material.ARROW, "&eNext button", editableSize - 1);
-            case GuiLayoutManager.MAP_SELECT -> {
-                ensureButton(layout, "random", Material.ENDER_PEARL, "&eRandom button", editableSize - 2);
-                ensureButton(layout, "next", Material.ARROW, "&eNext button", editableSize - 1);
-            }
+            case GuiLayoutManager.MAP_SELECT ->
+                    ensureButton(layout, "random", Material.ENDER_PEARL, "&eRandom button", editableSize - 1);
             default -> {
             }
         }

@@ -5,6 +5,7 @@ import com.vduels.gui.ArenaMenu;
 import com.vduels.gui.DuelConfirmMenu;
 import com.vduels.gui.GuiEditorMenu;
 import com.vduels.gui.KitPickMenu;
+import com.vduels.managers.CategoryManager;
 import com.vduels.managers.GuiLayoutManager;
 import com.vduels.model.Arena;
 import org.bukkit.Material;
@@ -44,7 +45,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             case "kitcreate" -> createKit(sender, args);
             case "deletekit" -> deleteKit(sender, args);
             case "kiticon" -> kitIcon(sender, args);
-            case "adminduel" -> editGui(sender, new String[]{GuiLayoutManager.KIT_MENU});
+            case "adminduel" -> editGui(sender, new String[]{GuiLayoutManager.DUEL_CONFIRM});
             case "editgui" -> editGui(sender, args);
             case "duel" -> duel(sender, args);
             case "scoreboardip" -> scoreboardIp(sender, args);
@@ -172,7 +173,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             return;
         }
         if (args.length < 1 || !GuiLayoutManager.isValidMenu(args[0].toLowerCase(Locale.ROOT))) {
-            sender.sendMessage(Text.prefixed("&cUsage: /editgui <duelconfirm|kitmenu|mapselect>"));
+            sender.sendMessage(Text.prefixed("&cUsage: /editgui <duelconfirm|mapselect>"));
             return;
         }
         new GuiEditorMenu(plugin, args[0].toLowerCase(Locale.ROOT)).open((Player) sender);
@@ -250,11 +251,97 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
         plugin.getDuelManager().acceptRequest(player, senderId);
     }
 
+    // --- kit-menu categories ---------------------------------------------
+
+    private void category(CommandSender sender, String[] args) {
+        if (!requireAdmin(sender)) {
+            return;
+        }
+        String sub = args.length >= 2 ? args[1].toLowerCase(Locale.ROOT) : "list";
+        CategoryManager cats = plugin.getCategoryManager();
+
+        switch (sub) {
+            case "list" -> {
+                sender.sendMessage(Text.color("&bKit categories:"));
+                for (CategoryManager.Category c : cats.all()) {
+                    sender.sendMessage(Text.color("&e" + c.getId() + " &8- header &f" + c.getHeader()
+                            + " &8- kits: &f" + (c.getKits().isEmpty() ? "all" : String.join(", ", c.getKits()))));
+                }
+            }
+            case "create" -> {
+                if (args.length < 3) {
+                    sender.sendMessage(Text.prefixed("&cUsage: /vduels category create <id> [header]"));
+                    return;
+                }
+                String header = args.length >= 4 ? joinFrom(args, 3) : args[2].toUpperCase(Locale.ROOT);
+                if (cats.create(args[2], header)) {
+                    sender.sendMessage(Text.prefixed("&aCreated category &b" + args[2] + "&a."));
+                } else {
+                    sender.sendMessage(Text.prefixed("&cA category with that id already exists."));
+                }
+            }
+            case "delete" -> {
+                if (args.length < 3) {
+                    sender.sendMessage(Text.prefixed("&cUsage: /vduels category delete <id>"));
+                    return;
+                }
+                cats.delete(args[2]);
+                sender.sendMessage(Text.prefixed("&aDeleted category &b" + args[2] + "&a."));
+            }
+            case "header" -> {
+                if (args.length < 4) {
+                    sender.sendMessage(Text.prefixed("&cUsage: /vduels category header <id> <text>"));
+                    return;
+                }
+                CategoryManager.Category c = cats.get(args[2]);
+                if (c == null) {
+                    sender.sendMessage(Text.prefixed("&cNo category named &f" + args[2] + "&c."));
+                    return;
+                }
+                c.setHeader(joinFrom(args, 3));
+                cats.save();
+                sender.sendMessage(Text.prefixed("&aHeader for &b" + c.getId() + "&a set to &f" + c.getHeader() + "&a."));
+            }
+            case "addkit", "removekit" -> {
+                if (args.length < 4) {
+                    sender.sendMessage(Text.prefixed("&cUsage: /vduels category " + sub + " <id> <kit>"));
+                    return;
+                }
+                CategoryManager.Category c = cats.get(args[2]);
+                if (c == null) {
+                    sender.sendMessage(Text.prefixed("&cNo category named &f" + args[2] + "&c."));
+                    return;
+                }
+                if (sub.equals("addkit")) {
+                    if (!plugin.getKitManager().exists(args[3])) {
+                        sender.sendMessage(Text.prefixed("&cNo kit named &f" + args[3] + "&c."));
+                        return;
+                    }
+                    c.getKits().add(args[3]);
+                    sender.sendMessage(Text.prefixed("&aAdded &f" + args[3] + "&a to &b" + c.getId() + "&a."));
+                } else {
+                    c.getKits().removeIf(k -> k.equalsIgnoreCase(args[3]));
+                    sender.sendMessage(Text.prefixed("&aRemoved &f" + args[3] + "&a from &b" + c.getId() + "&a."));
+                }
+                cats.save();
+            }
+            default -> sender.sendMessage(Text.prefixed("&cSub-commands: list, create, delete, header, addkit, removekit"));
+        }
+    }
+
+    private String joinFrom(String[] args, int from) {
+        return String.join(" ", java.util.Arrays.copyOfRange(args, from, args.length));
+    }
+
     // --- root: copy/paste + help -----------------------------------------
 
     private void root(CommandSender sender, String[] args) {
         if (args.length >= 1 && args[0].equalsIgnoreCase("scoreboardip")) {
             scoreboardIp(sender, java.util.Arrays.copyOfRange(args, 1, args.length));
+            return;
+        }
+        if (args.length >= 1 && args[0].equalsIgnoreCase("category")) {
+            category(sender, args);
             return;
         }
         if (args.length >= 2 && (args[1].equalsIgnoreCase("copy") || args[1].equalsIgnoreCase("paste"))) {
@@ -303,7 +390,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(Text.color("&e/deletekit <name> &7- delete a kit"));
             sender.sendMessage(Text.color("&e/kiticon <name> &7- set a kit's icon to your held item"));
             sender.sendMessage(Text.color("&e/editgui <menu> &7- customise a GUI layout"));
-            sender.sendMessage(Text.color("&e/adminduel &7- customise the kit menu"));
+            sender.sendMessage(Text.color("&e/vduels category ... &7- manage kit-menu categories"));
             sender.sendMessage(Text.color("&e/vduels <arena> copy|paste &7- duplicator"));
             sender.sendMessage(Text.color("&e/vduels:scoreboardip <ip> &7- set scoreboard IP"));
         }
@@ -352,7 +439,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
                 }
             }
         } else if (name.equals("editgui") && args.length == 1) {
-            for (String menu : List.of("duelconfirm", "kitmenu", "mapselect")) {
+            for (String menu : List.of("duelconfirm", "mapselect")) {
                 if (startsWith(menu, args[0])) {
                     out.add(menu);
                 }

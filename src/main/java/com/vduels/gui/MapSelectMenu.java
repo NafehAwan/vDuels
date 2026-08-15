@@ -12,9 +12,9 @@ import org.bukkit.inventory.ItemStack;
 import java.util.Map;
 
 /**
- * The arena picker (DUEL MAP, small chest). Clicking an arena (or Random)
- * selects it; the admin-placed &quot;next&quot; arrow returns to DUEL CONFIRM.
- * Layout is editable with {@code /editgui mapselect}.
+ * The arena picker (DUEL MAP, small chest) opened from DUEL CONFIRM. Clicking an
+ * arena (or Random) selects it and returns to DUEL CONFIRM. Layout is editable
+ * with {@code /editgui mapselect}.
  */
 public class MapSelectMenu extends Menu {
 
@@ -24,11 +24,6 @@ public class MapSelectMenu extends Menu {
     public MapSelectMenu(VDuels plugin, DuelConfirmMenu confirm) {
         this.plugin = plugin;
         this.confirm = confirm;
-    }
-
-    public void reopen(Player player) {
-        build();
-        player.openInventory(inventory);
     }
 
     @Override
@@ -41,9 +36,8 @@ public class MapSelectMenu extends Menu {
                 if (e.getKey() >= 27) {
                     continue;
                 }
-                String button = Items.readTag(e.getValue(), plugin.keyButton());
-                if (button != null) {
-                    inventory.setItem(e.getKey(), renderButton(button));
+                if ("random".equals(Items.readTag(e.getValue(), plugin.keyButton()))) {
+                    inventory.setItem(e.getKey(), randomButton());
                     continue;
                 }
                 String arenaName = Items.readTag(e.getValue(), plugin.keyArena());
@@ -59,36 +53,25 @@ public class MapSelectMenu extends Menu {
         } else {
             int slot = 0;
             for (Arena arena : plugin.getArenaManager().all()) {
-                if (slot >= 25) {
+                if (slot >= 26) {
                     break;
                 }
                 if (arena.isConfigured() && (kit == null || arena.supportsKit(kit))) {
                     inventory.setItem(slot++, liveArenaIcon(arena.getName(), kit));
                 }
             }
-            inventory.setItem(25, renderButton("random"));
-            inventory.setItem(26, renderButton("next"));
+            inventory.setItem(26, randomButton());
         }
     }
 
-    private ItemStack renderButton(String id) {
-        if (id.equals("next")) {
-            return Items.of(Material.ARROW)
-                    .name("&eNext")
-                    .lore("&fBack to the duel menu.")
-                    .tag(plugin.keyButton(), "next")
-                    .build();
-        }
-        if (id.equals("random")) {
-            boolean sel = confirm.getSelectedArena() == null;
-            return Items.of(Material.ENDER_PEARL)
-                    .name((sel ? "&a" : "&e") + "Random")
-                    .lore("", sel ? "&aSelected" : "&fPick any free compatible arena")
-                    .glow(sel)
-                    .tag(plugin.keyButton(), "random")
-                    .build();
-        }
-        return Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
+    private ItemStack randomButton() {
+        boolean sel = confirm.getSelectedArena() == null;
+        return Items.of(Material.ENDER_PEARL)
+                .name((sel ? "&a" : "&e") + "Random")
+                .lore("", sel ? "&aSelected" : "&fPick any free compatible arena")
+                .glow(sel)
+                .tag(plugin.keyButton(), "random")
+                .build();
     }
 
     private ItemStack liveArenaIcon(String name, String kit) {
@@ -109,14 +92,9 @@ public class MapSelectMenu extends Menu {
     @Override
     public void onClick(Player player, InventoryClickEvent event) {
         ItemStack clicked = event.getCurrentItem();
-        String button = Items.readTag(clicked, plugin.keyButton());
-        if ("next".equals(button)) {
-            confirm.reopen(player);
-            return;
-        }
-        if ("random".equals(button)) {
+        if ("random".equals(Items.readTag(clicked, plugin.keyButton()))) {
             confirm.setSelectedArena(null);
-            reopen(player);
+            confirm.reopen(player);
             return;
         }
         String arenaName = Items.readTag(clicked, plugin.keyArena());
@@ -133,6 +111,6 @@ public class MapSelectMenu extends Menu {
             return;
         }
         confirm.setSelectedArena(arena.getName());
-        reopen(player);
+        confirm.reopen(player);
     }
 }

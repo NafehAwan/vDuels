@@ -44,7 +44,8 @@ public class GuiLayoutManager {
     }
 
     public static boolean isValidMenu(String menuId) {
-        return menuId.equals(DUEL_CONFIRM) || menuId.equals(MAP_SELECT) || menuId.equals(KIT_MENU);
+        // The kit menu is driven by categories now, not by an editor layout.
+        return menuId.equals(DUEL_CONFIRM) || menuId.equals(MAP_SELECT);
     }
 
     public void load() {
