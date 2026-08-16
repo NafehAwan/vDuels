@@ -45,7 +45,6 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             case "kitcreate" -> createKit(sender, args);
             case "deletekit" -> deleteKit(sender, args);
             case "kiticon" -> kitIcon(sender, args);
-            case "adminduel" -> adminDuel(sender);
             case "editgui" -> editGui(sender, args);
             case "category" -> category(sender, args);
             case "duel" -> duel(sender, args);
@@ -167,14 +166,6 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
         kit.setIcon(held.getType());
         plugin.getKitManager().save();
         sender.sendMessage(Text.prefixed("&aKit &b" + kit.getName() + "&a icon set to &f" + held.getType().name() + "&a."));
-    }
-
-    private void adminDuel(CommandSender sender) {
-        if (!requireAdmin(sender) || !requirePlayer(sender)) {
-            return;
-        }
-        // Edits the default (no-category) duels/kit menu decoration & layout.
-        new GuiEditorMenu(plugin, GuiLayoutManager.KIT_MENU).open((Player) sender);
     }
 
     private void editGui(CommandSender sender, String[] args) {
@@ -300,23 +291,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
                     return;
                 }
                 cats.delete(args[1]);
-                plugin.getGuiLayoutManager().clear(GuiLayoutManager.categoryMenuId(args[1]));
                 sender.sendMessage(Text.prefixed("&aDeleted category &b" + args[1] + "&a."));
-            }
-            case "edit" -> {
-                if (!requirePlayer(sender)) {
-                    return;
-                }
-                if (args.length < 2) {
-                    sender.sendMessage(Text.prefixed("&cUsage: /category edit <id>"));
-                    return;
-                }
-                CategoryManager.Category c = cats.get(args[1]);
-                if (c == null) {
-                    sender.sendMessage(Text.prefixed("&cNo category named &f" + args[1] + "&c."));
-                    return;
-                }
-                new GuiEditorMenu(plugin, GuiLayoutManager.categoryMenuId(c.getId())).open((Player) sender);
             }
             case "header" -> {
                 if (args.length < 3) {
@@ -355,7 +330,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
                 }
                 cats.save();
             }
-            default -> sender.sendMessage(Text.prefixed("&cSub-commands: list, create, delete, edit, header, addkit, removekit"));
+            default -> sender.sendMessage(Text.prefixed("&cSub-commands: list, create, delete, header, addkit, removekit"));
         }
     }
 
@@ -415,7 +390,6 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(Text.color("&e/kitcreate <name> &7- save a kit from inventory"));
             sender.sendMessage(Text.color("&e/deletekit <name> &7- delete a kit"));
             sender.sendMessage(Text.color("&e/kiticon <name> &7- set a kit's icon to your held item"));
-            sender.sendMessage(Text.color("&e/adminduel &7- decorate the duels (kit) menu"));
             sender.sendMessage(Text.color("&e/editgui <menu> &7- customise a GUI layout"));
             sender.sendMessage(Text.color("&e/vduels:category ... &7- manage kit-menu categories"));
             sender.sendMessage(Text.color("&e/vduels <arena> copy|paste &7- duplicator"));
@@ -473,7 +447,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             }
         } else if (name.equals("category")) {
             if (args.length == 1) {
-                for (String sub : List.of("list", "create", "delete", "edit", "header", "addkit", "removekit")) {
+                for (String sub : List.of("list", "create", "delete", "header", "addkit", "removekit")) {
                     if (startsWith(sub, args[0])) {
                         out.add(sub);
                     }

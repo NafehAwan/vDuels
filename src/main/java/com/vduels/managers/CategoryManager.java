@@ -114,13 +114,8 @@ public class CategoryManager {
         save();
     }
 
-    /** The kit names to show for a category: its list, or all kits if empty. */
+    /** The kit names to show for a category: only the ones added to it. */
     public List<String> kitsFor(Category category) {
-        if (category.getKits().isEmpty()) {
-            List<String> all = new ArrayList<>();
-            plugin.getKitManager().all().forEach(k -> all.add(k.getName()));
-            return all;
-        }
         List<String> out = new ArrayList<>();
         for (String name : category.getKits()) {
             if (plugin.getKitManager().exists(name)) {

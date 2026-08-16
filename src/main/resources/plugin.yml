@@ -35,10 +35,6 @@ commands:
     description: Set a kit's menu icon to the item in your hand.
     usage: /kiticon <name>
     permission: vduels.admin
-  adminduel:
-    description: Edit the kit menu layout / decoration.
-    usage: /adminduel
-    permission: vduels.admin
   editgui:
     description: Customise a GUI layout (duelconfirm, mapselect).
     usage: /editgui <menu>

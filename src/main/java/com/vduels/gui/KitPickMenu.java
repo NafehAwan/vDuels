@@ -2,7 +2,6 @@ package com.vduels.gui;
 
 import com.vduels.VDuels;
 import com.vduels.managers.CategoryManager;
-import com.vduels.managers.GuiLayoutManager;
 import com.vduels.model.Kit;
 import com.vduels.util.Items;
 import org.bukkit.Material;
@@ -12,17 +11,21 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
- * The kit picker (small chest) opened first by {@code /duel}. When categories
- * exist the title is "DUELS &rarr; &lt;header&gt;" and the arrow cycles between
- * them; with no categories it just shows every kit. Clicking a kit opens DUEL
- * CONFIRM.
+ * The kit picker (small chest, 4 rows) opened first by {@code /duel}. Kits flow
+ * live into the middle two rows (inner columns), so adding a kit to a category
+ * shows up immediately with no editing. The rest is gray glass, with the
+ * category arrow pinned to the bottom-right when more than one category exists.
  */
 public class KitPickMenu extends Menu {
 
     private static final int ARROW_SLOT = 35;
+    // Rows 2 and 3, columns 2-8 (inner slots) - where kits are shown.
+    private static final int[] KIT_SLOTS = {
+            10, 11, 12, 13, 14, 15, 16,
+            19, 20, 21, 22, 23, 24, 25
+    };
 
     private final VDuels plugin;
     private final DuelConfirmMenu confirm;
@@ -37,88 +40,41 @@ public class KitPickMenu extends Menu {
     public void build() {
         List<CategoryManager.Category> categories = plugin.getCategoryManager().all();
 
+        List<String> kitNames;
+        boolean multi = false;
         if (categories.isEmpty()) {
             create(4, "&7DUELS");
-            List<String> all = new ArrayList<>();
+            kitNames = new ArrayList<>();
             for (Kit kit : plugin.getKitManager().all()) {
-                all.add(kit.getName());
+                kitNames.add(kit.getName());
             }
-            // Admins can decorate this default menu with /adminduel.
-            if (plugin.getGuiLayoutManager().has(GuiLayoutManager.KIT_MENU)) {
-                renderLayout(GuiLayoutManager.KIT_MENU);
-            } else {
-                grid(all, false);
-            }
-            return;
-        }
-
-        if (categoryIndex >= categories.size()) {
-            categoryIndex = 0;
-        }
-        CategoryManager.Category category = categories.get(categoryIndex);
-        boolean multi = categories.size() > 1;
-        create(4, "&7DUELS &7→ &7" + category.getHeader());
-
-        String layoutId = GuiLayoutManager.categoryMenuId(category.getId());
-        if (plugin.getGuiLayoutManager().has(layoutId)) {
-            renderLayout(layoutId);
         } else {
-            grid(plugin.getCategoryManager().kitsFor(category), multi);
+            if (categoryIndex >= categories.size()) {
+                categoryIndex = 0;
+            }
+            CategoryManager.Category category = categories.get(categoryIndex);
+            multi = categories.size() > 1;
+            create(4, "&7DUELS &7→ &7" + category.getHeader());
+            kitNames = plugin.getCategoryManager().kitsFor(category);
         }
 
-        // The category arrow is always pinned to the bottom-right corner.
-        if (multi) {
-            inventory.setItem(ARROW_SLOT, arrowItem());
-        }
-    }
-
-    /** Renders a saved layout: kit markers become live icons, decoration stays. */
-    private void renderLayout(String layoutId) {
-        for (Map.Entry<Integer, ItemStack> e : plugin.getGuiLayoutManager().get(layoutId).entrySet()) {
-            if (e.getKey() >= 36) {
-                continue;
-            }
-            // The next-category arrow is placed automatically, not from the layout.
-            if ("next-cat".equals(Items.readTag(e.getValue(), plugin.keyButton()))) {
-                continue;
-            }
-            String kitName = Items.readTag(e.getValue(), plugin.keyKit());
-            if (kitName != null) {
-                ItemStack icon = kitIcon(kitName);
-                if (icon != null) {
-                    inventory.setItem(e.getKey(), icon);
-                }
-            } else {
-                inventory.setItem(e.getKey(), e.getValue());
-            }
-        }
-    }
-
-    /** Default gray-filled grid of kit icons; leaves the arrow slot free when needed. */
-    private void grid(List<String> kitNames, boolean reserveArrow) {
+        // Gray glass background everywhere.
         ItemStack filler = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
         for (int i = 0; i < 36; i++) {
             inventory.setItem(i, filler);
         }
-        int limit = reserveArrow ? ARROW_SLOT : 36;
-        int slot = 0;
-        for (String kitName : kitNames) {
-            if (slot >= limit) {
-                break;
-            }
-            ItemStack icon = kitIcon(kitName);
+
+        // Kits flow into the fixed inner slots, in list order.
+        for (int i = 0; i < KIT_SLOTS.length && i < kitNames.size(); i++) {
+            ItemStack icon = kitIcon(kitNames.get(i));
             if (icon != null) {
-                inventory.setItem(slot++, icon);
+                inventory.setItem(KIT_SLOTS[i], icon);
             }
         }
-    }
 
-    private ItemStack arrowItem() {
-        return Items.of(Material.ARROW)
-                .name("&eNext Category")
-                .lore("&f→ another category")
-                .tag(plugin.keyButton(), "next-cat")
-                .build();
+        if (multi) {
+            inventory.setItem(ARROW_SLOT, arrowItem());
+        }
     }
 
     private ItemStack kitIcon(String name) {
@@ -130,6 +86,14 @@ public class KitPickMenu extends Menu {
                 .name("&e" + kit.getName())
                 .lore("", "&fClick to select")
                 .tag(plugin.keyKit(), kit.getName())
+                .build();
+    }
+
+    private ItemStack arrowItem() {
+        return Items.of(Material.ARROW)
+                .name("&eNext Category")
+                .lore("&f→ another category")
+                .tag(plugin.keyButton(), "next-cat")
                 .build();
     }
 
