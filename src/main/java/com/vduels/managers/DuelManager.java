@@ -231,9 +231,8 @@ public class DuelManager {
         String ctSub = msg("titles.countdown.subtitle", "seconds", secs);
         sendTitle(p1, ctTitle, ctSub);
         sendTitle(p2, ctTitle, ctSub);
-        // Keep players in place during the countdown.
-        p1.teleport(duel.getArena().getSpawn1());
-        p2.teleport(duel.getArena().getSpawn2());
+        // Movement is frozen by DuelListener during STARTING; no re-teleport
+        // needed (which would also reset where players are aiming).
         Bukkit.getScheduler().runTaskLater(plugin, () -> runCountdown(duel, secondsLeft - 1), 20L);
     }
 

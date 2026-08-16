@@ -11,6 +11,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 
@@ -77,6 +78,26 @@ public class DuelListener implements Listener {
                 ? duel.getArena().getSpawn1() : duel.getArena().getSpawn2();
         if (spawn != null) {
             event.setRespawnLocation(spawn);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onMove(PlayerMoveEvent event) {
+        ActiveDuel duel = plugin.getDuelManager().getDuel(event.getPlayer().getUniqueId());
+        if (duel == null || duel.getState() != ActiveDuel.State.STARTING) {
+            return;
+        }
+        Location from = event.getFrom();
+        Location to = event.getTo();
+        if (to == null) {
+            return;
+        }
+        // Frozen body during the countdown, but the head can still look around.
+        if (from.getX() != to.getX() || from.getY() != to.getY() || from.getZ() != to.getZ()) {
+            Location frozen = from.clone();
+            frozen.setYaw(to.getYaw());
+            frozen.setPitch(to.getPitch());
+            event.setTo(frozen);
         }
     }
 

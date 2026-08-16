@@ -43,7 +43,12 @@ public class KitPickMenu extends Menu {
             for (Kit kit : plugin.getKitManager().all()) {
                 all.add(kit.getName());
             }
-            grid(all, false);
+            // Admins can decorate this default menu with /adminduel.
+            if (plugin.getGuiLayoutManager().has(GuiLayoutManager.KIT_MENU)) {
+                renderLayout(GuiLayoutManager.KIT_MENU, false);
+            } else {
+                grid(all, false);
+            }
             return;
         }
 
@@ -56,28 +61,33 @@ public class KitPickMenu extends Menu {
 
         String layoutId = GuiLayoutManager.categoryMenuId(category.getId());
         if (plugin.getGuiLayoutManager().has(layoutId)) {
-            for (Map.Entry<Integer, ItemStack> e : plugin.getGuiLayoutManager().get(layoutId).entrySet()) {
-                if (e.getKey() >= 36) {
-                    continue;
-                }
-                if ("next-cat".equals(Items.readTag(e.getValue(), plugin.keyButton()))) {
-                    if (multi) {
-                        inventory.setItem(e.getKey(), arrowItem());
-                    }
-                    continue;
-                }
-                String kitName = Items.readTag(e.getValue(), plugin.keyKit());
-                if (kitName != null) {
-                    ItemStack icon = kitIcon(kitName);
-                    if (icon != null) {
-                        inventory.setItem(e.getKey(), icon);
-                    }
-                } else {
-                    inventory.setItem(e.getKey(), e.getValue());
-                }
-            }
+            renderLayout(layoutId, multi);
         } else {
             grid(plugin.getCategoryManager().kitsFor(category), multi);
+        }
+    }
+
+    /** Renders a saved layout: kit markers become live icons, decoration stays. */
+    private void renderLayout(String layoutId, boolean multi) {
+        for (Map.Entry<Integer, ItemStack> e : plugin.getGuiLayoutManager().get(layoutId).entrySet()) {
+            if (e.getKey() >= 36) {
+                continue;
+            }
+            if ("next-cat".equals(Items.readTag(e.getValue(), plugin.keyButton()))) {
+                if (multi) {
+                    inventory.setItem(e.getKey(), arrowItem());
+                }
+                continue;
+            }
+            String kitName = Items.readTag(e.getValue(), plugin.keyKit());
+            if (kitName != null) {
+                ItemStack icon = kitIcon(kitName);
+                if (icon != null) {
+                    inventory.setItem(e.getKey(), icon);
+                }
+            } else {
+                inventory.setItem(e.getKey(), e.getValue());
+            }
         }
     }
 

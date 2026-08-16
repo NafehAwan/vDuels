@@ -103,6 +103,19 @@ public class GuiEditorMenu extends Menu {
                 inventory.setItem(14, buttonMarker("clock", Material.CLOCK, "&eRounds button"));
                 inventory.setItem(16, buttonMarker("confirm", Material.GREEN_STAINED_GLASS_PANE, "&aConfirm button"));
             }
+            case GuiLayoutManager.KIT_MENU -> {
+                int slot = 0;
+                for (Kit kit : plugin.getKitManager().all()) {
+                    if (slot >= editableSize) {
+                        break;
+                    }
+                    inventory.setItem(slot++, Items.of(kit.getIcon())
+                            .name("&e" + kit.getName())
+                            .lore("&fKit icon - drag to arrange.")
+                            .tag(plugin.keyKit(), kit.getName())
+                            .build());
+                }
+            }
             case GuiLayoutManager.MAP_SELECT -> {
                 int slot = 0;
                 for (Arena arena : plugin.getArenaManager().all()) {
