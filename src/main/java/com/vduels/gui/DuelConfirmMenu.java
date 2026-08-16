@@ -87,7 +87,7 @@ public class DuelConfirmMenu extends Menu {
                 }
             }
         } else {
-            ItemStack gray = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
+            ItemStack gray = Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build();
             for (int i = 0; i < 36; i++) {
                 inventory.setItem(i, gray);
             }

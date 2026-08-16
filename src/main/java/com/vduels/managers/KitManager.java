@@ -25,6 +25,9 @@ public class KitManager {
     public KitManager(VDuels plugin) {
         this.plugin = plugin;
         this.file = new File(plugin.getDataFolder(), "kits.yml");
+        if (!file.exists()) {
+            plugin.saveResource("kits.yml", false); // ship the default kits
+        }
         load();
     }
 

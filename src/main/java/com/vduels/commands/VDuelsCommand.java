@@ -45,6 +45,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             case "kitcreate" -> createKit(sender, args);
             case "deletekit" -> deleteKit(sender, args);
             case "kiticon" -> kitIcon(sender, args);
+            case "kitdisplayname" -> kitDisplayName(sender, args);
             case "editgui" -> editGui(sender, args);
             case "category" -> category(sender, args);
             case "duel" -> duel(sender, args);
@@ -166,6 +167,25 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
         kit.setIcon(held.getType());
         plugin.getKitManager().save();
         sender.sendMessage(Text.prefixed("&aKit &b" + kit.getName() + "&a icon set to &f" + held.getType().name() + "&a."));
+    }
+
+    private void kitDisplayName(CommandSender sender, String[] args) {
+        if (!requireAdmin(sender)) {
+            return;
+        }
+        if (args.length < 2) {
+            sender.sendMessage(Text.prefixed("&cUsage: /kitdisplayname <name> <display...>"));
+            return;
+        }
+        Kit kit = plugin.getKitManager().get(args[0]);
+        if (kit == null) {
+            sender.sendMessage(Text.prefixed("&cNo kit named &f" + args[0] + "&c."));
+            return;
+        }
+        String display = joinFrom(args, 1);
+        kit.setDisplayName(display);
+        plugin.getKitManager().save();
+        sender.sendMessage(Text.prefixed("&aKit &b" + kit.getName() + "&a display name set."));
     }
 
     private void editGui(CommandSender sender, String[] args) {
@@ -433,7 +453,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
                     out.add(arena.getName());
                 }
             }
-        } else if ((name.equals("deletekit") || name.equals("kiticon")) && args.length == 1) {
+        } else if ((name.equals("deletekit") || name.equals("kiticon") || name.equals("kitdisplayname")) && args.length == 1) {
             for (Kit kit : plugin.getKitManager().all()) {
                 if (startsWith(kit.getName(), args[0])) {
                     out.add(kit.getName());

@@ -69,6 +69,29 @@ public final class Items {
         return this;
     }
 
+    /** Hides attribute/enchant/extra tooltips so icons show only the name. */
+    public Items hideTooltip() {
+        if (meta != null) {
+            meta.addItemFlags(
+                    org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES,
+                    org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS,
+                    org.bukkit.inventory.ItemFlag.HIDE_ADDITIONAL_TOOLTIP,
+                    org.bukkit.inventory.ItemFlag.HIDE_UNBREAKABLE,
+                    org.bukkit.inventory.ItemFlag.HIDE_DYE);
+        }
+        return this;
+    }
+
+    /** Sets a MiniMessage display name (gradients, bold, etc.), non-italic. */
+    public Items miniName(String miniMessage) {
+        if (meta != null && miniMessage != null) {
+            meta.displayName(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage()
+                    .deserialize(miniMessage)
+                    .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false));
+        }
+        return this;
+    }
+
     public Items tag(NamespacedKey key, String value) {
         if (meta != null) {
             meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, value);

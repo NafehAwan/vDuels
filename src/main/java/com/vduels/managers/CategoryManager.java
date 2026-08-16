@@ -54,7 +54,19 @@ public class CategoryManager {
     public CategoryManager(VDuels plugin) {
         this.plugin = plugin;
         this.file = new File(plugin.getDataFolder(), "categories.yml");
+        if (!file.exists()) {
+            plugin.saveResource("categories.yml", false); // ship the default category
+        }
         load();
+    }
+
+    /**
+     * Category ids are used as YAML keys, so they must not contain '.' (Bukkit's
+     * path separator) or spaces - those would silently split the section.
+     */
+    private static String safeId(String id) {
+        String cleaned = id.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_]", "_");
+        return cleaned.isEmpty() ? "category" : cleaned;
     }
 
     public void load() {
@@ -96,21 +108,21 @@ public class CategoryManager {
     }
 
     public Category get(String id) {
-        return id == null ? null : categories.get(id.toLowerCase(Locale.ROOT));
+        return id == null ? null : categories.get(safeId(id));
     }
 
     public boolean create(String id, String header) {
-        String key = id.toLowerCase(Locale.ROOT);
+        String key = safeId(id);
         if (categories.containsKey(key)) {
             return false;
         }
-        categories.put(key, new Category(id, header == null ? id.toUpperCase(Locale.ROOT) : header));
+        categories.put(key, new Category(key, header == null ? id.toUpperCase(Locale.ROOT) : header));
         save();
         return true;
     }
 
     public void delete(String id) {
-        categories.remove(id.toLowerCase(Locale.ROOT));
+        categories.remove(safeId(id));
         save();
     }
 

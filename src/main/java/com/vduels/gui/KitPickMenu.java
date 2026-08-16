@@ -59,7 +59,7 @@ public class KitPickMenu extends Menu {
         }
 
         // Gray glass background everywhere.
-        ItemStack filler = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
+        ItemStack filler = Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build();
         for (int i = 0; i < 36; i++) {
             inventory.setItem(i, filler);
         }
@@ -82,11 +82,15 @@ public class KitPickMenu extends Menu {
         if (kit == null) {
             return null;
         }
-        return Items.of(kit.getIcon())
+        Items item = Items.of(kit.getIcon())
                 .name("&e" + kit.getName())
                 .lore("", "&fClick to select")
-                .tag(plugin.keyKit(), kit.getName())
-                .build();
+                .hideTooltip()
+                .tag(plugin.keyKit(), kit.getName());
+        if (kit.getDisplayName() != null && !kit.getDisplayName().isEmpty()) {
+            item.miniName(kit.getDisplayName());
+        }
+        return item.build();
     }
 
     private ItemStack arrowItem() {

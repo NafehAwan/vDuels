@@ -71,7 +71,7 @@ public class GuiEditorMenu extends Menu {
         }
 
         // Control row.
-        ItemStack bar = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
+        ItemStack bar = Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build();
         for (int i = 45; i < 54; i++) {
             inventory.setItem(i, bar);
         }
@@ -89,7 +89,7 @@ public class GuiEditorMenu extends Menu {
     private void fillDefaults() {
         switch (menuId) {
             case GuiLayoutManager.DUEL_CONFIRM -> {
-                ItemStack gray = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
+                ItemStack gray = Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build();
                 for (int i = 0; i < editableSize; i++) {
                     inventory.setItem(i, gray);
                 }

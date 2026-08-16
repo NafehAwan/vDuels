@@ -20,6 +20,7 @@ public class Kit {
     private ItemStack[] armor;      // boots, leggings, chestplate, helmet
     private ItemStack offhand;
     private Material icon = Material.IRON_SWORD;
+    private String displayName;     // optional MiniMessage display name
 
     public Kit(String name) {
         this.name = name;
@@ -35,6 +36,15 @@ public class Kit {
 
     public void setIcon(Material icon) {
         this.icon = icon;
+    }
+
+    /** Optional MiniMessage display name (supports gradients, bold, etc.). */
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
     }
 
     /** Snapshot the given player's full inventory into this kit. */
@@ -76,6 +86,7 @@ public class Kit {
 
     public void save(ConfigurationSection section) {
         section.set("icon", icon.name());
+        section.set("display-name", displayName);
         section.set("contents", contents);
         section.set("armor", armor);
         section.set("offhand", offhand);
@@ -87,6 +98,7 @@ public class Kit {
         String iconName = section.getString("icon", "IRON_SWORD");
         Material mat = Material.matchMaterial(iconName);
         kit.icon = mat == null ? Material.IRON_SWORD : mat;
+        kit.displayName = section.getString("display-name");
 
         List<?> contentsList = section.getList("contents");
         if (contentsList != null) {

@@ -35,6 +35,10 @@ commands:
     description: Set a kit's menu icon to the item in your hand.
     usage: /kiticon <name>
     permission: vduels.admin
+  kitdisplayname:
+    description: Set a kit's display name (MiniMessage format).
+    usage: /kitdisplayname <name> <display...>
+    permission: vduels.admin
   editgui:
     description: Customise a GUI layout (duelconfirm, mapselect).
     usage: /editgui <menu>

@@ -51,7 +51,7 @@ public class MapSelectMenu extends Menu {
                 }
             }
         } else {
-            ItemStack filler = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
+            ItemStack filler = Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build();
             for (int i = 0; i < 36; i++) {
                 inventory.setItem(i, filler);
             }
