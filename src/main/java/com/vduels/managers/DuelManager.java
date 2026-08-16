@@ -6,6 +6,7 @@ import com.vduels.model.Arena;
 import com.vduels.model.DuelRequest;
 import com.vduels.model.Kit;
 import com.vduels.model.PlayerSnapshot;
+import com.vduels.util.Sounds;
 import com.vduels.util.Text;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
@@ -88,6 +89,7 @@ public class DuelManager {
                 new ComponentBuilder(msg("request.click-hover", "sender", sender.getName())).create()));
         target.spigot().sendMessage(click);
         target.sendMessage("");
+        Sounds.request(target);
     }
 
     private String msg(String key, String... placeholders) {
@@ -224,6 +226,8 @@ public class DuelManager {
             duel.setState(ActiveDuel.State.FIGHTING);
             sendTitle(p1, msg("titles.fight.title"), msg("titles.fight.subtitle"));
             sendTitle(p2, msg("titles.fight.title"), msg("titles.fight.subtitle"));
+            Sounds.fight(p1);
+            Sounds.fight(p2);
             return;
         }
         String secs = String.valueOf(secondsLeft);
@@ -231,6 +235,8 @@ public class DuelManager {
         String ctSub = msg("titles.countdown.subtitle", "seconds", secs);
         sendTitle(p1, ctTitle, ctSub);
         sendTitle(p2, ctTitle, ctSub);
+        Sounds.countdown(p1);
+        Sounds.countdown(p2);
         // Movement is frozen by DuelListener during STARTING; no re-teleport
         // needed (which would also reset where players are aiming).
         Bukkit.getScheduler().runTaskLater(plugin, () -> runCountdown(duel, secondsLeft - 1), 20L);
@@ -266,12 +272,14 @@ public class DuelManager {
                     msg("titles.round-won.subtitle",
                             "yourScore", String.valueOf(duel.getScoreFor(winnerId)),
                             "theirScore", String.valueOf(duel.getScoreAgainst(winnerId))));
+            Sounds.roundWon(winner);
         }
         if (loser != null) {
             sendTitle(loser, msg("titles.round-lost.title"),
                     msg("titles.round-lost.subtitle",
                             "yourScore", String.valueOf(duel.getScoreFor(loserId)),
                             "theirScore", String.valueOf(duel.getScoreAgainst(loserId))));
+            Sounds.roundLost(loser);
         }
 
         if (matchOver) {
@@ -317,10 +325,12 @@ public class DuelManager {
                     "yourScore", String.valueOf(duel.getScoreFor(winnerId)),
                     "theirScore", String.valueOf(duel.getScoreAgainst(winnerId))));
             sendTitle(winner, msg("titles.victory.title"), msg("titles.victory.subtitle"));
+            Sounds.victory(winner);
         }
         if (loser != null) {
             loser.sendMessage(msg("duel.defeat", "winner", winnerName));
             sendTitle(loser, msg("titles.defeat.title"), msg("titles.defeat.subtitle"));
+            Sounds.defeat(loser);
         }
     }
 

@@ -33,7 +33,8 @@ public class GuiListener implements Listener {
 
         if (!menu.isEditable()) {
             event.setCancelled(true);
-            if (clickedTop) {
+            if (clickedTop && event.getCurrentItem() != null) {
+                com.vduels.util.Sounds.click(player);
                 menu.onClick(player, event);
             }
             return;

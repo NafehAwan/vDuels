@@ -83,10 +83,10 @@ public class ScoreboardService {
 
         board.setLine(0, "");
         board.setLine(1, "&8" + ICON_SCORE + " &fScore: &b" + duel.getScoreFor(id)
-                + " &7- &b" + duel.getScoreAgainst(id));
+                + " &8- &b" + duel.getScoreAgainst(id));
         board.setLine(2, "");
         board.setLine(3, teamColor + ICON_TEAM + " &fTeam: " + teamColor + teamName);
-        board.setLine(4, "&a" + ICON_PING + " &fPing: &f" + player.getPing() + "&7ms");
+        board.setLine(4, "&a" + ICON_PING + " &fPing: &f" + player.getPing() + "&8ms");
         board.setLine(5, "&6" + ICON_TIME + " &fTime: &f" + time);
         board.setLine(6, "");
         board.setLine(7, "&e" + plugin.getScoreboardIp());
