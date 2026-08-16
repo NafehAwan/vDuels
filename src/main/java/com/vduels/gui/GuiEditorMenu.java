@@ -159,7 +159,8 @@ public class GuiEditorMenu extends Menu {
                     .tag(plugin.keyKit(), kit.getName())
                     .build());
         }
-        inventory.setItem(editableSize - 1, buttonMarker("next-cat", Material.ARROW, "&eNext-category arrow"));
+        // The next-category arrow is added automatically at the bottom-right of
+        // the live menu, so it is not an editable element here.
     }
 
     private ItemStack buttonMarker(String id, Material icon, String name) {
@@ -224,9 +225,8 @@ public class GuiEditorMenu extends Menu {
             }
         }
         // Keep each menu functional: re-add any missing button at a free slot.
-        if (GuiLayoutManager.isCategoryMenu(menuId)) {
-            ensureButton(layout, "next-cat", Material.ARROW, "&eNext-category arrow", editableSize - 1);
-        } else {
+        // Category menus need no forced button (the arrow is added automatically).
+        if (!GuiLayoutManager.isCategoryMenu(menuId)) {
             switch (menuId) {
                 case GuiLayoutManager.DUEL_CONFIRM -> {
                     ensureButton(layout, "map", Material.FILLED_MAP, "&bArena button", 10);

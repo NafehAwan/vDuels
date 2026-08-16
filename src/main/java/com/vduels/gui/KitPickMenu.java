@@ -45,7 +45,7 @@ public class KitPickMenu extends Menu {
             }
             // Admins can decorate this default menu with /adminduel.
             if (plugin.getGuiLayoutManager().has(GuiLayoutManager.KIT_MENU)) {
-                renderLayout(GuiLayoutManager.KIT_MENU, false);
+                renderLayout(GuiLayoutManager.KIT_MENU);
             } else {
                 grid(all, false);
             }
@@ -61,22 +61,25 @@ public class KitPickMenu extends Menu {
 
         String layoutId = GuiLayoutManager.categoryMenuId(category.getId());
         if (plugin.getGuiLayoutManager().has(layoutId)) {
-            renderLayout(layoutId, multi);
+            renderLayout(layoutId);
         } else {
             grid(plugin.getCategoryManager().kitsFor(category), multi);
+        }
+
+        // The category arrow is always pinned to the bottom-right corner.
+        if (multi) {
+            inventory.setItem(ARROW_SLOT, arrowItem());
         }
     }
 
     /** Renders a saved layout: kit markers become live icons, decoration stays. */
-    private void renderLayout(String layoutId, boolean multi) {
+    private void renderLayout(String layoutId) {
         for (Map.Entry<Integer, ItemStack> e : plugin.getGuiLayoutManager().get(layoutId).entrySet()) {
             if (e.getKey() >= 36) {
                 continue;
             }
+            // The next-category arrow is placed automatically, not from the layout.
             if ("next-cat".equals(Items.readTag(e.getValue(), plugin.keyButton()))) {
-                if (multi) {
-                    inventory.setItem(e.getKey(), arrowItem());
-                }
                 continue;
             }
             String kitName = Items.readTag(e.getValue(), plugin.keyKit());
@@ -91,13 +94,13 @@ public class KitPickMenu extends Menu {
         }
     }
 
-    /** Default gray-filled grid of kit icons, with the arrow when relevant. */
-    private void grid(List<String> kitNames, boolean multi) {
+    /** Default gray-filled grid of kit icons; leaves the arrow slot free when needed. */
+    private void grid(List<String> kitNames, boolean reserveArrow) {
         ItemStack filler = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
         for (int i = 0; i < 36; i++) {
             inventory.setItem(i, filler);
         }
-        int limit = multi ? ARROW_SLOT : 36;
+        int limit = reserveArrow ? ARROW_SLOT : 36;
         int slot = 0;
         for (String kitName : kitNames) {
             if (slot >= limit) {
@@ -107,9 +110,6 @@ public class KitPickMenu extends Menu {
             if (icon != null) {
                 inventory.setItem(slot++, icon);
             }
-        }
-        if (multi) {
-            inventory.setItem(ARROW_SLOT, arrowItem());
         }
     }
 
