@@ -66,8 +66,11 @@ public final class VDuels extends JavaPlugin {
         registerCommands();
         registerListeners();
 
-        // Refresh in-duel scoreboards once per second.
-        getServer().getScheduler().runTaskTimer(this, () -> scoreboardService.tick(), 20L, 20L);
+        // Refresh in-duel scoreboards and open queue menus once per second.
+        getServer().getScheduler().runTaskTimer(this, () -> {
+            scoreboardService.tick();
+            com.vduels.gui.QueuePickMenu.refreshAll();
+        }, 20L, 20L);
 
         getLogger().info("vDuels enabled.");
     }

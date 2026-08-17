@@ -404,9 +404,19 @@ public class DuelManager {
         return playerDuels.get(id);
     }
 
-    /** A snapshot of everyone currently in a duel (used by the queue counts). */
-    public Set<UUID> duellingPlayers() {
-        return new HashSet<>(playerDuels.keySet());
+    /**
+     * The number of ongoing fights (duels) using the given kit. Each duel counts
+     * once even though both players are its participants.
+     */
+    public int fightsWithKit(String kit) {
+        Set<ActiveDuel> seen = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+        int fights = 0;
+        for (ActiveDuel duel : playerDuels.values()) {
+            if (seen.add(duel) && duel.getKit().equalsIgnoreCase(kit)) {
+                fights++;
+            }
+        }
+        return fights;
     }
 
     /**

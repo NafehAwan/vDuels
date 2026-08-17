@@ -268,7 +268,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
         }
         Player player = (Player) sender;
         if (args.length >= 1 && args[0].equalsIgnoreCase("leave")) {
-            plugin.getQueueManager().leave(player);
+            plugin.getQueueManager().leaveAll(player);
             return;
         }
         if (plugin.getDuelManager().isInDuel(player.getUniqueId())) {

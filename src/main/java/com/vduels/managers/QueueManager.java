@@ -1,7 +1,9 @@
 package com.vduels.managers;
 
 import com.vduels.VDuels;
-import com.vduels.model.ActiveDuel;
+import com.vduels.model.Kit;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -12,13 +14,14 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
- * The 1v1 matchmaking queues, one per kit. A player joins a kit's queue from the
- * {@code /queue} menu; when two players share a queue they are matched into a
- * duel on a free compatible arena. Each player can only be queued for one kit at
- * a time.
+ * The 1v1 matchmaking queues, one per kit. A player may sit in several kit
+ * queues at once; clicking a kit toggles that queue. When two players share a
+ * queue they are matched into a duel on a free compatible arena and pulled out
+ * of every queue they were in (a player is only ever in one fight at a time).
  */
 public class QueueManager {
 
@@ -39,16 +42,14 @@ public class QueueManager {
         return set == null ? 0 : set.size();
     }
 
-    /** How many players are currently in a duel that uses the given kit. */
+    /** How many fights (duels) are currently running with the given kit. */
     public int dueling(String kit) {
-        int count = 0;
-        for (UUID id : plugin.getDuelManager().duellingPlayers()) {
-            ActiveDuel duel = plugin.getDuelManager().getDuel(id);
-            if (duel != null && duel.getKit().equalsIgnoreCase(kit)) {
-                count++;
-            }
-        }
-        return count;
+        return plugin.getDuelManager().fightsWithKit(kit);
+    }
+
+    public boolean isQueuedFor(UUID id, String kit) {
+        LinkedHashSet<UUID> set = queues.get(key(kit));
+        return set != null && set.contains(id);
     }
 
     public boolean isQueued(UUID id) {
@@ -60,17 +61,27 @@ public class QueueManager {
         return false;
     }
 
-    /** The kit a player is queued for, or null. */
-    public String queuedKit(UUID id) {
+    /** The set of kit ids (lower-case) a player is currently queued for. */
+    public Set<String> queuedKits(UUID id) {
+        Set<String> out = new LinkedHashSet<>();
         for (Map.Entry<String, LinkedHashSet<UUID>> e : queues.entrySet()) {
             if (e.getValue().contains(id)) {
-                return e.getKey();
+                out.add(e.getKey());
             }
         }
-        return null;
+        return out;
     }
 
-    /** Join (or switch to) a kit's queue, then try to match. */
+    /** Clicking a kit: join its queue, or leave it if already queued for it. */
+    public void toggle(Player player, String kit) {
+        if (isQueuedFor(player.getUniqueId(), kit)) {
+            leaveKit(player, kit);
+        } else {
+            join(player, kit);
+        }
+    }
+
+    /** Join a kit's queue (in addition to any others), then try to match. */
     public void join(Player player, String kit) {
         UUID id = player.getUniqueId();
         if (plugin.getDuelManager().isInDuel(id)) {
@@ -81,22 +92,24 @@ public class QueueManager {
             player.sendMessage(msg("queue.kit-gone"));
             return;
         }
-        String k = key(kit);
-        String current = queuedKit(id);
-        if (k.equals(current)) {
-            player.sendMessage(msg("queue.already", "kit", kit));
-            return;
-        }
-        if (current != null) {
-            remove(id); // switching queues
-        }
-        queues.computeIfAbsent(k, x -> new LinkedHashSet<>()).add(id);
-        player.sendMessage(msg("queue.joined", "kit", kit,
-                "queued", String.valueOf(queued(kit)), "needed", String.valueOf(NEEDED)));
-        tryMatch(k);
+        queues.computeIfAbsent(key(kit), x -> new LinkedHashSet<>()).add(id);
+        player.sendMessage(queuedLine("queue.joined-text", kit));
+        tryMatch(key(kit));
     }
 
-    /** Remove a player from whatever queue they are in (no message). */
+    /** Leave one kit's queue with a chat notice. */
+    public void leaveKit(Player player, String kit) {
+        LinkedHashSet<UUID> set = queues.get(key(kit));
+        if (set == null || !set.remove(player.getUniqueId())) {
+            return;
+        }
+        if (set.isEmpty()) {
+            queues.remove(key(kit));
+        }
+        player.sendMessage(queuedLine("queue.left-text", kit));
+    }
+
+    /** Remove a player from every queue silently (on match start / quit). */
     public void remove(UUID id) {
         for (Iterator<LinkedHashSet<UUID>> it = queues.values().iterator(); it.hasNext(); ) {
             LinkedHashSet<UUID> set = it.next();
@@ -106,8 +119,8 @@ public class QueueManager {
         }
     }
 
-    /** {@code /queue leave}: leave the current queue with a message. */
-    public void leave(Player player) {
+    /** {@code /queue leave}: leave all queues with a message. */
+    public void leaveAll(Player player) {
         if (!isQueued(player.getUniqueId())) {
             player.sendMessage(msg("queue.not-queued"));
             return;
@@ -117,18 +130,20 @@ public class QueueManager {
     }
 
     private void tryMatch(String kit) {
-        LinkedHashSet<UUID> set = queues.get(kit);
-        while (set != null && set.size() >= NEEDED) {
+        while (true) {
+            LinkedHashSet<UUID> set = queues.get(kit);
+            if (set == null || set.size() < NEEDED) {
+                return;
+            }
             List<UUID> ids = new ArrayList<>(set);
             Player p1 = Bukkit.getPlayer(ids.get(0));
-            Player p2 = Bukkit.getPlayer(ids.get(1));
-            // Drop anyone who went offline and retry.
             if (p1 == null) {
-                set.remove(ids.get(0));
+                remove(ids.get(0));
                 continue;
             }
+            Player p2 = Bukkit.getPlayer(ids.get(1));
             if (p2 == null) {
-                set.remove(ids.get(1));
+                remove(ids.get(1));
                 continue;
             }
             boolean started = plugin.getDuelManager().startQueuedDuel(p1, p2, kit);
@@ -136,14 +151,31 @@ public class QueueManager {
                 // No free arena right now; leave them queued and stop trying.
                 p1.sendMessage(msg("queue.no-arena"));
                 p2.sendMessage(msg("queue.no-arena"));
-                break;
+                return;
             }
-            set.remove(ids.get(0));
-            set.remove(ids.get(1));
+            // startDuel already removed both players from every queue.
         }
-        if (set != null && set.isEmpty()) {
-            queues.remove(kit);
+    }
+
+    /**
+     * A "normal font, gray" line whose only styled part is the kit's display
+     * name, e.g. "You have been queued to &lt;gradient&gt;name&lt;/gradient&gt;.".
+     * Built as one MiniMessage component so the gray text stays in the vanilla
+     * font while the kit name keeps its own colours.
+     */
+    private Component queuedLine(String textKey, String kit) {
+        String prefix = plugin.messages().raw(textKey);
+        return MiniMessage.miniMessage().deserialize(
+                "<gray>" + prefix + "</gray>" + kitMini(kit) + "<gray>.</gray>");
+    }
+
+    /** The kit's MiniMessage display name, or its id wrapped in gray. */
+    private String kitMini(String kit) {
+        Kit k = plugin.getKitManager().get(kit);
+        if (k != null && k.getDisplayName() != null && !k.getDisplayName().isEmpty()) {
+            return k.getDisplayName();
         }
+        return "<gray>" + kit + "</gray>";
     }
 
     private static String key(String kit) {

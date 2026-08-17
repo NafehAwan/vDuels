@@ -48,11 +48,12 @@ public class MessageManager {
 
         DEFAULTS.put("queue.in-duel", "{prefix}&cYou are already in a duel.");
         DEFAULTS.put("queue.kit-gone", "{prefix}&cThat kit no longer exists.");
-        DEFAULTS.put("queue.already", "{prefix}&eYou are already queued for &f{kit}&e.");
-        DEFAULTS.put("queue.joined", "{prefix}&aJoined the &e{kit} &aqueue (&e{queued}&7/&e{needed}&a).");
-        DEFAULTS.put("queue.left", "{prefix}&aYou left the queue.");
+        DEFAULTS.put("queue.left", "{prefix}&aYou left every queue.");
         DEFAULTS.put("queue.not-queued", "{prefix}&cYou are not in a queue.");
         DEFAULTS.put("queue.no-arena", "{prefix}&cNo free arena is available for that kit right now.");
+        // Normal-font, gray lead-ins; only the kit's display name is styled.
+        DEFAULTS.put("queue.joined-text", "You have been queued to ");
+        DEFAULTS.put("queue.left-text", "You have left the queue for ");
         DEFAULTS.put("duel.victory", "{prefix}&a&lVICTORY! &fYou won the duel (&e{yourScore} &f- &e{theirScore}&f).");
         DEFAULTS.put("duel.defeat", "{prefix}&c&lDEFEAT. &f{winner} won the duel.");
 
@@ -122,7 +123,8 @@ public class MessageManager {
         }
     }
 
-    private String raw(String key) {
+    /** The stored/default text for a key, with no colour or small-caps applied. */
+    public String raw(String key) {
         String value = config == null ? null : config.getString(key);
         if (value == null) {
             value = DEFAULTS.get(key);
