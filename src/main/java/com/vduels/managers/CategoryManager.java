@@ -49,13 +49,25 @@ public class CategoryManager {
 
     private final VDuels plugin;
     private final File file;
+    private final String resourceName;
     private final Map<String, Category> categories = new LinkedHashMap<>();
 
     public CategoryManager(VDuels plugin) {
+        this(plugin, "categories.yml");
+    }
+
+    /**
+     * @param resourceName the bundled default file and the on-disk file name.
+     *                     The duel menu uses {@code categories.yml}; the queue
+     *                     uses {@code queuecategories.yml} so the two are edited
+     *                     independently.
+     */
+    public CategoryManager(VDuels plugin, String resourceName) {
         this.plugin = plugin;
-        this.file = new File(plugin.getDataFolder(), "categories.yml");
+        this.resourceName = resourceName;
+        this.file = new File(plugin.getDataFolder(), resourceName);
         if (!file.exists()) {
-            plugin.saveResource("categories.yml", false); // ship the default category
+            plugin.saveResource(resourceName, false); // ship the default categories
         }
         load();
     }

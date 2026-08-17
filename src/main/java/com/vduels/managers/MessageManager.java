@@ -45,6 +45,14 @@ public class MessageManager {
         DEFAULTS.put("duel.start.leave", "{prefix}&7Use &a/leave &7to leave the duel.");
 
         DEFAULTS.put("leave.not-in-duel", "{prefix}&cYou are not in a duel.");
+
+        DEFAULTS.put("queue.in-duel", "{prefix}&cYou are already in a duel.");
+        DEFAULTS.put("queue.kit-gone", "{prefix}&cThat kit no longer exists.");
+        DEFAULTS.put("queue.already", "{prefix}&eYou are already queued for &f{kit}&e.");
+        DEFAULTS.put("queue.joined", "{prefix}&aJoined the &e{kit} &aqueue (&e{queued}&7/&e{needed}&a).");
+        DEFAULTS.put("queue.left", "{prefix}&aYou left the queue.");
+        DEFAULTS.put("queue.not-queued", "{prefix}&cYou are not in a queue.");
+        DEFAULTS.put("queue.no-arena", "{prefix}&cNo free arena is available for that kit right now.");
         DEFAULTS.put("duel.victory", "{prefix}&a&lVICTORY! &fYou won the duel (&e{yourScore} &f- &e{theirScore}&f).");
         DEFAULTS.put("duel.defeat", "{prefix}&c&lDEFEAT. &f{winner} won the duel.");
 

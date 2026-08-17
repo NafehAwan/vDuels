@@ -163,6 +163,9 @@ public class DuelManager {
     // --- duel lifecycle ---------------------------------------------------
 
     private void startDuel(Player p1, Player p2, Arena arena, String kit, int rounds) {
+        // A duel supersedes any pending queue membership.
+        plugin.getQueueManager().remove(p1.getUniqueId());
+        plugin.getQueueManager().remove(p2.getUniqueId());
         arenasInUse.add(arena.getName().toLowerCase());
         snapshots.put(p1.getUniqueId(), PlayerSnapshot.capture(p1));
         snapshots.put(p2.getUniqueId(), PlayerSnapshot.capture(p2));
@@ -399,6 +402,28 @@ public class DuelManager {
 
     public ActiveDuel getDuel(UUID id) {
         return playerDuels.get(id);
+    }
+
+    /** A snapshot of everyone currently in a duel (used by the queue counts). */
+    public Set<UUID> duellingPlayers() {
+        return new HashSet<>(playerDuels.keySet());
+    }
+
+    /**
+     * Starts a duel between two queued players on a free arena that supports the
+     * kit. Returns false (leaving them queued) when no arena is available.
+     */
+    public boolean startQueuedDuel(Player p1, Player p2, String kit) {
+        if (isInDuel(p1.getUniqueId()) || isInDuel(p2.getUniqueId())) {
+            return false;
+        }
+        Arena arena = plugin.getArenaManager().findFreeArena(
+                a -> arenasInUse.contains(a.getName().toLowerCase()) || !a.supportsKit(kit));
+        if (arena == null) {
+            return false;
+        }
+        startDuel(p1, p2, arena, kit, 1);
+        return true;
     }
 
     /** Restores everyone and cleans up; used on plugin disable. */

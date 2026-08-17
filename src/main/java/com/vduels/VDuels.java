@@ -11,6 +11,7 @@ import com.vduels.managers.CategoryManager;
 import com.vduels.managers.GuiLayoutManager;
 import com.vduels.managers.KitManager;
 import com.vduels.managers.MessageManager;
+import com.vduels.managers.QueueManager;
 import com.vduels.managers.ScoreboardService;
 import com.vduels.managers.SetupManager;
 import org.bukkit.NamespacedKey;
@@ -31,6 +32,8 @@ public final class VDuels extends JavaPlugin {
     private ScoreboardService scoreboardService;
     private MessageManager messageManager;
     private CategoryManager categoryManager;
+    private CategoryManager queueCategoryManager;
+    private QueueManager queueManager;
 
     private NamespacedKey keyKit;
     private NamespacedKey keyButton;
@@ -53,10 +56,12 @@ public final class VDuels extends JavaPlugin {
         this.arenaManager = new ArenaManager(this);
         this.kitManager = new KitManager(this);
         this.categoryManager = new CategoryManager(this);
+        this.queueCategoryManager = new CategoryManager(this, "queuecategories.yml");
         this.guiLayoutManager = new GuiLayoutManager(this);
         this.setupManager = new SetupManager(this);
         this.scoreboardService = new ScoreboardService(this);
         this.duelManager = new DuelManager(this);
+        this.queueManager = new QueueManager(this);
 
         registerCommands();
         registerListeners();
@@ -83,7 +88,8 @@ public final class VDuels extends JavaPlugin {
     private void registerCommands() {
         VDuelsCommand handler = new VDuelsCommand(this);
         for (String name : new String[]{"vduels", "createarena", "arena", "deletearena",
-                "kitcreate", "deletekit", "kiticon", "kitdisplayname", "editgui", "category", "scoreboardip", "duel"}) {
+                "kitcreate", "deletekit", "kiticon", "kitdisplayname", "editgui", "category",
+                "categoryqueue", "scoreboardip", "duel", "leave", "queue"}) {
             PluginCommand command = getCommand(name);
             if (command != null) {
                 command.setExecutor(handler);
@@ -131,6 +137,14 @@ public final class VDuels extends JavaPlugin {
 
     public CategoryManager getCategoryManager() {
         return categoryManager;
+    }
+
+    public CategoryManager getQueueCategoryManager() {
+        return queueCategoryManager;
+    }
+
+    public QueueManager getQueueManager() {
+        return queueManager;
     }
 
     public NamespacedKey keyKit() {

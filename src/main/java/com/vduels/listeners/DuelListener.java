@@ -120,6 +120,7 @@ public class DuelListener implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         plugin.getSetupManager().cancel(player);
+        plugin.getQueueManager().remove(player.getUniqueId());
         if (plugin.getDuelManager().isInDuel(player.getUniqueId())) {
             plugin.getDuelManager().handleDisconnect(player.getUniqueId());
         }

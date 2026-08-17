@@ -5,6 +5,7 @@ import com.vduels.gui.ArenaMenu;
 import com.vduels.gui.DuelConfirmMenu;
 import com.vduels.gui.GuiEditorMenu;
 import com.vduels.gui.KitPickMenu;
+import com.vduels.gui.QueuePickMenu;
 import com.vduels.managers.CategoryManager;
 import com.vduels.managers.GuiLayoutManager;
 import com.vduels.model.Arena;
@@ -47,7 +48,9 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             case "kiticon" -> kitIcon(sender, args);
             case "kitdisplayname" -> kitDisplayName(sender, args);
             case "editgui" -> editGui(sender, args);
-            case "category" -> category(sender, args);
+            case "category" -> categoryCommand(sender, args, plugin.getCategoryManager(), "category");
+            case "categoryqueue" -> categoryCommand(sender, args, plugin.getQueueCategoryManager(), "categoryqueue");
+            case "queue" -> queue(sender, args);
             case "duel" -> duel(sender, args);
             case "leave" -> leave(sender);
             case "scoreboardip" -> scoreboardIp(sender, args);
@@ -259,6 +262,26 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
         plugin.getDuelManager().leave((Player) sender);
     }
 
+    private void queue(CommandSender sender, String[] args) {
+        if (!requirePlayer(sender)) {
+            return;
+        }
+        Player player = (Player) sender;
+        if (args.length >= 1 && args[0].equalsIgnoreCase("leave")) {
+            plugin.getQueueManager().leave(player);
+            return;
+        }
+        if (plugin.getDuelManager().isInDuel(player.getUniqueId())) {
+            sender.sendMessage(msg("duel.already-in-duel"));
+            return;
+        }
+        if (plugin.getKitManager().isEmpty()) {
+            sender.sendMessage(msg("duel.no-kits"));
+            return;
+        }
+        new QueuePickMenu(plugin).open(player);
+    }
+
     private void handleAccept(Player player, String[] args) {
         UUID senderId;
         if (args.length >= 2) {
@@ -281,18 +304,17 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
 
     // --- kit-menu categories ---------------------------------------------
 
-    private void category(CommandSender sender, String[] args) {
+    private void categoryCommand(CommandSender sender, String[] args, CategoryManager cats, String cmd) {
         if (!requireAdmin(sender)) {
             return;
         }
         // args[0] = sub, args[1] = id, args[2..] = rest
         String sub = args.length >= 1 ? args[0].toLowerCase(Locale.ROOT) : "list";
-        CategoryManager cats = plugin.getCategoryManager();
 
         switch (sub) {
             case "list" -> {
                 if (cats.all().isEmpty()) {
-                    sender.sendMessage(Text.prefixed("&7No categories yet. Create one with &e/category create <id>&7."));
+                    sender.sendMessage(Text.prefixed("&7No categories yet. Create one with &e/" + cmd + " create <id>&7."));
                     return;
                 }
                 sender.sendMessage(Text.color("&bKit categories:"));
@@ -303,7 +325,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             }
             case "create" -> {
                 if (args.length < 2) {
-                    sender.sendMessage(Text.prefixed("&cUsage: /category create <id> [header]"));
+                    sender.sendMessage(Text.prefixed("&cUsage: /" + cmd + " create <id> [header]"));
                     return;
                 }
                 String header = args.length >= 3 ? joinFrom(args, 2) : args[1].toUpperCase(Locale.ROOT);
@@ -315,7 +337,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             }
             case "delete" -> {
                 if (args.length < 2) {
-                    sender.sendMessage(Text.prefixed("&cUsage: /category delete <id>"));
+                    sender.sendMessage(Text.prefixed("&cUsage: /" + cmd + " delete <id>"));
                     return;
                 }
                 cats.delete(args[1]);
@@ -323,7 +345,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             }
             case "header" -> {
                 if (args.length < 3) {
-                    sender.sendMessage(Text.prefixed("&cUsage: /category header <id> <text>"));
+                    sender.sendMessage(Text.prefixed("&cUsage: /" + cmd + " header <id> <text>"));
                     return;
                 }
                 CategoryManager.Category c = cats.get(args[1]);
@@ -337,7 +359,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             }
             case "addkit", "removekit" -> {
                 if (args.length < 3) {
-                    sender.sendMessage(Text.prefixed("&cUsage: /category " + sub + " <id> <kit>"));
+                    sender.sendMessage(Text.prefixed("&cUsage: /" + cmd + " " + sub + " <id> <kit>"));
                     return;
                 }
                 CategoryManager.Category c = cats.get(args[1]);
@@ -473,7 +495,9 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
                     out.add(menu);
                 }
             }
-        } else if (name.equals("category")) {
+        } else if (name.equals("category") || name.equals("categoryqueue")) {
+            CategoryManager cats = name.equals("categoryqueue")
+                    ? plugin.getQueueCategoryManager() : plugin.getCategoryManager();
             if (args.length == 1) {
                 for (String sub : List.of("list", "create", "delete", "header", "addkit", "removekit")) {
                     if (startsWith(sub, args[0])) {
@@ -481,11 +505,15 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
                     }
                 }
             } else if (args.length == 2 && !args[0].equalsIgnoreCase("create")) {
-                for (CategoryManager.Category c : plugin.getCategoryManager().all()) {
+                for (CategoryManager.Category c : cats.all()) {
                     if (startsWith(c.getId(), args[1])) {
                         out.add(c.getId());
                     }
                 }
+            }
+        } else if (name.equals("queue") && args.length == 1) {
+            if (startsWith("leave", args[0])) {
+                out.add("leave");
             }
         } else if (name.equals("duel") && args.length == 1) {
             for (Player p : plugin.getServer().getOnlinePlayers()) {

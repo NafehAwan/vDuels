@@ -47,6 +47,10 @@ commands:
     description: Manage kit-menu categories.
     usage: /category <list|create|delete|header|addkit|removekit> ...
     permission: vduels.admin
+  categoryqueue:
+    description: Manage queue-menu categories.
+    usage: /categoryqueue <list|create|delete|header|addkit|removekit> ...
+    permission: vduels.admin
   scoreboardip:
     description: Set the server IP shown on the duel scoreboard.
     usage: /scoreboardip <ip>
@@ -57,6 +61,9 @@ commands:
   leave:
     description: Leave (forfeit) your current duel.
     usage: /leave
+  queue:
+    description: Open the 1v1 queue menu (or /queue leave).
+    usage: /queue [leave]
 
 permissions:
   vduels.admin:
