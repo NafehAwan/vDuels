@@ -14,6 +14,8 @@ import com.vduels.managers.MessageManager;
 import com.vduels.managers.QueueManager;
 import com.vduels.managers.ScoreboardService;
 import com.vduels.managers.SetupManager;
+import com.vduels.managers.TabEditManager;
+import com.vduels.managers.TabService;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -34,11 +36,16 @@ public final class VDuels extends JavaPlugin {
     private CategoryManager categoryManager;
     private CategoryManager queueCategoryManager;
     private QueueManager queueManager;
+    private TabService tabService;
+    private TabEditManager tabEditManager;
 
     private NamespacedKey keyKit;
     private NamespacedKey keyButton;
     private NamespacedKey keyArena;
     private String scoreboardIp = "play.example.net";
+    private String tabTitle;
+    private String tabDiscord;
+    private String tabStore;
 
     @Override
     public void onEnable() {
@@ -51,6 +58,10 @@ public final class VDuels extends JavaPlugin {
         this.keyButton = new NamespacedKey(this, "button");
         this.keyArena = new NamespacedKey(this, "arena");
         this.scoreboardIp = getConfig().getString("scoreboard-ip", "play.example.net");
+        this.tabTitle = getConfig().getString("tab.title",
+                "<gradient:#FFD700:#FFC62F><bold>DesertiaMC</bold></gradient>");
+        this.tabDiscord = getConfig().getString("tab.discord", "discord.desertiamc.fun");
+        this.tabStore = getConfig().getString("tab.store", "store.desertiamc.fun");
 
         this.messageManager = new MessageManager(this);
         this.arenaManager = new ArenaManager(this);
@@ -62,13 +73,16 @@ public final class VDuels extends JavaPlugin {
         this.scoreboardService = new ScoreboardService(this);
         this.duelManager = new DuelManager(this);
         this.queueManager = new QueueManager(this);
+        this.tabService = new TabService(this);
+        this.tabEditManager = new TabEditManager(this);
 
         registerCommands();
         registerListeners();
 
-        // Refresh in-duel scoreboards and open queue menus once per second.
+        // Refresh in-duel scoreboards, tab counts and open queue menus per second.
         getServer().getScheduler().runTaskTimer(this, () -> {
             scoreboardService.tick();
+            tabService.tick();
             com.vduels.gui.QueuePickMenu.refreshAll();
         }, 20L, 20L);
 
@@ -92,7 +106,7 @@ public final class VDuels extends JavaPlugin {
         VDuelsCommand handler = new VDuelsCommand(this);
         for (String name : new String[]{"vduels", "createarena", "arena", "deletearena",
                 "kitcreate", "deletekit", "kiticon", "kitdisplayname", "editgui", "category",
-                "categoryqueue", "scoreboardip", "duel", "leave", "queue"}) {
+                "categoryqueue", "scoreboardip", "duel", "leave", "queue", "vduelstab"}) {
             PluginCommand command = getCommand(name);
             if (command != null) {
                 command.setExecutor(handler);
@@ -148,6 +162,44 @@ public final class VDuels extends JavaPlugin {
 
     public QueueManager getQueueManager() {
         return queueManager;
+    }
+
+    public TabService getTabService() {
+        return tabService;
+    }
+
+    public TabEditManager getTabEditManager() {
+        return tabEditManager;
+    }
+
+    public String getTabTitle() {
+        return tabTitle;
+    }
+
+    public String getTabDiscord() {
+        return tabDiscord;
+    }
+
+    public String getTabStore() {
+        return tabStore;
+    }
+
+    public void setTabTitle(String value) {
+        this.tabTitle = value;
+        getConfig().set("tab.title", value);
+        saveConfig();
+    }
+
+    public void setTabDiscord(String value) {
+        this.tabDiscord = value;
+        getConfig().set("tab.discord", value);
+        saveConfig();
+    }
+
+    public void setTabStore(String value) {
+        this.tabStore = value;
+        getConfig().set("tab.store", value);
+        saveConfig();
     }
 
     public NamespacedKey keyKit() {

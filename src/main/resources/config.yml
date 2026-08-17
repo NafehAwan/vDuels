@@ -12,3 +12,10 @@ round-countdown-seconds: 3
 # Server IP shown on the bottom of the in-duel scoreboard.
 # Also settable in-game with /vduels:scoreboardip <ip>
 scoreboard-ip: "play.example.net"
+
+# Per-fight tab list. The title supports MiniMessage (gradients, bold, etc.).
+# Editable in-game through the GUI: /vduelstab
+tab:
+  title: "<gradient:#FFD700:#FFC62F><bold>DesertiaMC</bold></gradient>"
+  discord: "discord.desertiamc.fun"
+  store: "store.desertiamc.fun"

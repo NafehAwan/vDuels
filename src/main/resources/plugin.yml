@@ -64,6 +64,10 @@ commands:
   queue:
     description: Open the 1v1 queue menu (or /queue leave).
     usage: /queue [leave]
+  vduelstab:
+    description: Configure the per-fight tab (title, discord, store).
+    usage: /vduelstab
+    permission: vduels.admin
 
 permissions:
   vduels.admin:

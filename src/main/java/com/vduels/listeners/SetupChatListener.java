@@ -25,11 +25,19 @@ public class SetupChatListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
+        String message = event.getMessage();
+
+        if (plugin.getTabEditManager().isEditing(player.getUniqueId())) {
+            event.setCancelled(true);
+            Bukkit.getScheduler().runTask(plugin,
+                    () -> plugin.getTabEditManager().handleInput(player, message));
+            return;
+        }
+
         if (!plugin.getSetupManager().inSetup(player.getUniqueId())) {
             return;
         }
         event.setCancelled(true);
-        String message = event.getMessage();
         Bukkit.getScheduler().runTask(plugin, () -> {
             Arena finished = plugin.getSetupManager().handleInput(player, message);
             if (finished != null) {

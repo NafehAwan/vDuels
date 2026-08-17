@@ -51,6 +51,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             case "category" -> categoryCommand(sender, args, plugin.getCategoryManager(), "category");
             case "categoryqueue" -> categoryCommand(sender, args, plugin.getQueueCategoryManager(), "categoryqueue");
             case "queue" -> queue(sender, args);
+            case "vduelstab" -> vduelsTab(sender);
             case "duel" -> duel(sender, args);
             case "leave" -> leave(sender);
             case "scoreboardip" -> scoreboardIp(sender, args);
@@ -260,6 +261,13 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             return;
         }
         plugin.getDuelManager().leave((Player) sender);
+    }
+
+    private void vduelsTab(CommandSender sender) {
+        if (!requireAdmin(sender) || !requirePlayer(sender)) {
+            return;
+        }
+        new com.vduels.gui.TabConfigMenu(plugin).open((Player) sender);
     }
 
     private void queue(CommandSender sender, String[] args) {

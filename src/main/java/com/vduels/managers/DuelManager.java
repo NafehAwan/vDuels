@@ -176,6 +176,7 @@ public class DuelManager {
 
         plugin.getScoreboardService().attach(p1, duel);
         plugin.getScoreboardService().attach(p2, duel);
+        plugin.getTabService().attach(duel);
 
         sendStartCard(p1, p2.getName(), duel);
         sendStartCard(p2, p1.getName(), duel);
@@ -336,6 +337,8 @@ public class DuelManager {
         restorePlayer(duel.getPlayer1(), true);
         restorePlayer(duel.getPlayer2(), true);
 
+        plugin.getTabService().detach(duel.getPlayer1());
+        plugin.getTabService().detach(duel.getPlayer2());
         plugin.getScoreboardService().detach(duel.getPlayer1());
         plugin.getScoreboardService().detach(duel.getPlayer2());
 
@@ -398,6 +401,11 @@ public class DuelManager {
 
     public boolean isInDuel(UUID id) {
         return playerDuels.containsKey(id);
+    }
+
+    /** Number of players currently in a duel (both fighters of each fight). */
+    public int playersInDuels() {
+        return playerDuels.size();
     }
 
     public ActiveDuel getDuel(UUID id) {

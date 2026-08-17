@@ -11,6 +11,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
@@ -114,6 +115,12 @@ public class DuelListener implements Listener {
         if (plugin.getDuelManager().isInDuel(event.getPlayer().getUniqueId())) {
             event.setCancelled(true);
         }
+    }
+
+    @EventHandler
+    public void onJoin(PlayerJoinEvent event) {
+        // Keep newcomers out of any ongoing fight's isolated tab.
+        plugin.getTabService().onPlayerJoin(event.getPlayer());
     }
 
     @EventHandler

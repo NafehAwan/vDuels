@@ -69,12 +69,12 @@ public class QueuePickMenu extends Menu {
     public void build() {
         List<CategoryManager.Category> categories = plugin.getQueueCategoryManager().all();
         if (categories.isEmpty()) {
-            create(4, "&7&lQueue");
+            create(4, "&7Queue");
         } else {
             if (categoryIndex >= categories.size()) {
                 categoryIndex = 0;
             }
-            create(4, "&7&lQueue&r &7" + categories.get(categoryIndex).getHeader());
+            create(4, "&7Queue → &7" + categories.get(categoryIndex).getHeader());
         }
         populate();
     }
