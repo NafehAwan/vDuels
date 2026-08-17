@@ -43,7 +43,8 @@ public class KitPickMenu extends Menu {
         List<String> kitNames;
         boolean multi = false;
         if (categories.isEmpty()) {
-            create(4, "&7DUELS");
+            // Bold gray "Duel Request", no category to append.
+            create(4, "&7&lDuel Request");
             kitNames = new ArrayList<>();
             for (Kit kit : plugin.getKitManager().all()) {
                 kitNames.add(kit.getName());
@@ -54,7 +55,8 @@ public class KitPickMenu extends Menu {
             }
             CategoryManager.Category category = categories.get(categoryIndex);
             multi = categories.size() > 1;
-            create(4, "&7DUELS &7→ &7" + category.getHeader());
+            // Bold gray "Duel Request", then the category name in gray, not bold.
+            create(4, "&7&lDuel Request&r &7" + category.getHeader());
             kitNames = plugin.getCategoryManager().kitsFor(category);
         }
 
@@ -82,13 +84,15 @@ public class KitPickMenu extends Menu {
         if (kit == null) {
             return null;
         }
+        // Hover shows nothing but the kit's name (its display name when set) -
+        // no lore, no item stats.
         Items item = Items.of(kit.getIcon())
-                .name("&e" + kit.getName())
-                .lore("", "&fClick to select")
                 .hideTooltip()
                 .tag(plugin.keyKit(), kit.getName());
         if (kit.getDisplayName() != null && !kit.getDisplayName().isEmpty()) {
             item.miniName(kit.getDisplayName());
+        } else {
+            item.name("&e" + kit.getName());
         }
         return item.build();
     }
