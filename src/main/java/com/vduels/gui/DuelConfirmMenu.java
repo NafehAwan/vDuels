@@ -124,7 +124,7 @@ public class DuelConfirmMenu extends Menu {
                     .build();
             default -> {
                 boolean ready = selectedKit != null;
-                yield Items.of(ready ? Material.GREEN_STAINED_GLASS_PANE : Material.GRAY_STAINED_GLASS_PANE)
+                yield Items.of(ready ? Material.GREEN_STAINED_GLASS_PANE : Material.BLACK_STAINED_GLASS_PANE)
                         .name(ready ? "&a&lCONFIRM & SEND" : "&fSelect a kit first")
                         .lore("&fChallenge &e" + target.getName() + "&f.")
                         .tag(plugin.keyButton(), "confirm")

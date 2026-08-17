@@ -82,14 +82,14 @@ public class ScoreboardService {
         String time = String.format("%02d:%02d", seconds / 60, seconds % 60);
 
         board.setLine(0, "");
-        board.setLine(1, "&8" + ICON_SCORE + " &fScore: &b" + duel.getScoreFor(id)
+        board.setLine(1, "&7" + ICON_SCORE + " &fScore: &b" + duel.getScoreFor(id)
                 + " &7- &c" + duel.getScoreAgainst(id));
         board.setLine(2, "");
         board.setLine(3, teamColor + ICON_TEAM + " &fTeam: " + teamColor + teamName);
         board.setLine(4, "&a" + ICON_PING + " &fPing: &a" + player.getPing() + "ms");
         board.setLine(5, "&6" + ICON_TIME + " &fTime: &f" + time);
         board.setLine(6, "");
-        board.setLine(7, "&8" + ICON_SCORE + " &b" + plugin.getScoreboardIp());
+        board.setLine(7, "&7" + ICON_SCORE + " &b" + plugin.getScoreboardIp());
     }
 
     /** Holds one player's scoreboard and its per-line teams. */
