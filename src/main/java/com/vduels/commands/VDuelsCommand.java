@@ -53,6 +53,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             case "queue" -> queue(sender, args);
             case "vduelstab" -> vduelsTab(sender);
             case "editkit" -> editKit(sender, args);
+            case "changekit" -> changeKit(sender, args);
             case "spectate" -> spectate(sender, args);
             case "duel" -> duel(sender, args);
             case "leave" -> leave(sender);
@@ -291,6 +292,29 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             return;
         }
         new com.vduels.gui.EditKitListMenu(plugin).open(player);
+    }
+
+    private void changeKit(CommandSender sender, String[] args) {
+        if (!requirePlayer(sender)) {
+            return;
+        }
+        Player player = (Player) sender;
+        if (args.length < 1) {
+            sender.sendMessage(Text.prefixed("&cUsage: /changekit <kit>"));
+            return;
+        }
+        if (plugin.getDuelManager().isInDuel(player.getUniqueId())) {
+            sender.sendMessage(Text.prefixed("&cYou can't change your kit while in a duel."));
+            return;
+        }
+        com.vduels.model.Kit kit = plugin.getKitManager().get(args[0]);
+        if (kit == null) {
+            sender.sendMessage(Text.prefixed("&cNo kit named &f" + args[0] + "&c."));
+            return;
+        }
+        kit.applyTo(player);
+        kit.applyOffhand(player);
+        sender.sendMessage(Text.prefixed("&aYou are now holding the &e" + kit.getName() + "&a kit."));
     }
 
     private void spectate(CommandSender sender, String[] args) {
@@ -570,7 +594,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
                 }
             }
         } else if ((name.equals("deletekit") || name.equals("kiticon") || name.equals("kitdisplayname")
-                || name.equals("editkit")) && args.length == 1) {
+                || name.equals("editkit") || name.equals("changekit")) && args.length == 1) {
             for (Kit kit : plugin.getKitManager().all()) {
                 if (startsWith(kit.getName(), args[0])) {
                     out.add(kit.getName());

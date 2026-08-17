@@ -92,6 +92,12 @@ public class Kit {
         player.updateInventory();
     }
 
+    /** Re-sets just the off-hand item (used a tick later so it reliably shows). */
+    public void applyOffhand(Player player) {
+        player.getInventory().setItemInOffHand(offhand == null ? null : offhand.clone());
+        player.updateInventory();
+    }
+
     private static ItemStack[] cloneAll(ItemStack[] src) {
         if (src == null) {
             return null;

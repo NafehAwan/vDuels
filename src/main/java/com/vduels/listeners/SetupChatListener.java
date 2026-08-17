@@ -27,6 +27,14 @@ public class SetupChatListener implements Listener {
         Player player = event.getPlayer();
         String message = event.getMessage();
 
+        // Spectators leave with ".leave" in chat.
+        if (plugin.getSpectateManager().isSpectating(player.getUniqueId())
+                && message.equalsIgnoreCase(".leave")) {
+            event.setCancelled(true);
+            Bukkit.getScheduler().runTask(plugin, () -> plugin.getSpectateManager().stop(player));
+            return;
+        }
+
         if (plugin.getTabEditManager().isEditing(player.getUniqueId())) {
             event.setCancelled(true);
             Bukkit.getScheduler().runTask(plugin,

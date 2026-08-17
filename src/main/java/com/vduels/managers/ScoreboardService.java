@@ -36,6 +36,8 @@ public class ScoreboardService {
 
     private final VDuels plugin;
     private final Map<UUID, DuelBoard> boards = new HashMap<>();
+    // spectator id -> a fighter of the duel they are watching
+    private final Map<UUID, UUID> spectatorOf = new HashMap<>();
 
     public ScoreboardService(VDuels plugin) {
         this.plugin = plugin;
@@ -48,8 +50,18 @@ public class ScoreboardService {
         update(player, duel, board);
     }
 
+    /** Give a spectator a board mirroring the fight they are watching. */
+    public void attachSpectator(Player spectator, ActiveDuel duel, UUID targetId) {
+        DuelBoard board = new DuelBoard();
+        boards.put(spectator.getUniqueId(), board);
+        spectatorOf.put(spectator.getUniqueId(), targetId);
+        spectator.setScoreboard(board.scoreboard);
+        updateSpectator(spectator, duel, board);
+    }
+
     public void detach(UUID id) {
         boards.remove(id);
+        spectatorOf.remove(id);
         Player player = Bukkit.getPlayer(id);
         if (player != null && Bukkit.getScoreboardManager() != null) {
             player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
@@ -63,14 +75,43 @@ public class ScoreboardService {
         }
         for (UUID id : new HashMap<>(boards).keySet()) {
             Player player = Bukkit.getPlayer(id);
-            ActiveDuel duel = plugin.getDuelManager().getDuel(id);
             DuelBoard board = boards.get(id);
-            if (player == null || duel == null || board == null) {
+            if (player == null || board == null) {
+                detach(id);
+                continue;
+            }
+            if (spectatorOf.containsKey(id)) {
+                ActiveDuel duel = plugin.getDuelManager().getDuel(spectatorOf.get(id));
+                if (duel != null) {
+                    updateSpectator(player, duel, board);
+                }
+                // If the watched duel ended, SpectateManager returns the viewer.
+                continue;
+            }
+            ActiveDuel duel = plugin.getDuelManager().getDuel(id);
+            if (duel == null) {
                 detach(id);
                 continue;
             }
             update(player, duel, board);
         }
+    }
+
+    private void updateSpectator(Player player, ActiveDuel duel, DuelBoard board) {
+        UUID blueId = duel.isBlue(duel.getPlayer1()) ? duel.getPlayer1() : duel.getPlayer2();
+        UUID redId = duel.getOpponent(blueId);
+        long seconds = Math.max(0, (System.currentTimeMillis() - duel.getStartedAt()) / 1000L);
+        String time = String.format("%02d:%02d", seconds / 60, seconds % 60);
+
+        board.setLine(0, "");
+        board.setLine(1, "&7" + ICON_SCORE + " &fScore: &b" + duel.getScoreFor(blueId)
+                + " &7- &c" + duel.getScoreFor(redId));
+        board.setLine(2, "");
+        board.setLine(3, "&e" + ICON_TEAM + " &fTeam: &7SPEC");
+        board.setLine(4, "&a" + ICON_PING + " &fPing: &a" + player.getPing() + "ms");
+        board.setLine(5, "&6" + ICON_TIME + " &fTime: &f" + time);
+        board.setLine(6, "");
+        board.setLine(7, "&7" + ICON_SCORE + " &b" + plugin.getScoreboardIp());
     }
 
     private void update(Player player, ActiveDuel duel, DuelBoard board) {

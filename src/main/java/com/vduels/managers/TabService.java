@@ -27,9 +27,41 @@ public class TabService {
 
     private final VDuels plugin;
     private final Set<UUID> fighters = new HashSet<>();
+    private final Set<UUID> spectators = new HashSet<>();
 
     public TabService(VDuels plugin) {
         this.plugin = plugin;
+    }
+
+    /** A spectator sees the same isolated fight tab the fighters do. */
+    public void attachSpectator(Player spectator, ActiveDuel duel) {
+        spectators.add(spectator.getUniqueId());
+        Player p1 = Bukkit.getPlayer(duel.getPlayer1());
+        Player p2 = Bukkit.getPlayer(duel.getPlayer2());
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            boolean fighter = (p1 != null && online.getUniqueId().equals(p1.getUniqueId()))
+                    || (p2 != null && online.getUniqueId().equals(p2.getUniqueId()));
+            if (!online.getUniqueId().equals(spectator.getUniqueId()) && !fighter) {
+                spectator.hidePlayer(plugin, online);
+            }
+        }
+        applyTeams(spectator, duel);
+        sendHeaderFooter(spectator);
+    }
+
+    public void detachSpectator(UUID id) {
+        if (!spectators.remove(id)) {
+            return;
+        }
+        Player viewer = Bukkit.getPlayer(id);
+        if (viewer == null) {
+            return;
+        }
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            if (!online.getUniqueId().equals(id)) {
+                viewer.showPlayer(plugin, online);
+            }
+        }
     }
 
     /** Put both fighters onto their isolated per-fight tab. */
@@ -108,13 +140,19 @@ public class TabService {
         }
     }
 
-    /** Show the newcomer the branded tab, and hide them from any live fight. */
+    /** Show the newcomer the branded tab, and hide them from fighters/spectators. */
     public void onPlayerJoin(Player joiner) {
         sendHeaderFooter(joiner);
         for (UUID id : fighters) {
             Player fighter = Bukkit.getPlayer(id);
             if (fighter != null && !fighter.getUniqueId().equals(joiner.getUniqueId())) {
                 fighter.hidePlayer(plugin, joiner);
+            }
+        }
+        for (UUID id : spectators) {
+            Player spectator = Bukkit.getPlayer(id);
+            if (spectator != null && !spectator.getUniqueId().equals(joiner.getUniqueId())) {
+                spectator.hidePlayer(plugin, joiner);
             }
         }
     }

@@ -246,6 +246,16 @@ public class DuelManager {
             for (var effect : kit.getStartEffects()) {
                 player.addPotionEffect(effect.toPotionEffect());
             }
+            // Re-set the off-hand a tick later; setting it in the same tick as the
+            // teleport/inventory rebuild sometimes doesn't reach the client.
+            Kit fixed = kit;
+            UUID pid = player.getUniqueId();
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                Player p = Bukkit.getPlayer(pid);
+                if (p != null) {
+                    fixed.applyOffhand(p);
+                }
+            }, 1L);
         }
     }
 

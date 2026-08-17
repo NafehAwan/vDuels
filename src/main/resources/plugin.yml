@@ -72,6 +72,10 @@ commands:
     description: Edit a kit's starting effects.
     usage: /editkit [kit]
     permission: vduels.admin
+  changekit:
+    description: Equip a kit into your inventory.
+    usage: /changekit <kit>
+    permission: vduels.changekit
   spectate:
     description: Spectate a player (or /spectate to stop).
     usage: /spectate [player]
@@ -84,3 +88,6 @@ permissions:
   vduels.use:
     description: Access to the /duel command.
     default: true
+  vduels.changekit:
+    description: Access to the /changekit command.
+    default: op

@@ -52,6 +52,10 @@ public class MessageManager {
         DEFAULTS.put("spectate.now", "{prefix}&aNow spectating &e{target}&a. Type &e/spectate&a to stop.");
         DEFAULTS.put("spectate.stopped", "{prefix}&aStopped spectating.");
         DEFAULTS.put("spectate.not-spectating", "{prefix}&cYou are not spectating anyone.");
+        DEFAULTS.put("spectate.fight-ended", "{prefix}&eThe fight ended - returning you back.");
+        // Normal-font gray notices (only the name varies); rendered as-is.
+        DEFAULTS.put("spectate.started-watching", "{name} has started spectating you.");
+        DEFAULTS.put("spectate.stopped-watching", "{name} has stopped spectating you.");
 
         DEFAULTS.put("queue.in-duel", "{prefix}&cYou are already in a duel.");
         DEFAULTS.put("queue.kit-gone", "{prefix}&cThat kit no longer exists.");

@@ -85,6 +85,7 @@ public final class VDuels extends JavaPlugin {
         getServer().getScheduler().runTaskTimer(this, () -> {
             scoreboardService.tick();
             tabService.tick();
+            spectateManager.tick();
             com.vduels.gui.QueuePickMenu.refreshAll();
         }, 20L, 20L);
 
@@ -109,7 +110,7 @@ public final class VDuels extends JavaPlugin {
         for (String name : new String[]{"vduels", "createarena", "arena", "deletearena",
                 "kitcreate", "deletekit", "kiticon", "kitdisplayname", "editgui", "category",
                 "categoryqueue", "scoreboardip", "duel", "leave", "queue", "vduelstab",
-                "editkit", "spectate"}) {
+                "editkit", "changekit", "spectate"}) {
             PluginCommand command = getCommand(name);
             if (command != null) {
                 command.setExecutor(handler);
