@@ -9,5 +9,17 @@ categories:
     - Sword
     - ModernAxe
     - Mace
-    - DiaSMP
     - MoneySMP
+    - crystalio
+  subtiers:
+    header: SUBTIERS
+    kits:
+    - Speed
+    - Diasmp
+    - Creeper
+    - Cartht
+    - Cartlt
+    - ogv
+    - bow
+    - elytra
+    - trident

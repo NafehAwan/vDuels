@@ -375,21 +375,59 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
                     sender.sendMessage(Text.prefixed("&cNo category named &f" + args[1] + "&c."));
                     return;
                 }
-                if (sub.equals("addkit")) {
+                boolean adding = sub.equals("addkit");
+                if (adding) {
                     if (!plugin.getKitManager().exists(args[2])) {
                         sender.sendMessage(Text.prefixed("&cNo kit named &f" + args[2] + "&c."));
                         return;
                     }
-                    c.getKits().add(args[2]);
+                    addKitDedup(c, args[2]);
                     sender.sendMessage(Text.prefixed("&aAdded &f" + args[2] + "&a to &b" + c.getId() + "&a."));
                 } else {
                     c.getKits().removeIf(k -> k.equalsIgnoreCase(args[2]));
                     sender.sendMessage(Text.prefixed("&aRemoved &f" + args[2] + "&a from &b" + c.getId() + "&a."));
                 }
                 cats.save();
+                // Queue and duel categories are merged: mirror the change into
+                // the same-id category of the other menu.
+                CategoryManager other = cats == plugin.getCategoryManager()
+                        ? plugin.getQueueCategoryManager() : plugin.getCategoryManager();
+                syncKit(other, c.getId(), c.getHeader(), args[2], adding);
             }
             default -> sender.sendMessage(Text.prefixed("&cSub-commands: list, create, delete, header, addkit, removekit"));
         }
+    }
+
+    /** Adds a kit to a category unless it is already present (case-insensitive). */
+    private void addKitDedup(CategoryManager.Category category, String kit) {
+        if (category.getKits().stream().noneMatch(k -> k.equalsIgnoreCase(kit))) {
+            category.getKits().add(kit);
+        }
+    }
+
+    /**
+     * Mirrors an addkit/removekit into the other menu's same-id category so the
+     * queue and duel categories stay merged. Creates the counterpart category
+     * (with the same header) when adding to one that doesn't exist yet.
+     */
+    private void syncKit(CategoryManager other, String catId, String header, String kit, boolean adding) {
+        CategoryManager.Category oc = other.get(catId);
+        if (oc == null) {
+            if (!adding) {
+                return;
+            }
+            other.create(catId, header);
+            oc = other.get(catId);
+            if (oc == null) {
+                return;
+            }
+        }
+        if (adding) {
+            addKitDedup(oc, kit);
+        } else {
+            oc.getKits().removeIf(k -> k.equalsIgnoreCase(kit));
+        }
+        other.save();
     }
 
     private String joinFrom(String[] args, int from) {
