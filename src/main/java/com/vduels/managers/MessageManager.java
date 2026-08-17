@@ -35,6 +35,16 @@ public class MessageManager {
         DEFAULTS.put("duel.sent", "{prefix}&aChallenge sent to &e{target} &a(&e{kit}&a, first to &e{rounds}&a).");
         DEFAULTS.put("duel.starting", "{prefix}&aDuel starting against &e{opponent}&a!");
         DEFAULTS.put("duel.round", "{prefix}&fRound &b{round} &f- first to {roundsToWin}");
+
+        // The "Duel:" card shown to both players when a match begins.
+        DEFAULTS.put("duel.start.header", "&f&lDuel:");
+        DEFAULTS.put("duel.start.opponent", "&a⚔ &7Opponent: &f{opponent}");
+        DEFAULTS.put("duel.start.kit", "&a✎ &7Kit: &d{kit}");
+        DEFAULTS.put("duel.start.rounds", "&a★ &7Rounds: &f{rounds}");
+        DEFAULTS.put("duel.start.ranked", "&a☾ &7Ranked: &f{ranked}");
+        DEFAULTS.put("duel.start.leave", "{prefix}&7Use &a/leave &7to leave the duel.");
+
+        DEFAULTS.put("leave.not-in-duel", "{prefix}&cYou are not in a duel.");
         DEFAULTS.put("duel.victory", "{prefix}&a&lVICTORY! &fYou won the duel (&e{yourScore} &f- &e{theirScore}&f).");
         DEFAULTS.put("duel.defeat", "{prefix}&c&lDEFEAT. &f{winner} won the duel.");
 
@@ -59,8 +69,8 @@ public class MessageManager {
         DEFAULTS.put("arena.cannot-edit", "{prefix}&cYou cannot edit an arena here.");
 
         DEFAULTS.put("titles.countdown.title", "&e{seconds}");
-        DEFAULTS.put("titles.countdown.subtitle", "&fGet ready...");
-        DEFAULTS.put("titles.fight.title", "&c&lFIGHT!");
+        DEFAULTS.put("titles.countdown.subtitle", "");
+        DEFAULTS.put("titles.fight.title", "&eFIGHT ⚔ !");
         DEFAULTS.put("titles.fight.subtitle", "");
         DEFAULTS.put("titles.round-won.title", "&aRound won!");
         DEFAULTS.put("titles.round-won.subtitle", "&e{yourScore} &f- &e{theirScore}");

@@ -54,6 +54,9 @@ commands:
   duel:
     description: Challenge a player to a duel.
     usage: /duel <player>
+  leave:
+    description: Leave (forfeit) your current duel.
+    usage: /leave
 
 permissions:
   vduels.admin:

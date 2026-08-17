@@ -30,8 +30,8 @@ public class ScoreboardService {
 
     // Monochrome unicode glyphs (coloured by legacy codes) matching the design.
     private static final String ICON_SCORE = "ⓘ"; // circled i
-    private static final String ICON_TEAM = "■";  // filled square
-    private static final String ICON_PING = "✦";  // four-point star
+    private static final String ICON_TEAM = "⚑";  // flag
+    private static final String ICON_PING = "★";  // star
     private static final String ICON_TIME = "⌚";  // watch
 
     private final VDuels plugin;
@@ -83,13 +83,13 @@ public class ScoreboardService {
 
         board.setLine(0, "");
         board.setLine(1, "&8" + ICON_SCORE + " &fScore: &b" + duel.getScoreFor(id)
-                + " &8- &b" + duel.getScoreAgainst(id));
+                + " &7- &c" + duel.getScoreAgainst(id));
         board.setLine(2, "");
         board.setLine(3, teamColor + ICON_TEAM + " &fTeam: " + teamColor + teamName);
-        board.setLine(4, "&a" + ICON_PING + " &fPing: &f" + player.getPing() + "&8ms");
+        board.setLine(4, "&a" + ICON_PING + " &fPing: &a" + player.getPing() + "ms");
         board.setLine(5, "&6" + ICON_TIME + " &fTime: &f" + time);
         board.setLine(6, "");
-        board.setLine(7, "&e" + plugin.getScoreboardIp());
+        board.setLine(7, "&8" + ICON_SCORE + " &b" + plugin.getScoreboardIp());
     }
 
     /** Holds one player's scoreboard and its per-line teams. */
@@ -101,7 +101,7 @@ public class ScoreboardService {
         private DuelBoard() {
             this.scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
             Objective objective = scoreboard.registerNewObjective("vduels", Criteria.DUMMY,
-                    Text.color("&b&lDUELS"));
+                    Text.color("&e&lDUELS"));
             objective.setDisplaySlot(DisplaySlot.SIDEBAR);
             for (int i = 0; i < LINES; i++) {
                 String entry = LINE_KEYS[i].toString();

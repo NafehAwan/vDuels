@@ -49,6 +49,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             case "editgui" -> editGui(sender, args);
             case "category" -> category(sender, args);
             case "duel" -> duel(sender, args);
+            case "leave" -> leave(sender);
             case "scoreboardip" -> scoreboardIp(sender, args);
             case "vduels" -> root(sender, args);
             default -> {
@@ -249,6 +250,13 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
         // Kit selection comes first; picking a kit opens the DUEL CONFIRM menu.
         DuelConfirmMenu confirm = new DuelConfirmMenu(plugin, target);
         new KitPickMenu(plugin, confirm).open(player);
+    }
+
+    private void leave(CommandSender sender) {
+        if (!requirePlayer(sender)) {
+            return;
+        }
+        plugin.getDuelManager().leave((Player) sender);
     }
 
     private void handleAccept(Player player, String[] args) {

@@ -31,7 +31,7 @@ import java.util.UUID;
 public class DuelManager {
 
     private static final long REQUEST_TTL = 60_000L; // 60s
-    private static final int COUNTDOWN = 3;
+    private static final int COUNTDOWN = 5;
 
     private final VDuels plugin;
 
@@ -174,9 +174,34 @@ public class DuelManager {
         plugin.getScoreboardService().attach(p1, duel);
         plugin.getScoreboardService().attach(p2, duel);
 
-        p1.sendMessage(msg("duel.starting", "opponent", p2.getName()));
-        p2.sendMessage(msg("duel.starting", "opponent", p1.getName()));
+        sendStartCard(p1, p2.getName(), duel);
+        sendStartCard(p2, p1.getName(), duel);
         startRound(duel);
+    }
+
+    /** The multi-line "Duel:" card shown to each player when the match begins. */
+    private void sendStartCard(Player player, String opponentName, ActiveDuel duel) {
+        String kitLabel = kitLabel(duel.getKit());
+        String rounds = String.valueOf(duel.getRoundsToWin());
+        player.sendMessage(msg("duel.start.header"));
+        player.sendMessage(msg("duel.start.opponent", "opponent", opponentName));
+        player.sendMessage(msg("duel.start.kit", "kit", kitLabel));
+        player.sendMessage(msg("duel.start.rounds", "rounds", rounds));
+        player.sendMessage(msg("duel.start.ranked", "ranked", "No"));
+        player.sendMessage("");
+        player.sendMessage(msg("duel.start.leave"));
+    }
+
+    /**
+     * The kit name to show in chat: its display name's plain text (MiniMessage
+     * tags stripped) when set, otherwise the kit id.
+     */
+    private String kitLabel(String kitId) {
+        Kit kit = plugin.getKitManager().get(kitId);
+        if (kit != null && kit.getDisplayName() != null && !kit.getDisplayName().isEmpty()) {
+            return kit.getDisplayName().replaceAll("<[^>]*>", "");
+        }
+        return kitId;
     }
 
     private void startRound(ActiveDuel duel) {
@@ -224,8 +249,9 @@ public class DuelManager {
         }
         if (secondsLeft <= 0) {
             duel.setState(ActiveDuel.State.FIGHTING);
-            sendTitle(p1, msg("titles.fight.title"), msg("titles.fight.subtitle"));
-            sendTitle(p2, msg("titles.fight.title"), msg("titles.fight.subtitle"));
+            // FIGHT holds a touch longer; no fade-in so it snaps in after "1".
+            sendTitle(p1, msg("titles.fight.title"), msg("titles.fight.subtitle"), 0, 40, 10);
+            sendTitle(p2, msg("titles.fight.title"), msg("titles.fight.subtitle"), 0, 40, 10);
             Sounds.fight(p1);
             Sounds.fight(p2);
             return;
@@ -233,8 +259,9 @@ public class DuelManager {
         String secs = String.valueOf(secondsLeft);
         String ctTitle = msg("titles.countdown.title", "seconds", secs);
         String ctSub = msg("titles.countdown.subtitle", "seconds", secs);
-        sendTitle(p1, ctTitle, ctSub);
-        sendTitle(p2, ctTitle, ctSub);
+        // No fade in/out and a >1s hold so each number cleanly replaces the last.
+        sendTitle(p1, ctTitle, ctSub, 0, 22, 2);
+        sendTitle(p2, ctTitle, ctSub, 0, 22, 2);
         Sounds.countdown(p1);
         Sounds.countdown(p2);
         // Movement is frozen by DuelListener during STARTING; no re-teleport
@@ -386,7 +413,31 @@ public class DuelManager {
     }
 
     private void sendTitle(Player player, String title, String subtitle) {
+        sendTitle(player, title, subtitle, 5, 30, 10);
+    }
+
+    private void sendTitle(Player player, String title, String subtitle,
+                           int fadeIn, int stay, int fadeOut) {
         // title/subtitle are already coloured by the message manager.
-        player.sendTitle(title, subtitle, 5, 30, 10);
+        player.sendTitle(title, subtitle, fadeIn, stay, fadeOut);
+    }
+
+    /** A player forfeits their current duel with {@code /leave}. */
+    public void leave(Player player) {
+        UUID id = player.getUniqueId();
+        ActiveDuel duel = playerDuels.get(id);
+        if (duel == null) {
+            player.sendMessage(msg("leave.not-in-duel"));
+            return;
+        }
+        UUID winnerId = duel.getOpponent(id);
+        duel.setState(ActiveDuel.State.ENDING);
+        // Award the remaining rounds to the opponent so the match ends cleanly.
+        while (duel.getMatchWinner() == null) {
+            if (duel.awardRound(winnerId)) {
+                break;
+            }
+        }
+        endMatch(duel, winnerId, false);
     }
 }
