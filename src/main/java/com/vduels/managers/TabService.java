@@ -87,33 +87,30 @@ public class TabService {
         int fighting = plugin.getDuelManager().playersInDuels();
         int global = online; // single server: global == online
 
+        // The discord/store lines carry their own MiniMessage colours/gradients.
         String header = plugin.getTabTitle()
                 + "\n<gray>Global Players: <white>" + global
                 + "\n \n<gray>Online: <green>" + online
                 + " <dark_gray>• <gray>Fighting: <red>" + fighting;
-        String footer = " \n<aqua>" + plugin.getTabDiscord()
-                + "\n<yellow>" + plugin.getTabStore();
+        String footer = " \n" + plugin.getTabDiscord()
+                + "\n" + plugin.getTabStore();
 
         viewer.sendPlayerListHeaderAndFooter(mm(header), mm(footer));
     }
 
-    /** Refreshes the header/footer counts for everyone in a fight (per second). */
+    /**
+     * Refreshes the branded header/footer for every online player each second -
+     * this is the default tab everyone sees, in a fight or not.
+     */
     public void tick() {
-        if (fighters.isEmpty()) {
-            return;
-        }
-        for (UUID id : new HashSet<>(fighters)) {
-            Player p = Bukkit.getPlayer(id);
-            if (p == null) {
-                fighters.remove(id);
-            } else {
-                sendHeaderFooter(p);
-            }
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            sendHeaderFooter(p);
         }
     }
 
-    /** A newcomer must stay hidden from anyone currently in a fight. */
+    /** Show the newcomer the branded tab, and hide them from any live fight. */
     public void onPlayerJoin(Player joiner) {
+        sendHeaderFooter(joiner);
         for (UUID id : fighters) {
             Player fighter = Bukkit.getPlayer(id);
             if (fighter != null && !fighter.getUniqueId().equals(joiner.getUniqueId())) {
@@ -122,7 +119,7 @@ public class TabService {
         }
     }
 
-    /** Restore a fighter's normal tab (show everyone, clear header/footer). */
+    /** End of a fight: make every player visible again (branding stays). */
     public void detach(UUID id) {
         if (!fighters.remove(id)) {
             return;
@@ -136,7 +133,6 @@ public class TabService {
                 viewer.showPlayer(plugin, online);
             }
         }
-        viewer.sendPlayerListHeaderAndFooter(mm(""), mm(""));
     }
 
     private static Component mm(String miniMessage) {

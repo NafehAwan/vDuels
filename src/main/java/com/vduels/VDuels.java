@@ -58,10 +58,9 @@ public final class VDuels extends JavaPlugin {
         this.keyButton = new NamespacedKey(this, "button");
         this.keyArena = new NamespacedKey(this, "arena");
         this.scoreboardIp = getConfig().getString("scoreboard-ip", "play.example.net");
-        this.tabTitle = getConfig().getString("tab.title",
-                "<gradient:#FFD700:#FFC62F><bold>DesertiaMC</bold></gradient>");
-        this.tabDiscord = getConfig().getString("tab.discord", "discord.desertiamc.fun");
-        this.tabStore = getConfig().getString("tab.store", "store.desertiamc.fun");
+        this.tabTitle = getConfig().getString("tab.title", "<gold><bold>ServerName</bold></gold>");
+        this.tabDiscord = getConfig().getString("tab.discord", "<aqua>discord.example.net</aqua>");
+        this.tabStore = getConfig().getString("tab.store", "<yellow>store.example.net</yellow>");
 
         this.messageManager = new MessageManager(this);
         this.arenaManager = new ArenaManager(this);

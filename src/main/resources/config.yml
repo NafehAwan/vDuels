@@ -13,9 +13,10 @@ round-countdown-seconds: 3
 # Also settable in-game with /vduels:scoreboardip <ip>
 scoreboard-ip: "play.example.net"
 
-# Per-fight tab list. The title supports MiniMessage (gradients, bold, etc.).
+# Tab list branding (shown to everyone; a fight only isolates the player list).
+# All three support MiniMessage - gradients, colours and bold.
 # Editable in-game through the GUI: /vduelstab
 tab:
-  title: "<gradient:#FFD700:#FFC62F><bold>DesertiaMC</bold></gradient>"
-  discord: "discord.desertiamc.fun"
-  store: "store.desertiamc.fun"
+  title: "<gold><bold>ServerName</bold></gold>"
+  discord: "<aqua>discord.example.net</aqua>"
+  store: "<yellow>store.example.net</yellow>"
