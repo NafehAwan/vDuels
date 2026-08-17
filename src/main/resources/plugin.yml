@@ -68,6 +68,14 @@ commands:
     description: Configure the per-fight tab (title, discord, store).
     usage: /vduelstab
     permission: vduels.admin
+  editkit:
+    description: Edit a kit's starting effects.
+    usage: /editkit [kit]
+    permission: vduels.admin
+  spectate:
+    description: Spectate a player (or /spectate to stop).
+    usage: /spectate [player]
+    aliases: [spec]
 
 permissions:
   vduels.admin:

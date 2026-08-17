@@ -46,6 +46,13 @@ public class MessageManager {
 
         DEFAULTS.put("leave.not-in-duel", "{prefix}&cYou are not in a duel.");
 
+        DEFAULTS.put("spectate.not-found", "{prefix}&cPlayer {name} is not online.");
+        DEFAULTS.put("spectate.in-duel", "{prefix}&cYou can't spectate while in a duel.");
+        DEFAULTS.put("spectate.self", "{prefix}&cYou can't spectate yourself.");
+        DEFAULTS.put("spectate.now", "{prefix}&aNow spectating &e{target}&a. Type &e/spectate&a to stop.");
+        DEFAULTS.put("spectate.stopped", "{prefix}&aStopped spectating.");
+        DEFAULTS.put("spectate.not-spectating", "{prefix}&cYou are not spectating anyone.");
+
         DEFAULTS.put("queue.in-duel", "{prefix}&cYou are already in a duel.");
         DEFAULTS.put("queue.kit-gone", "{prefix}&cThat kit no longer exists.");
         DEFAULTS.put("queue.left", "{prefix}&aYou left every queue.");

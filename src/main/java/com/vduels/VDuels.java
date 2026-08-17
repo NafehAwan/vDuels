@@ -14,6 +14,7 @@ import com.vduels.managers.MessageManager;
 import com.vduels.managers.QueueManager;
 import com.vduels.managers.ScoreboardService;
 import com.vduels.managers.SetupManager;
+import com.vduels.managers.SpectateManager;
 import com.vduels.managers.TabEditManager;
 import com.vduels.managers.TabService;
 import org.bukkit.NamespacedKey;
@@ -38,6 +39,7 @@ public final class VDuels extends JavaPlugin {
     private QueueManager queueManager;
     private TabService tabService;
     private TabEditManager tabEditManager;
+    private SpectateManager spectateManager;
 
     private NamespacedKey keyKit;
     private NamespacedKey keyButton;
@@ -74,6 +76,7 @@ public final class VDuels extends JavaPlugin {
         this.queueManager = new QueueManager(this);
         this.tabService = new TabService(this);
         this.tabEditManager = new TabEditManager(this);
+        this.spectateManager = new SpectateManager(this);
 
         registerCommands();
         registerListeners();
@@ -105,7 +108,8 @@ public final class VDuels extends JavaPlugin {
         VDuelsCommand handler = new VDuelsCommand(this);
         for (String name : new String[]{"vduels", "createarena", "arena", "deletearena",
                 "kitcreate", "deletekit", "kiticon", "kitdisplayname", "editgui", "category",
-                "categoryqueue", "scoreboardip", "duel", "leave", "queue", "vduelstab"}) {
+                "categoryqueue", "scoreboardip", "duel", "leave", "queue", "vduelstab",
+                "editkit", "spectate"}) {
             PluginCommand command = getCommand(name);
             if (command != null) {
                 command.setExecutor(handler);
@@ -169,6 +173,10 @@ public final class VDuels extends JavaPlugin {
 
     public TabEditManager getTabEditManager() {
         return tabEditManager;
+    }
+
+    public SpectateManager getSpectateManager() {
+        return spectateManager;
     }
 
     public String getTabTitle() {

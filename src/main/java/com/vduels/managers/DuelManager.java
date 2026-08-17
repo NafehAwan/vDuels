@@ -242,6 +242,10 @@ public class DuelManager {
         }
         if (kit != null) {
             kit.applyTo(player);
+            // Apply the kit's configured starting effects (if any).
+            for (var effect : kit.getStartEffects()) {
+                player.addPotionEffect(effect.toPotionEffect());
+            }
         }
     }
 
@@ -316,12 +320,17 @@ public class DuelManager {
         if (matchOver) {
             endMatch(duel, winnerId, false);
         } else {
+            // More rounds to go: the loser watches in spectator for 2s, then the
+            // next round begins (startRound teleports them back and re-kits them).
+            if (loser != null) {
+                loser.setGameMode(GameMode.SPECTATOR);
+            }
             duel.nextRound();
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 if (playerDuels.containsKey(duel.getPlayer1())) {
                     startRound(duel);
                 }
-            }, 60L);
+            }, 40L); // 2 seconds
         }
     }
 

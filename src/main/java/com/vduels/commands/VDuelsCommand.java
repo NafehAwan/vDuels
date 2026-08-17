@@ -52,6 +52,8 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             case "categoryqueue" -> categoryCommand(sender, args, plugin.getQueueCategoryManager(), "categoryqueue");
             case "queue" -> queue(sender, args);
             case "vduelstab" -> vduelsTab(sender);
+            case "editkit" -> editKit(sender, args);
+            case "spectate" -> spectate(sender, args);
             case "duel" -> duel(sender, args);
             case "leave" -> leave(sender);
             case "scoreboardip" -> scoreboardIp(sender, args);
@@ -268,6 +270,44 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             return;
         }
         new com.vduels.gui.TabConfigMenu(plugin).open((Player) sender);
+    }
+
+    private void editKit(CommandSender sender, String[] args) {
+        if (!requireAdmin(sender) || !requirePlayer(sender)) {
+            return;
+        }
+        Player player = (Player) sender;
+        if (args.length >= 1) {
+            com.vduels.model.Kit kit = plugin.getKitManager().get(args[0]);
+            if (kit == null) {
+                sender.sendMessage(Text.prefixed("&cNo kit named &f" + args[0] + "&c."));
+                return;
+            }
+            new com.vduels.gui.EditKitEffectsMenu(plugin, kit).open(player);
+            return;
+        }
+        if (plugin.getKitManager().isEmpty()) {
+            sender.sendMessage(msg("duel.no-kits"));
+            return;
+        }
+        new com.vduels.gui.EditKitListMenu(plugin).open(player);
+    }
+
+    private void spectate(CommandSender sender, String[] args) {
+        if (!requirePlayer(sender)) {
+            return;
+        }
+        Player player = (Player) sender;
+        if (args.length == 0) {
+            plugin.getSpectateManager().stop(player);
+            return;
+        }
+        Player target = plugin.getServer().getPlayerExact(args[0]);
+        if (target == null) {
+            sender.sendMessage(msg("spectate.not-found", "name", args[0]));
+            return;
+        }
+        plugin.getSpectateManager().spectate(player, target);
     }
 
     private void queue(CommandSender sender, String[] args) {
@@ -529,7 +569,8 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
                     out.add(arena.getName());
                 }
             }
-        } else if ((name.equals("deletekit") || name.equals("kiticon") || name.equals("kitdisplayname")) && args.length == 1) {
+        } else if ((name.equals("deletekit") || name.equals("kiticon") || name.equals("kitdisplayname")
+                || name.equals("editkit")) && args.length == 1) {
             for (Kit kit : plugin.getKitManager().all()) {
                 if (startsWith(kit.getName(), args[0])) {
                     out.add(kit.getName());
@@ -561,7 +602,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             if (startsWith("leave", args[0])) {
                 out.add("leave");
             }
-        } else if (name.equals("duel") && args.length == 1) {
+        } else if ((name.equals("duel") || name.equals("spectate")) && args.length == 1) {
             for (Player p : plugin.getServer().getOnlinePlayers()) {
                 if (startsWith(p.getName(), args[0])) {
                     out.add(p.getName());

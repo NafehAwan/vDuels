@@ -6,7 +6,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
+import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A saved loadout: main inventory contents plus the four armour slots and the
@@ -21,9 +24,25 @@ public class Kit {
     private ItemStack offhand;
     private Material icon = Material.IRON_SWORD;
     private String displayName;     // optional MiniMessage display name
+    private final Set<StartEffect> startEffects = EnumSet.noneOf(StartEffect.class);
 
     public Kit(String name) {
         this.name = name;
+    }
+
+    /** The starting effects this kit grants each round (empty = none). */
+    public Set<StartEffect> getStartEffects() {
+        return startEffects;
+    }
+
+    public boolean hasStartEffect(StartEffect effect) {
+        return startEffects.contains(effect);
+    }
+
+    public void toggleStartEffect(StartEffect effect) {
+        if (!startEffects.remove(effect)) {
+            startEffects.add(effect);
+        }
     }
 
     public String getName() {
@@ -87,6 +106,11 @@ public class Kit {
     public void save(ConfigurationSection section) {
         section.set("icon", icon.name());
         section.set("display-name", displayName);
+        List<String> effectNames = new ArrayList<>();
+        for (StartEffect effect : startEffects) {
+            effectNames.add(effect.name());
+        }
+        section.set("start-effects", effectNames);
         section.set("contents", contents);
         section.set("armor", armor);
         section.set("offhand", offhand);
@@ -99,6 +123,13 @@ public class Kit {
         Material mat = Material.matchMaterial(iconName);
         kit.icon = mat == null ? Material.IRON_SWORD : mat;
         kit.displayName = section.getString("display-name");
+        for (String effectName : section.getStringList("start-effects")) {
+            try {
+                kit.startEffects.add(StartEffect.valueOf(effectName));
+            } catch (IllegalArgumentException ignored) {
+                // Unknown effect name in config - skip it.
+            }
+        }
 
         List<?> contentsList = section.getList("contents");
         if (contentsList != null) {
