@@ -103,6 +103,8 @@ public class ScoreboardService {
             Objective objective = scoreboard.registerNewObjective("vduels", Criteria.DUMMY,
                     Text.color("&e&lDUELS"));
             objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+            // Hide the red side-numbers Minecraft draws for each sidebar line.
+            objective.numberFormat(io.papermc.paper.scoreboard.numbers.NumberFormat.blank());
             for (int i = 0; i < LINES; i++) {
                 String entry = LINE_KEYS[i].toString();
                 entries[i] = entry;
