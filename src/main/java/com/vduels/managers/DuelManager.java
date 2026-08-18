@@ -45,6 +45,23 @@ public class DuelManager {
         this.plugin = plugin;
     }
 
+    // --- arena reservation (used by PartyManager for FFA/split/party-duel matches) ---
+
+    /** Whether an arena (by name, case-insensitive) is currently in use by any duel or party match. */
+    public boolean isArenaBusy(String arenaName) {
+        return arenasInUse.contains(arenaName.toLowerCase());
+    }
+
+    /** Marks an arena as in-use so it won't be picked for another match. */
+    public void reserveArena(String arenaName) {
+        arenasInUse.add(arenaName.toLowerCase());
+    }
+
+    /** Frees a previously reserved arena. */
+    public void releaseArena(String arenaName) {
+        arenasInUse.remove(arenaName.toLowerCase());
+    }
+
     // --- requests ---------------------------------------------------------
 
     public void sendRequest(Player sender, Player target, String kit, int rounds, String arena) {

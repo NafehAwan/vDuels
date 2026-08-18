@@ -86,6 +86,54 @@ public class MessageManager {
         DEFAULTS.put("menu.target-offline", "{prefix}&c{target} is no longer online.");
         DEFAULTS.put("menu.arena-incompatible", "{prefix}&cThat arena doesn't support the selected kit.");
 
+
+        DEFAULTS.put("party.already-in-party", "{prefix}&cYou're already in a party.");
+        DEFAULTS.put("party.created", "{prefix}&aParty created! Use &f/party invite <player> &ato add people.");
+        DEFAULTS.put("party.usage-invite", "{prefix}&cUsage: /party invite <player>");
+        DEFAULTS.put("party.invite-failed", "{prefix}&cCouldn't invite {target} - they may already be in a party.");
+        DEFAULTS.put("party.invite-sent", "{prefix}&aInvite sent to {target}.");
+        DEFAULTS.put("party.invite-received", "{prefix}&e{inviter} &finvited you to their party! &aType /party join {inviter} &fto accept.");
+        DEFAULTS.put("party.usage-join", "{prefix}&cUsage: /party join <leader>");
+        DEFAULTS.put("party.no-pending-invite", "{prefix}&cYou don't have a pending invite from that player.");
+        DEFAULTS.put("party.joined", "{prefix}&aYou joined the party!");
+        DEFAULTS.put("party.declined", "{prefix}&7You declined the invite.");
+        DEFAULTS.put("party.invite-was-declined", "{prefix}&e{player} &fdeclined your party invite.");
+        DEFAULTS.put("party.not-in-party", "{prefix}&cYou're not in a party.");
+        DEFAULTS.put("party.usage-kick", "{prefix}&cUsage: /party kick <player>");
+        DEFAULTS.put("party.kick-failed", "{prefix}&cCouldn't kick {target}.");
+        DEFAULTS.put("party.not-leader", "{prefix}&cOnly the party leader can do that.");
+        DEFAULTS.put("party.member-joined", "{prefix}&e{player} &fjoined the party.");
+        DEFAULTS.put("party.member-left", "{prefix}&e{player} &fleft the party.");
+        DEFAULTS.put("party.you-left", "{prefix}&7You left the party.");
+        DEFAULTS.put("party.you-were-kicked", "{prefix}&cYou were kicked from the party.");
+        DEFAULTS.put("party.member-kicked", "{prefix}&e{player} &fwas kicked from the party.");
+        DEFAULTS.put("party.disbanded", "{prefix}&cThe party was disbanded.");
+        DEFAULTS.put("party.ffa.need-players", "{prefix}&cYou need at least 2 online party members to start a FFA.");
+        DEFAULTS.put("party.ffa.no-arena", "{prefix}&cNo free arena supports this kit right now.");
+        DEFAULTS.put("party.ffa.round", "{prefix}&fRound &e{round}&f/&e{roundsToWin} &f- last one standing wins!");
+        DEFAULTS.put("party.ffa.eliminated", "{prefix}&cYou were eliminated! Spectating until the round ends.");
+        DEFAULTS.put("party.ffa.player-eliminated", "{prefix}&e{player} &fwas eliminated! &e{remaining} &fplayer(s) remaining.");
+        DEFAULTS.put("party.ffa.you-won", "{prefix}&a&lYOU WON THE PARTY FFA!");
+        DEFAULTS.put("party.ffa.match-over", "{prefix}&fThe party FFA is over. &e{winner} &fwon!");
+        DEFAULTS.put("party.match-force-ended", "{prefix}&7The match was force-ended by the party leader.");
+        DEFAULTS.put("party.now-public", "{prefix}&aYour party is now public - anyone can /party join you.");
+        DEFAULTS.put("party.now-private", "{prefix}&7Your party is now private - invite only.");
+        DEFAULTS.put("party.usage-transfer", "{prefix}&cUsage: /party transfer <player>");
+        DEFAULTS.put("party.transfer-failed", "{prefix}&cCouldn't transfer leadership to {target} - are they in your party?");
+        DEFAULTS.put("party.leadership-transferred", "{prefix}&e{player} &fis now the party leader.");
+        DEFAULTS.put("party.nothing-to-end", "{prefix}&cYour party isn't in a match right now.");
+        DEFAULTS.put("party.split.need-both-teams", "{prefix}&cAssign at least one online player to each of red and blue first.");
+        DEFAULTS.put("party.team.round", "{prefix}&fRound &e{round}&f/&e{roundsToWin} &f- eliminate the other team!");
+        DEFAULTS.put("party.team.eliminated", "{prefix}&cYou were eliminated! Spectating until the round ends.");
+        DEFAULTS.put("party.team.player-eliminated", "{prefix}&e{player} &fwas eliminated!");
+        DEFAULTS.put("party.team.you-won", "{prefix}&a&lYOUR TEAM WON!");
+        DEFAULTS.put("party.team.you-lost", "{prefix}&c&lYOUR TEAM LOST.");
+        DEFAULTS.put("party.duel.sent", "{prefix}&aChallenge sent to {target}'s party!");
+        DEFAULTS.put("party.duel.request-header", "&e{sender}&f's party has challenged your party to a duel!");
+        DEFAULTS.put("party.duel.declined", "{prefix}&7You declined the party challenge.");
+        DEFAULTS.put("party.duel.was-declined", "{prefix}&e{player}&f's party declined your challenge.");
+        DEFAULTS.put("party.usage-duelaccept", "{prefix}&cUsage: /party duelaccept <leader>");
+
         DEFAULTS.put("arena.cannot-edit", "{prefix}&cYou cannot edit an arena here.");
 
         DEFAULTS.put("titles.countdown.title", "&e{seconds}");

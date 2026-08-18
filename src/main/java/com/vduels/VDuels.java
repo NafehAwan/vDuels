@@ -4,6 +4,7 @@ import com.vduels.commands.VDuelsCommand;
 import com.vduels.listeners.ArenaProtectionListener;
 import com.vduels.listeners.DuelListener;
 import com.vduels.listeners.GuiListener;
+import com.vduels.listeners.PartyListener;
 import com.vduels.listeners.SetupChatListener;
 import com.vduels.managers.ArenaManager;
 import com.vduels.managers.DuelManager;
@@ -11,6 +12,7 @@ import com.vduels.managers.CategoryManager;
 import com.vduels.managers.GuiLayoutManager;
 import com.vduels.managers.KitManager;
 import com.vduels.managers.MessageManager;
+import com.vduels.managers.PartyManager;
 import com.vduels.managers.QueueManager;
 import com.vduels.managers.ScoreboardService;
 import com.vduels.managers.SetupManager;
@@ -40,6 +42,7 @@ public final class VDuels extends JavaPlugin {
     private TabService tabService;
     private TabEditManager tabEditManager;
     private SpectateManager spectateManager;
+    private PartyManager partyManager;
 
     private NamespacedKey keyKit;
     private NamespacedKey keyButton;
@@ -77,6 +80,7 @@ public final class VDuels extends JavaPlugin {
         this.tabService = new TabService(this);
         this.tabEditManager = new TabEditManager(this);
         this.spectateManager = new SpectateManager(this);
+        this.partyManager = new PartyManager(this);
 
         registerCommands();
         registerListeners();
@@ -110,7 +114,7 @@ public final class VDuels extends JavaPlugin {
         for (String name : new String[]{"vduels", "createarena", "arena", "deletearena",
                 "kitcreate", "deletekit", "kiticon", "kitdisplayname", "editgui", "category",
                 "categoryqueue", "scoreboardip", "duel", "leave", "queue", "vduelstab",
-                "editkit", "changekit", "spectate"}) {
+                "editkit", "changekit", "spectate", "party"}) {
             PluginCommand command = getCommand(name);
             if (command != null) {
                 command.setExecutor(handler);
@@ -126,6 +130,7 @@ public final class VDuels extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new SetupChatListener(this), this);
         getServer().getPluginManager().registerEvents(new ArenaProtectionListener(this), this);
         getServer().getPluginManager().registerEvents(new DuelListener(this), this);
+        getServer().getPluginManager().registerEvents(new PartyListener(this), this);
     }
 
     public ArenaManager getArenaManager() {
@@ -178,6 +183,10 @@ public final class VDuels extends JavaPlugin {
 
     public SpectateManager getSpectateManager() {
         return spectateManager;
+    }
+
+    public PartyManager getPartyManager() {
+        return partyManager;
     }
 
     public String getTabTitle() {

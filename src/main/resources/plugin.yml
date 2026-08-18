@@ -2,7 +2,7 @@ name: vDuels
 version: ${project.version}
 main: com.vduels.VDuels
 api-version: '1.21'
-author: nafehawan
+authors: [nafehawan, cravewho]
 description: GUI-based Duels and Party plugin.
 softdepend:
   - FastAsyncWorldEdit
@@ -80,13 +80,17 @@ commands:
     description: Spectate a player (or /spectate to stop).
     usage: /spectate [player]
     aliases: [spec]
+  party:
+    description: Manage your party (create, invite, join, leave, kick, disband, etc).
+    usage: /party <create|invite|join|decline|leave|kick|disband|transfer|public|private|info|manage|duel|forceend|help>
+    permission: vduels.use
 
 permissions:
   vduels.admin:
     description: Access to vDuels administration commands.
     default: op
   vduels.use:
-    description: Access to the /duel command.
+    description: Access to the /duel, /queue, /leave and /party commands.
     default: true
   vduels.changekit:
     description: Access to the /changekit command.

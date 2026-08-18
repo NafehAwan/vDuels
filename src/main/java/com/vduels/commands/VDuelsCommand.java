@@ -5,6 +5,9 @@ import com.vduels.gui.ArenaMenu;
 import com.vduels.gui.DuelConfirmMenu;
 import com.vduels.gui.GuiEditorMenu;
 import com.vduels.gui.KitPickMenu;
+import com.vduels.gui.PartyDuelBrowseMenu;
+import com.vduels.gui.PartyInfoMenu;
+import com.vduels.gui.PartyMatchMenu;
 import com.vduels.gui.QueuePickMenu;
 import com.vduels.managers.CategoryManager;
 import com.vduels.managers.GuiLayoutManager;
@@ -13,7 +16,9 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import com.vduels.model.DuelRequest;
 import com.vduels.model.Kit;
+import com.vduels.model.Party;
 import com.vduels.util.Text;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -57,6 +62,7 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
             case "spectate" -> spectate(sender, args);
             case "duel" -> duel(sender, args);
             case "leave" -> leave(sender);
+            case "party" -> party(sender, args);
             case "scoreboardip" -> scoreboardIp(sender, args);
             case "vduels" -> root(sender, args);
             default -> {
@@ -374,6 +380,233 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
         plugin.getDuelManager().acceptRequest(player, senderId);
     }
 
+    // --- player: party ------------------------------------------------------
+
+    private void party(CommandSender sender, String[] args) {
+        if (!requirePlayer(sender)) {
+            return;
+        }
+        Player player = (Player) sender;
+        if (args.length == 0) {
+            partyHelp(player);
+            return;
+        }
+        String sub = args[0].toLowerCase(Locale.ROOT);
+        switch (sub) {
+            case "create": {
+                if (plugin.getPartyManager().isInParty(player.getUniqueId())) {
+                    player.sendMessage(msg("party.already-in-party"));
+                    return;
+                }
+                plugin.getPartyManager().create(player);
+                player.sendMessage(msg("party.created"));
+                break;
+            }
+            case "invite": {
+                if (args.length < 2) {
+                    player.sendMessage(msg("party.usage-invite"));
+                    return;
+                }
+                Party party = plugin.getPartyManager().getParty(player.getUniqueId());
+                if (party == null) {
+                    if (!plugin.getPartyManager().create(player)) {
+                        return;
+                    }
+                    player.sendMessage(msg("party.created"));
+                }
+                Player target = plugin.getServer().getPlayer(args[1]);
+                if (target == null) {
+                    player.sendMessage(msg("menu.target-offline", "target", args[1]));
+                    return;
+                }
+                if (!plugin.getPartyManager().invite(player, target)) {
+                    player.sendMessage(msg("party.invite-failed", "target", target.getName()));
+                    return;
+                }
+                player.sendMessage(msg("party.invite-sent", "target", target.getName()));
+                target.sendMessage(msg("party.invite-received", "inviter", player.getName()));
+                break;
+            }
+            case "join": {
+                if (args.length < 2) {
+                    player.sendMessage(msg("party.usage-join"));
+                    return;
+                }
+                Player leader = plugin.getServer().getPlayer(args[1]);
+                UUID leaderId = leader != null ? leader.getUniqueId() : plugin.getPartyManager().getPendingInviter(player.getUniqueId());
+                if (leaderId == null || !plugin.getPartyManager().join(player, leaderId)) {
+                    player.sendMessage(msg("party.no-pending-invite"));
+                    return;
+                }
+                player.sendMessage(msg("party.joined"));
+                break;
+            }
+            case "decline": {
+                UUID leaderId = (args.length >= 2 && plugin.getServer().getPlayer(args[1]) != null)
+                        ? plugin.getServer().getPlayer(args[1]).getUniqueId()
+                        : plugin.getPartyManager().getPendingInviter(player.getUniqueId());
+                if (leaderId == null || plugin.getPartyManager().clearInvite(player.getUniqueId()) == null) {
+                    player.sendMessage(msg("party.no-pending-invite"));
+                    return;
+                }
+                player.sendMessage(msg("party.declined"));
+                Player leader = plugin.getServer().getPlayer(leaderId);
+                if (leader != null) {
+                    leader.sendMessage(msg("party.invite-was-declined", "player", player.getName()));
+                }
+                break;
+            }
+            case "leave": {
+                if (!plugin.getPartyManager().isInParty(player.getUniqueId())) {
+                    player.sendMessage(msg("party.not-in-party"));
+                    return;
+                }
+                plugin.getPartyManager().leave(player);
+                break;
+            }
+            case "kick": {
+                if (args.length < 2) {
+                    player.sendMessage(msg("party.usage-kick"));
+                    return;
+                }
+                if (!plugin.getPartyManager().kick(player, args[1])) {
+                    player.sendMessage(msg("party.kick-failed", "target", args[1]));
+                }
+                break;
+            }
+            case "disband": {
+                if (!plugin.getPartyManager().disband(player)) {
+                    player.sendMessage(msg("party.not-leader"));
+                }
+                break;
+            }
+            case "gamemodes":
+            case "manage":
+            case "match": {
+                Party party = plugin.getPartyManager().getParty(player.getUniqueId());
+                if (party == null) {
+                    player.sendMessage(msg("party.not-in-party"));
+                    return;
+                }
+                new PartyMatchMenu(plugin, party).open(player);
+                break;
+            }
+            case "settings": {
+                Party party = plugin.getPartyManager().getParty(player.getUniqueId());
+                if (party == null) {
+                    player.sendMessage(msg("party.not-in-party"));
+                    return;
+                }
+                new PartyInfoMenu(plugin, party, player).open(player);
+                break;
+            }
+            case "info": {
+                Party target = args.length >= 2
+                        ? findPartyByLeaderName(args[1])
+                        : plugin.getPartyManager().getParty(player.getUniqueId());
+                if (target == null) {
+                    player.sendMessage(msg("party.not-in-party"));
+                    return;
+                }
+                sendPartyInfo(player, target);
+                break;
+            }
+            case "public":
+            case "private": {
+                boolean makePublic = sub.equals("public") && (args.length < 2 || !args[1].equalsIgnoreCase("off"));
+                if (!plugin.getPartyManager().setPublic(player, makePublic)) {
+                    player.sendMessage(msg("party.not-leader"));
+                    return;
+                }
+                player.sendMessage(msg(makePublic ? "party.now-public" : "party.now-private"));
+                break;
+            }
+            case "transfer": {
+                if (args.length < 2) {
+                    player.sendMessage(msg("party.usage-transfer"));
+                    return;
+                }
+                if (!plugin.getPartyManager().transferLeadership(player, args[1])) {
+                    player.sendMessage(msg("party.transfer-failed", "target", args[1]));
+                }
+                break;
+            }
+            case "forceend": {
+                if (!plugin.getPartyManager().forceEnd(player)) {
+                    player.sendMessage(msg("party.nothing-to-end"));
+                }
+                break;
+            }
+            case "duel": {
+                Party party = plugin.getPartyManager().getParty(player.getUniqueId());
+                if (party == null) {
+                    player.sendMessage(msg("party.not-in-party"));
+                    return;
+                }
+                new PartyDuelBrowseMenu(plugin, party, player).open(player);
+                break;
+            }
+            case "duelaccept": {
+                if (args.length < 2) {
+                    player.sendMessage(msg("party.usage-duelaccept"));
+                    return;
+                }
+                plugin.getPartyManager().acceptPartyDuelChallenge(player, args[1]);
+                break;
+            }
+            case "dueldecline": {
+                if (args.length < 2) {
+                    player.sendMessage(msg("party.usage-duelaccept"));
+                    return;
+                }
+                plugin.getPartyManager().declinePartyDuelChallenge(player, args[1]);
+                break;
+            }
+            default:
+                partyHelp(player);
+        }
+    }
+
+    private Party findPartyByLeaderName(String name) {
+        for (Party party : plugin.getPartyManager().getAllParties()) {
+            OfflinePlayer op = plugin.getServer().getOfflinePlayer(party.getLeader());
+            if (op.getName() != null && op.getName().equalsIgnoreCase(name)) {
+                return party;
+            }
+        }
+        return null;
+    }
+
+    private void sendPartyInfo(Player viewer, Party party) {
+        OfflinePlayer leader = plugin.getServer().getOfflinePlayer(party.getLeader());
+        String leaderName = leader.getName() == null ? "Unknown" : leader.getName();
+        viewer.sendMessage(Text.color("&e" + leaderName + "'s Party"));
+        viewer.sendMessage(Text.color("&fPARTY LEADER: &e" + leaderName));
+        viewer.sendMessage(Text.color("&fMEMBERS: &e" + party.size()));
+        viewer.sendMessage(Text.color("&fPUBLIC: " + (party.isPublic() ? "&aYes" : "&cNo")));
+        for (UUID id : party.getMembers()) {
+            OfflinePlayer op = plugin.getServer().getOfflinePlayer(id);
+            viewer.sendMessage(Text.color("&7- " + (op.getName() == null ? "Unknown" : op.getName())));
+        }
+    }
+
+    private void partyHelp(Player player) {
+        player.sendMessage(Text.color("&e/party create &7- create a party"));
+        player.sendMessage(Text.color("&e/party invite <player> &7- invite a player"));
+        player.sendMessage(Text.color("&e/party join <leader> &7- accept an invite"));
+        player.sendMessage(Text.color("&e/party decline <leader> &7- decline an invite"));
+        player.sendMessage(Text.color("&e/party leave &7- leave your party"));
+        player.sendMessage(Text.color("&e/party kick <player> &7- kick a member (leader)"));
+        player.sendMessage(Text.color("&e/party disband &7- disband the party (leader)"));
+        player.sendMessage(Text.color("&e/party transfer <player> &7- hand over leadership (leader)"));
+        player.sendMessage(Text.color("&e/party public|private &7- toggle join-without-invite (leader)"));
+        player.sendMessage(Text.color("&e/party info [leader] &7- view a party's info"));
+        player.sendMessage(Text.color("&e/party manage &7- open FFA/Duel/Split menu"));
+        player.sendMessage(Text.color("&e/party duel &7- browse & challenge other parties"));
+        player.sendMessage(Text.color("&e/party settings &7- open the party settings menu"));
+        player.sendMessage(Text.color("&e/party forceend &7- force-end your party's match (leader)"));
+    }
+
     // --- kit-menu categories ---------------------------------------------
 
     private void categoryCommand(CommandSender sender, String[] args, CategoryManager cats, String cmd) {
@@ -625,6 +858,21 @@ public class VDuelsCommand implements CommandExecutor, TabCompleter {
         } else if (name.equals("queue") && args.length == 1) {
             if (startsWith("leave", args[0])) {
                 out.add("leave");
+            }
+        } else if (name.equals("party") && args.length == 1) {
+            for (String sub : List.of("create", "invite", "join", "decline", "leave", "kick", "disband",
+                    "transfer", "public", "private", "info", "manage", "match", "settings", "duel",
+                    "forceend", "help")) {
+                if (startsWith(sub, args[0])) {
+                    out.add(sub);
+                }
+            }
+        } else if (name.equals("party") && args.length == 2
+                && List.of("invite", "kick", "transfer").contains(args[0].toLowerCase(Locale.ROOT))) {
+            for (Player p : plugin.getServer().getOnlinePlayers()) {
+                if (startsWith(p.getName(), args[1])) {
+                    out.add(p.getName());
+                }
             }
         } else if ((name.equals("duel") || name.equals("spectate")) && args.length == 1) {
             for (Player p : plugin.getServer().getOnlinePlayers()) {
