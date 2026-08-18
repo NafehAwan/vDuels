@@ -85,9 +85,15 @@ public final class Items {
     /** Sets a MiniMessage display name (gradients, bold, etc.), non-italic. */
     public Items miniName(String miniMessage) {
         if (meta != null && miniMessage != null) {
-            meta.displayName(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage()
-                    .deserialize(miniMessage)
-                    .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false));
+            try {
+                meta.displayName(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage()
+                        .deserialize(miniMessage)
+                        .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false));
+            } catch (Exception e) {
+                // A malformed display name must never break the whole menu: fall
+                // back to the plain text with the tags stripped.
+                meta.setDisplayName(Text.color("&e" + miniMessage.replaceAll("<[^>]*>", "")));
+            }
         }
         return this;
     }

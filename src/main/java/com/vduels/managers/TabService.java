@@ -174,6 +174,12 @@ public class TabService {
     }
 
     private static Component mm(String miniMessage) {
-        return MiniMessage.miniMessage().deserialize(miniMessage);
+        try {
+            return MiniMessage.miniMessage().deserialize(miniMessage);
+        } catch (Exception e) {
+            // A malformed tab value (bad tag from /vduelstab) must not break the
+            // tab: strip tag delimiters and render it as plain text instead.
+            return MiniMessage.miniMessage().deserialize(miniMessage.replace("<", "").replace(">", ""));
+        }
     }
 }

@@ -86,14 +86,29 @@ public final class VDuels extends JavaPlugin {
         registerListeners();
 
         // Refresh in-duel scoreboards, tab counts and open queue menus per second.
+        // Each subsystem is isolated so a failure in one (e.g. a bad tab value)
+        // never breaks the others or spams the console every tick.
         getServer().getScheduler().runTaskTimer(this, () -> {
-            scoreboardService.tick();
-            tabService.tick();
-            spectateManager.tick();
-            com.vduels.gui.QueuePickMenu.refreshAll();
+            safeTick("scoreboard", scoreboardService::tick);
+            safeTick("tab", tabService::tick);
+            safeTick("spectate", spectateManager::tick);
+            safeTick("queue-menu", com.vduels.gui.QueuePickMenu::refreshAll);
         }, 20L, 20L);
 
         getLogger().info("vDuels enabled.");
+    }
+
+    private final java.util.Set<String> warnedTicks = new java.util.HashSet<>();
+
+    /** Runs one repeating-task subsystem, logging a failure at most once. */
+    private void safeTick(String name, Runnable task) {
+        try {
+            task.run();
+        } catch (Exception e) {
+            if (warnedTicks.add(name)) {
+                getLogger().warning("vDuels " + name + " tick failed: " + e);
+            }
+        }
     }
 
     @Override

@@ -165,8 +165,13 @@ public class QueueManager {
      */
     private Component queuedLine(String textKey, String kit) {
         String prefix = plugin.messages().raw(textKey);
-        return MiniMessage.miniMessage().deserialize(
-                "<gray>" + prefix + "</gray>" + kitMini(kit) + "<gray>.</gray>");
+        String mini = "<gray>" + prefix + "</gray>" + kitMini(kit) + "<gray>.</gray>";
+        try {
+            return MiniMessage.miniMessage().deserialize(mini);
+        } catch (Exception e) {
+            // A malformed kit display name must not stop the queue action.
+            return MiniMessage.miniMessage().deserialize("<gray>" + prefix + kit + ".</gray>");
+        }
     }
 
     /** The kit's MiniMessage display name, or its id wrapped in gray. */

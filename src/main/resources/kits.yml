@@ -2,6 +2,9 @@ kits:
   NetheriteOP:
     icon: NETHERITE_SWORD
     display-name: <b><gradient:#FFC62F:#FCD05C>ɴᴇᴛʜᴇʀɪᴛᴇ ᴏᴘ</gradient></b>
+    start-effects:
+    - STRENGTH2_90
+    - SPEED2_90
     contents:
     - ==: org.bukkit.inventory.ItemStack
       DataVersion: 4671
@@ -328,6 +331,7 @@ kits:
   ModernAxe:
     icon: DIAMOND_AXE
     display-name: <b><gradient:#18FC00:#65FC5C>ᴍᴏᴅᴇʀɴ ᴀxᴇ</gradient></b>
+    start-effects: []
     contents:
     - ==: org.bukkit.inventory.ItemStack
       DataVersion: 4671
@@ -416,6 +420,7 @@ kits:
       schema_version: 1
   UHC:
     icon: LAVA_BUCKET
+    start-effects: []
     contents:
     - ==: org.bukkit.inventory.ItemStack
       DataVersion: 4671
@@ -566,164 +571,10 @@ kits:
       id: minecraft:shield
       count: 1
       schema_version: 1
-  ModernUHC:
-    icon: LAVA_BUCKET
-    display-name: <b><gradient:#E43A96:#FF78C1>ᴍᴏᴅᴇʀɴ ᴜʜᴄ</gradient></b>
-    contents:
-    - ==: org.bukkit.inventory.ItemStack
-      DataVersion: 4671
-      id: minecraft:diamond_sword
-      count: 1
-      components:
-        minecraft:enchantments: '{"minecraft:sharpness":3}'
-        minecraft:custom_data: '{Damage:0,Enchantments:[{id:"sharpness",lvl:3s}]}'
-      schema_version: 1
-    - ==: org.bukkit.inventory.ItemStack
-      DataVersion: 4671
-      id: minecraft:diamond_axe
-      count: 1
-      components:
-        minecraft:enchantments: '{"minecraft:efficiency":3}'
-      schema_version: 1
-    - ==: org.bukkit.inventory.ItemStack
-      DataVersion: 4671
-      id: minecraft:cobweb
-      count: 8
-      schema_version: 1
-    - ==: org.bukkit.inventory.ItemStack
-      DataVersion: 4671
-      id: minecraft:golden_apple
-      count: 8
-      schema_version: 1
-    - ==: org.bukkit.inventory.ItemStack
-      DataVersion: 4671
-      id: minecraft:water_bucket
-      count: 1
-      schema_version: 1
-    - ==: org.bukkit.inventory.ItemStack
-      DataVersion: 4671
-      id: minecraft:lava_bucket
-      count: 1
-      schema_version: 1
-    - ==: org.bukkit.inventory.ItemStack
-      DataVersion: 4671
-      id: minecraft:oak_planks
-      count: 64
-      schema_version: 1
-    - ==: org.bukkit.inventory.ItemStack
-      DataVersion: 4671
-      id: minecraft:crossbow
-      count: 1
-      components:
-        minecraft:enchantments: '{"minecraft:piercing":1}'
-        minecraft:charged_projectiles: '[{components:{"minecraft:custom_data":{"VV|Protocol1_20_3To1_20_5":1b},"minecraft:intangible_projectile":{}},count:1,id:"minecraft:arrow"}]'
-      schema_version: 1
-    - null
-    - null
-    - null
-    - null
-    - ==: org.bukkit.inventory.ItemStack
-      DataVersion: 4671
-      id: minecraft:water_bucket
-      count: 1
-      schema_version: 1
-    - ==: org.bukkit.inventory.ItemStack
-      DataVersion: 4671
-      id: minecraft:water_bucket
-      count: 1
-      schema_version: 1
-    - ==: org.bukkit.inventory.ItemStack
-      DataVersion: 4671
-      id: minecraft:water_bucket
-      count: 1
-      schema_version: 1
-    - null
-    - null
-    - ==: org.bukkit.inventory.ItemStack
-      DataVersion: 4671
-      id: minecraft:arrow
-      count: 10
-      schema_version: 1
-    - null
-    - null
-    - null
-    - null
-    - ==: org.bukkit.inventory.ItemStack
-      DataVersion: 4671
-      id: minecraft:lava_bucket
-      count: 1
-      schema_version: 1
-    - null
-    - null
-    - null
-    - ==: org.bukkit.inventory.ItemStack
-      DataVersion: 4671
-      id: minecraft:bow
-      count: 1
-      components:
-        minecraft:enchantments: '{"minecraft:power":1}'
-        minecraft:custom_data: '{Damage:0,Enchantments:[{id:"power",lvl:1s}]}'
-      schema_version: 1
-    - null
-    - null
-    - null
-    - null
-    - ==: org.bukkit.inventory.ItemStack
-      DataVersion: 4671
-      id: minecraft:diamond_pickaxe
-      count: 1
-      components:
-        minecraft:enchantments: '{"minecraft:efficiency":2,"minecraft:unbreaking":1}'
-        minecraft:custom_data: '{Damage:0,Enchantments:[{id:"unbreaking",lvl:1s},{id:"efficiency",lvl:2s}]}'
-      schema_version: 1
-    - null
-    - null
-    - null
-    - ==: org.bukkit.inventory.ItemStack
-      DataVersion: 4671
-      id: minecraft:oak_planks
-      count: 64
-      schema_version: 1
-    armor:
-    - ==: org.bukkit.inventory.ItemStack
-      DataVersion: 4671
-      id: minecraft:diamond_boots
-      count: 1
-      components:
-        minecraft:attribute_modifiers: '[{amount:3.0d,id:"minecraft:04955d06-1786-4c1c-bfe0-5e087ebaa2a2",operation:"add_value",type:"minecraft:armor"},{amount:3.0d,id:"minecraft:39a0eb38-41d3-4779-aab1-3b84f48863eb",operation:"add_value",type:"minecraft:armor_toughness"}]'
-        minecraft:enchantments: '{"minecraft:protection":3}'
-      schema_version: 1
-    - ==: org.bukkit.inventory.ItemStack
-      DataVersion: 4671
-      id: minecraft:diamond_leggings
-      count: 1
-      components:
-        minecraft:enchantments: '{"minecraft:protection":2}'
-      schema_version: 1
-    - ==: org.bukkit.inventory.ItemStack
-      DataVersion: 4671
-      id: minecraft:diamond_chestplate
-      count: 1
-      components:
-        minecraft:attribute_modifiers: '[{amount:8.0d,id:"minecraft:11ae2c5e-7319-4fc0-9c0f-4c0d1407ec03",operation:"add_value",type:"minecraft:armor"},{amount:3.0d,id:"minecraft:fc87fb13-1002-4602-ba3d-fa505f51ced4",operation:"add_value",type:"minecraft:armor_toughness"}]'
-        minecraft:enchantments: '{"minecraft:protection":2}'
-      schema_version: 1
-    - ==: org.bukkit.inventory.ItemStack
-      DataVersion: 4671
-      id: minecraft:diamond_helmet
-      count: 1
-      components:
-        minecraft:attribute_modifiers: '[{amount:3.0d,id:"minecraft:6695018c-3b5e-4a0c-9063-f94a0f05819a",operation:"add_value",type:"minecraft:armor"},{amount:3.0d,id:"minecraft:a08fac8a-c82c-4100-a035-33c0c061fd7b",operation:"add_value",type:"minecraft:armor_toughness"}]'
-        minecraft:enchantments: '{"minecraft:protection":3}'
-      schema_version: 1
-    offhand:
-      ==: org.bukkit.inventory.ItemStack
-      DataVersion: 4671
-      id: minecraft:air
-      schema_version: 1
   Mace:
     icon: MACE
     display-name: <b><gradient:#555555:#9B9B9B>ᴍᴏᴅᴇʀɴ ᴍᴀᴄᴇ</gradient></b>
+    start-effects: []
     contents:
     - ==: org.bukkit.inventory.ItemStack
       DataVersion: 4671
@@ -1025,12 +876,13 @@ kits:
       schema_version: 1
     offhand:
       ==: org.bukkit.inventory.ItemStack
-      DataVersion: 4671
       id: minecraft:air
+      DataVersion: 4671
       schema_version: 1
   ModernSMP:
     icon: SHIELD
     display-name: <b><gradient:#E55353:#E94747>ᴍᴏᴅᴇʀɴ ѕᴍᴘ</gradient></b>
+    start-effects: []
     contents:
     - ==: org.bukkit.inventory.ItemStack
       DataVersion: 4671
@@ -1319,11 +1171,12 @@ kits:
       schema_version: 1
     offhand:
       ==: org.bukkit.inventory.ItemStack
-      DataVersion: 4671
       id: minecraft:air
+      DataVersion: 4671
       schema_version: 1
   PotionIO:
     icon: SPLASH_POTION
+    start-effects: []
     contents:
     - ==: org.bukkit.inventory.ItemStack
       DataVersion: 4671
@@ -1614,6 +1467,7 @@ kits:
   Potion:
     icon: SPLASH_POTION
     display-name: <b><gradient:#5FE2C5:#4498DB>ᴘᴏᴛɪᴏɴ</gradient></b>
+    start-effects: []
     contents:
     - ==: org.bukkit.inventory.ItemStack
       DataVersion: 4671
@@ -1906,6 +1760,7 @@ kits:
   Sword:
     icon: DIAMOND_SWORD
     display-name: <b><gradient:#D7115A:#E90256>ѕᴡᴏʀᴅ</gradient></b>
+    start-effects: []
     contents:
     - ==: org.bukkit.inventory.ItemStack
       DataVersion: 4671
@@ -1978,12 +1833,13 @@ kits:
       schema_version: 1
     offhand:
       ==: org.bukkit.inventory.ItemStack
-      DataVersion: 4671
       id: minecraft:air
+      DataVersion: 4671
       schema_version: 1
   DiaSMP:
     icon: CHORUS_FRUIT
     display-name: <b><gradient:#FCB600:#FCD05C>ᴅɪᴀ ѕᴍᴘ</gradient></b>
+    start-effects: []
     contents:
     - ==: org.bukkit.inventory.ItemStack
       DataVersion: 4671
@@ -2282,6 +2138,7 @@ kits:
   MoneySMP:
     icon: PLAYER_HEAD
     display-name: <b><gradient:#11D71E:#53EE4A>ᴍᴏɴᴇʏ ѕᴍᴘ</gradient></b>
+    start-effects: []
     contents:
     - ==: org.bukkit.inventory.ItemStack
       DataVersion: 4671
@@ -2557,6 +2414,7 @@ kits:
   Speed:
     icon: SPLASH_POTION
     display-name: <b><gradient:#5FE2C5:#4498DB>ѕᴘᴇᴇᴅ</gradient></b>
+    start-effects: []
     contents:
     - null
     - null
@@ -2679,12 +2537,13 @@ kits:
       schema_version: 1
     offhand:
       ==: org.bukkit.inventory.ItemStack
-      DataVersion: 4671
       id: minecraft:air
+      DataVersion: 4671
       schema_version: 1
   Creeper:
     icon: CREEPER_SPAWN_EGG
     display-name: <b><gradient:#75FF12:#68D26F>ᴄʀᴇᴇᴘᴇʀ</gradient></b>
+    start-effects: []
     contents:
     - ==: org.bukkit.inventory.ItemStack
       DataVersion: 4671
@@ -2948,6 +2807,7 @@ kits:
   CartHT:
     icon: TNT_MINECART
     display-name: <b><gradient:#FF8F8F:#F87DA5>ᴄᴀʀᴛ ʜᴛ</gradient></b>
+    start-effects: []
     contents:
     - ==: org.bukkit.inventory.ItemStack
       DataVersion: 4671
@@ -3198,6 +3058,7 @@ kits:
   CartLT:
     icon: TNT_MINECART
     display-name: <b><gradient:#FF8F8F:#F87DA5>ᴄᴀʀᴛ ʟᴛ</gradient></b>
+    start-effects: []
     contents:
     - ==: org.bukkit.inventory.ItemStack
       DataVersion: 4671
@@ -3450,6 +3311,7 @@ kits:
   OGV:
     icon: DIAMOND_HELMET
     display-name: <b><gradient:#5B8C96:#6A71AE>ᴏɢᴠ</gradient></b>
+    start-effects: []
     contents:
     - ==: org.bukkit.inventory.ItemStack
       DataVersion: 4671
@@ -3727,6 +3589,7 @@ kits:
   Bow:
     icon: BOW
     display-name: <b><gradient:#FCD05C:#FFD831>ʙᴏᴡ</gradient></b>
+    start-effects: []
     contents:
     - ==: org.bukkit.inventory.ItemStack
       DataVersion: 4671
@@ -3805,12 +3668,13 @@ kits:
       schema_version: 1
     offhand:
       ==: org.bukkit.inventory.ItemStack
-      DataVersion: 4671
       id: minecraft:air
+      DataVersion: 4671
       schema_version: 1
   Elytra:
     icon: ELYTRA
     display-name: <b><gradient:#FC625C:#FF9531>ᴇʟʏᴛʀᴀ</gradient></b>
+    start-effects: []
     contents:
     - ==: org.bukkit.inventory.ItemStack
       DataVersion: 4671
@@ -4022,6 +3886,7 @@ kits:
   Trident:
     icon: TRIDENT
     display-name: <b><gradient:#5B8C96:#6A71AE>ᴛʀɪᴅᴇɴᴛ</gradient></b>
+    start-effects: []
     contents:
     - ==: org.bukkit.inventory.ItemStack
       DataVersion: 4671
@@ -4173,6 +4038,7 @@ kits:
   CrystalIO:
     icon: END_CRYSTAL
     display-name: <b><gradient:#FFC835:#FF922B>ᴄʀʏѕᴛᴀʟ ɪᴏ</gradient></b>
+    start-effects: []
     contents:
     - ==: org.bukkit.inventory.ItemStack
       DataVersion: 4671
@@ -4400,5 +4266,174 @@ kits:
       ==: org.bukkit.inventory.ItemStack
       DataVersion: 4671
       id: minecraft:totem_of_undying
+      count: 1
+      schema_version: 1
+  ModernUHC:
+    icon: HONEY_BOTTLE
+    start-effects: []
+    contents:
+    - ==: org.bukkit.inventory.ItemStack
+      DataVersion: 4671
+      id: minecraft:diamond_sword
+      count: 1
+      components:
+        minecraft:enchantments: '{"minecraft:sharpness":3}'
+        minecraft:custom_data: '{Damage:0,Enchantments:[{id:"sharpness",lvl:3s}]}'
+      schema_version: 1
+    - ==: org.bukkit.inventory.ItemStack
+      DataVersion: 4671
+      id: minecraft:diamond_axe
+      count: 1
+      components:
+        minecraft:enchantments: '{"minecraft:efficiency":3}'
+      schema_version: 1
+    - ==: org.bukkit.inventory.ItemStack
+      DataVersion: 4671
+      id: minecraft:cobweb
+      count: 8
+      schema_version: 1
+    - ==: org.bukkit.inventory.ItemStack
+      DataVersion: 4671
+      id: minecraft:golden_apple
+      count: 8
+      schema_version: 1
+    - ==: org.bukkit.inventory.ItemStack
+      DataVersion: 4671
+      id: minecraft:water_bucket
+      count: 1
+      schema_version: 1
+    - ==: org.bukkit.inventory.ItemStack
+      DataVersion: 4671
+      id: minecraft:lava_bucket
+      count: 1
+      schema_version: 1
+    - ==: org.bukkit.inventory.ItemStack
+      DataVersion: 4671
+      id: minecraft:oak_planks
+      count: 64
+      schema_version: 1
+    - ==: org.bukkit.inventory.ItemStack
+      DataVersion: 4671
+      id: minecraft:crossbow
+      count: 1
+      components:
+        minecraft:enchantments: '{"minecraft:piercing":1}'
+        minecraft:charged_projectiles: '[{components:{"minecraft:custom_data":{"VV|Protocol1_20_3To1_20_5":1b},"minecraft:intangible_projectile":{}},count:1,id:"minecraft:arrow"}]'
+      schema_version: 1
+    - ==: org.bukkit.inventory.ItemStack
+      DataVersion: 4671
+      id: minecraft:honey_bottle
+      count: 2
+      components:
+        minecraft:item_model: '"minecraft:player_head"'
+        minecraft:profile: '{properties:[{name:"textures",value:"ewogICJ0aW1lc3RhbXAiIDogMTczNzcwMTAwOTY3OSwKICAicHJvZmlsZUlkIiA6ICJhODY5YjY5ZmEyOTY0YjU5OGViOTBhNzY1MDcwMTk2OSIsCiAgInByb2ZpbGVOYW1lIiA6ICJwdXRzb21ldGhpbmciLAogICJzaWduYXR1cmVSZXF1aXJlZCIgOiB0cnVlLAogICJ0ZXh0dXJlcyIgOiB7CiAgICAiU0tJTiIgOiB7CiAgICAgICJ1cmwiIDogImh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNTY2YTg3NDYwMTczYWRmMDY3Y2IzNTZhZTIwMGQwMzA1MDQzNzhjNTUyZTM0MjhiNDc3NGM0YzExYTU5OWMyNCIsCiAgICAgICJtZXRhZGF0YSIgOiB7CiAgICAgICAgIm1vZGVsIiA6ICJzbGltIgogICAgICB9CiAgICB9CiAgfQp9"}]}'
+        minecraft:consumable: '{consume_seconds:1.0f,has_consume_particles:0b,on_consume_effects:[{effects:[{ambient:1b,amplifier:2b,duration:100,id:"minecraft:regeneration",show_icon:1b},{ambient:1b,duration:2400,id:"minecraft:absorption",show_icon:1b}],type:"minecraft:apply_effects"}]}'
+        minecraft:use_cooldown: '{cooldown_group:"goldenheads:goldenhead",seconds:10.0f}'
+        minecraft:custom_name: '{color:"gold",extra:[{color:"gray",text:" ("},{color:"red",text:"❤❤❤❤"},{color:"yellow",text:"❤❤"},{color:"gray",text:")"}],italic:0b,text:"Golden
+          Head"}'
+        '!minecraft:use_remainder': '{}'
+        minecraft:custom_data: '{PublicBukkitValues:{"goldenheads:goldenhead":1b}}'
+      schema_version: 1
+    - null
+    - null
+    - null
+    - ==: org.bukkit.inventory.ItemStack
+      DataVersion: 4671
+      id: minecraft:water_bucket
+      count: 1
+      schema_version: 1
+    - ==: org.bukkit.inventory.ItemStack
+      DataVersion: 4671
+      id: minecraft:water_bucket
+      count: 1
+      schema_version: 1
+    - ==: org.bukkit.inventory.ItemStack
+      DataVersion: 4671
+      id: minecraft:water_bucket
+      count: 1
+      schema_version: 1
+    - null
+    - null
+    - ==: org.bukkit.inventory.ItemStack
+      DataVersion: 4671
+      id: minecraft:arrow
+      count: 10
+      schema_version: 1
+    - null
+    - null
+    - null
+    - null
+    - ==: org.bukkit.inventory.ItemStack
+      DataVersion: 4671
+      id: minecraft:lava_bucket
+      count: 1
+      schema_version: 1
+    - null
+    - null
+    - null
+    - ==: org.bukkit.inventory.ItemStack
+      DataVersion: 4671
+      id: minecraft:bow
+      count: 1
+      components:
+        minecraft:enchantments: '{"minecraft:power":1}'
+        minecraft:custom_data: '{Damage:0,Enchantments:[{id:"power",lvl:1s}]}'
+      schema_version: 1
+    - null
+    - null
+    - null
+    - null
+    - ==: org.bukkit.inventory.ItemStack
+      DataVersion: 4671
+      id: minecraft:diamond_pickaxe
+      count: 1
+      components:
+        minecraft:enchantments: '{"minecraft:efficiency":2,"minecraft:unbreaking":1}'
+        minecraft:custom_data: '{Damage:0,Enchantments:[{id:"unbreaking",lvl:1s},{id:"efficiency",lvl:2s}]}'
+      schema_version: 1
+    - null
+    - null
+    - null
+    - ==: org.bukkit.inventory.ItemStack
+      DataVersion: 4671
+      id: minecraft:oak_planks
+      count: 64
+      schema_version: 1
+    armor:
+    - ==: org.bukkit.inventory.ItemStack
+      DataVersion: 4671
+      id: minecraft:diamond_boots
+      count: 1
+      components:
+        minecraft:attribute_modifiers: '[{amount:3.0d,id:"minecraft:04955d06-1786-4c1c-bfe0-5e087ebaa2a2",operation:"add_value",type:"minecraft:armor"},{amount:3.0d,id:"minecraft:39a0eb38-41d3-4779-aab1-3b84f48863eb",operation:"add_value",type:"minecraft:armor_toughness"}]'
+        minecraft:enchantments: '{"minecraft:protection":3}'
+      schema_version: 1
+    - ==: org.bukkit.inventory.ItemStack
+      DataVersion: 4671
+      id: minecraft:diamond_leggings
+      count: 1
+      components:
+        minecraft:enchantments: '{"minecraft:protection":2}'
+      schema_version: 1
+    - ==: org.bukkit.inventory.ItemStack
+      DataVersion: 4671
+      id: minecraft:diamond_chestplate
+      count: 1
+      components:
+        minecraft:attribute_modifiers: '[{amount:8.0d,id:"minecraft:11ae2c5e-7319-4fc0-9c0f-4c0d1407ec03",operation:"add_value",type:"minecraft:armor"},{amount:3.0d,id:"minecraft:fc87fb13-1002-4602-ba3d-fa505f51ced4",operation:"add_value",type:"minecraft:armor_toughness"}]'
+        minecraft:enchantments: '{"minecraft:protection":2}'
+      schema_version: 1
+    - ==: org.bukkit.inventory.ItemStack
+      DataVersion: 4671
+      id: minecraft:diamond_helmet
+      count: 1
+      components:
+        minecraft:attribute_modifiers: '[{amount:3.0d,id:"minecraft:6695018c-3b5e-4a0c-9063-f94a0f05819a",operation:"add_value",type:"minecraft:armor"},{amount:3.0d,id:"minecraft:a08fac8a-c82c-4100-a035-33c0c061fd7b",operation:"add_value",type:"minecraft:armor_toughness"}]'
+        minecraft:enchantments: '{"minecraft:protection":3}'
+      schema_version: 1
+    offhand:
+      ==: org.bukkit.inventory.ItemStack
+      DataVersion: 4671
+      id: minecraft:shield
       count: 1
       schema_version: 1
