@@ -35,7 +35,7 @@ public class GuiListener implements Listener {
             event.setCancelled(true);
             if (clickedTop && event.getCurrentItem() != null) {
                 com.vduels.util.Sounds.click(player);
-                menu.onClick(player, event);
+                safeClick(menu, player, event);
             }
             return;
         }
@@ -50,7 +50,16 @@ public class GuiListener implements Listener {
         }
         if (clickedTop && menu.isProtectedSlot(raw)) {
             event.setCancelled(true);
+            safeClick(menu, player, event);
+        }
+    }
+
+    /** Runs a menu's click handler, logging (not propagating) any failure. */
+    private void safeClick(Menu menu, Player player, InventoryClickEvent event) {
+        try {
             menu.onClick(player, event);
+        } catch (Exception e) {
+            java.util.logging.Logger.getLogger("vDuels").warning("menu click error: " + e);
         }
     }
 

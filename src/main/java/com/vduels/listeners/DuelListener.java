@@ -8,7 +8,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -102,13 +101,8 @@ public class DuelListener implements Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true)
-    public void onHunger(FoodLevelChangeEvent event) {
-        if (event.getEntity() instanceof Player player
-                && plugin.getDuelManager().isInDuel(player.getUniqueId())) {
-            event.setCancelled(true);
-        }
-    }
+    // Hunger and saturation are left vanilla during a duel: players lose hunger
+    // normally and eating (e.g. golden apples) restores food/saturation as usual.
 
     @EventHandler(ignoreCancelled = true)
     public void onDrop(PlayerDropItemEvent event) {

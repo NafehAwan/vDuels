@@ -71,7 +71,10 @@ public final class VDuels extends JavaPlugin {
         this.arenaManager = new ArenaManager(this);
         this.kitManager = new KitManager(this);
         this.categoryManager = new CategoryManager(this);
-        this.queueCategoryManager = new CategoryManager(this, "queuecategories.yml");
+        // Queue and duel categories are one merged set: any change through
+        // /category or /categoryqueue (create, delete, header, add/remove kit)
+        // affects both menus because they share this store.
+        this.queueCategoryManager = this.categoryManager;
         this.guiLayoutManager = new GuiLayoutManager(this);
         this.setupManager = new SetupManager(this);
         this.scoreboardService = new ScoreboardService(this);
