@@ -137,15 +137,27 @@ public class Kit {
             }
         }
 
-        List<?> contentsList = section.getList("contents");
-        if (contentsList != null) {
-            kit.contents = contentsList.toArray(new ItemStack[0]);
-        }
-        List<?> armorList = section.getList("armor");
-        if (armorList != null) {
-            kit.armor = armorList.toArray(new ItemStack[0]);
-        }
+        kit.contents = toItemArray(section.getList("contents"));
+        kit.armor = toItemArray(section.getList("armor"));
         kit.offhand = section.getItemStack("offhand");
         return kit;
+    }
+
+    /**
+     * Converts a serialized list into an ItemStack[]. Any entry that isn't an
+     * ItemStack (e.g. an item that failed to deserialize on this server version)
+     * becomes an empty slot instead of throwing, so one bad item never drops the
+     * whole kit.
+     */
+    private static ItemStack[] toItemArray(List<?> list) {
+        if (list == null) {
+            return null;
+        }
+        ItemStack[] out = new ItemStack[list.size()];
+        for (int i = 0; i < list.size(); i++) {
+            Object o = list.get(i);
+            out[i] = (o instanceof ItemStack) ? (ItemStack) o : null;
+        }
+        return out;
     }
 }
