@@ -137,9 +137,21 @@ public class Kit {
             }
         }
 
-        kit.contents = toItemArray(section.getList("contents"));
-        kit.armor = toItemArray(section.getList("armor"));
-        kit.offhand = section.getItemStack("offhand");
+        try {
+            kit.contents = toItemArray(section.getList("contents"));
+        } catch (Exception ignored) {
+            kit.contents = null;
+        }
+        try {
+            kit.armor = toItemArray(section.getList("armor"));
+        } catch (Exception ignored) {
+            kit.armor = null;
+        }
+        try {
+            kit.offhand = section.getItemStack("offhand");
+        } catch (Exception ignored) {
+            kit.offhand = null;
+        }
         return kit;
     }
 
