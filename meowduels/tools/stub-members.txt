@@ -1,0 +1,64 @@
+# Members that bytecode can't reveal, because the plugin either OVERRIDES them
+# (an override appears in no constant pool) or calls them on a subclass, so javac
+# recorded the subclass as the owner. Format:  <owner> | <java declaration>
+
+# --- JavaPlugin: inherited API the plugin calls on itself -------------------
+org/bukkit/plugin/java/JavaPlugin | public org.bukkit.configuration.file.FileConfiguration getConfig() { return null; }
+org/bukkit/plugin/java/JavaPlugin | public void saveConfig() {}
+org/bukkit/plugin/java/JavaPlugin | public void reloadConfig() {}
+org/bukkit/plugin/java/JavaPlugin | public void saveDefaultConfig() {}
+org/bukkit/plugin/java/JavaPlugin | public java.io.File getDataFolder() { return null; }
+org/bukkit/plugin/java/JavaPlugin | public java.util.logging.Logger getLogger() { return null; }
+org/bukkit/plugin/java/JavaPlugin | public org.bukkit.Server getServer() { return null; }
+org/bukkit/plugin/java/JavaPlugin | public org.bukkit.command.PluginCommand getCommand(String a0) { return null; }
+org/bukkit/plugin/java/JavaPlugin | public java.io.InputStream getResource(String a0) { return null; }
+org/bukkit/plugin/java/JavaPlugin | public void saveResource(String a0, boolean a1) {}
+org/bukkit/plugin/java/JavaPlugin | public void onEnable() {}
+org/bukkit/plugin/java/JavaPlugin | public void onDisable() {}
+
+# --- Interfaces the plugin implements --------------------------------------
+org/bukkit/command/CommandExecutor | boolean onCommand(org.bukkit.command.CommandSender a0, org.bukkit.command.Command a1, String a2, String[] a3);
+org/bukkit/command/TabCompleter | java.util.List<String> onTabComplete(org.bukkit.command.CommandSender a0, org.bukkit.command.Command a1, String a2, String[] a3);
+org/bukkit/inventory/InventoryHolder | org.bukkit.inventory.Inventory getInventory();
+
+# --- PlaceholderAPI expansion ----------------------------------------------
+me/clip/placeholderapi/expansion/PlaceholderExpansion | public boolean register() { return false; }
+me/clip/placeholderapi/expansion/PlaceholderExpansion | public String getIdentifier() { return null; }
+me/clip/placeholderapi/expansion/PlaceholderExpansion | public String getAuthor() { return null; }
+me/clip/placeholderapi/expansion/PlaceholderExpansion | public String getVersion() { return null; }
+me/clip/placeholderapi/expansion/PlaceholderExpansion | public boolean persist() { return false; }
+me/clip/placeholderapi/expansion/PlaceholderExpansion | public String onRequest(org.bukkit.OfflinePlayer a0, String a1) { return null; }
+
+# --- Enum constants only ever named in annotations --------------------------
+org/bukkit/event/EventPriority | LOWEST
+org/bukkit/event/EventPriority | LOW
+org/bukkit/event/EventPriority | NORMAL
+org/bukkit/event/EventPriority | HIGH
+org/bukkit/event/EventPriority | HIGHEST
+org/bukkit/event/EventPriority | MONITOR
+
+# --- Annotation elements ----------------------------------------------------
+org/bukkit/event/EventHandler | org.bukkit.event.EventPriority priority() default org.bukkit.event.EventPriority.NORMAL;
+org/bukkit/event/EventHandler | boolean ignoreCancelled() default false;
+
+# --- Generic signatures ------------------------------------------------------
+# Bytecode erases generics, so these must be declared by hand or every caller
+# sees Object where it expects a String / Player / PotionEffect.
+org/bukkit/configuration/ConfigurationSection | java.util.Set<String> getKeys(boolean a0);
+org/bukkit/configuration/file/FileConfiguration | public java.util.Set<String> getKeys(boolean a0) { return null; }
+org/bukkit/configuration/file/YamlConfiguration | public java.util.Set<String> getKeys(boolean a0) { return null; }
+org/bukkit/configuration/ConfigurationSection | java.util.List<String> getStringList(String a0);
+org/bukkit/configuration/file/FileConfiguration | public java.util.List<String> getStringList(String a0) { return null; }
+org/bukkit/Bukkit | public static java.util.Collection<? extends org.bukkit.entity.Player> getOnlinePlayers() { return null; }
+org/bukkit/entity/Player | java.util.Collection<org.bukkit.potion.PotionEffect> getActivePotionEffects();
+org/bukkit/World | java.util.Collection<org.bukkit.entity.Entity> getNearbyEntities(org.bukkit.Location a0, double a1, double a2, double a3);
+org/bukkit/entity/Entity | java.util.Set<String> getScoreboardTags();
+org/bukkit/scoreboard/Team | java.util.Set<String> getEntries();
+org/bukkit/configuration/ConfigurationSection | java.util.List<?> getList(String a0);
+org/bukkit/Server | java.util.Collection<? extends org.bukkit.entity.Player> getOnlinePlayers();
+org/bukkit/World | java.util.List<org.bukkit.entity.Player> getPlayers();
+org/bukkit/event/entity/EntityExplodeEvent | public java.util.List<org.bukkit.block.Block> blockList() { return null; }
+org/bukkit/configuration/file/YamlConfiguration | public void save(java.io.File a0) throws java.io.IOException {}
+org/bukkit/configuration/file/FileConfiguration | public void save(java.io.File a0) throws java.io.IOException {}
+# Used as a lambda, so it must be a functional interface with this exact shape.
+io/papermc/paper/chat/ChatRenderer | net.kyori.adventure.text.Component render(org.bukkit.entity.Player a0, net.kyori.adventure.text.Component a1, net.kyori.adventure.text.Component a2, net.kyori.adventure.audience.Audience a3);

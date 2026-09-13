@@ -1,0 +1,150 @@
+name: MeowDuels
+version: 1.0.0
+main: com.meowduels.MeowDuels
+api-version: '1.21'
+author: nafehawan
+description: GUI-based Duels and Party plugin - pink edition, with cloneable arenas and a full item kit editor.
+softdepend:
+  - FastAsyncWorldEdit
+  - PlaceholderAPI
+  - TAB
+
+commands:
+  meowduels:
+    description: MeowDuels root command (copy/paste, help).
+    usage: /meowduels <arena> <copy|paste> | /meowduels help
+    aliases: [vduels, md]
+  createarena:
+    description: Create a new arena.
+    usage: /createarena <name>
+    permission: meowduels.admin
+  arena:
+    description: Open the arena setup/settings GUI, or clone/regen/snapshot it.
+    usage: /arena <name> [copy|paste|regen|snapshot]
+    permission: meowduels.admin
+  deletearena:
+    description: Delete an arena.
+    usage: /deletearena <name>
+    permission: meowduels.admin
+  kitcreate:
+    description: Create a kit from your current inventory.
+    usage: /kitcreate <name>
+    permission: meowduels.admin
+  kiteditor:
+    description: Open the GUI item editor for every kit/gamemode.
+    usage: /kiteditor
+    permission: meowduels.admin
+  deletekit:
+    description: Delete a kit.
+    usage: /deletekit <name>
+    permission: meowduels.admin
+  kiticon:
+    description: Set a kit's menu icon to the item in your hand.
+    usage: /kiticon <name>
+    permission: meowduels.admin
+  kitdisplayname:
+    description: Set a kit's display name (MiniMessage format).
+    usage: /kitdisplayname <name> <display...>
+    permission: meowduels.admin
+  editgui:
+    description: Customise a GUI layout (duelconfirm, mapselect).
+    usage: /editgui <menu>
+    permission: meowduels.admin
+  category:
+    description: Manage kit-menu categories.
+    usage: /category <list|create|delete|header|addkit|removekit> ...
+    permission: meowduels.admin
+  categoryqueue:
+    description: Manage queue-menu categories.
+    usage: /categoryqueue <list|create|delete|header|addkit|removekit> ...
+    permission: meowduels.admin
+  scoreboardip:
+    description: Set the server IP shown on the duel scoreboard.
+    usage: /scoreboardip <ip>
+    permission: meowduels.admin
+  meowduelssetspawn:
+    description: Set the location every duel returns players to when it ends.
+    usage: /meowduelssetspawn
+    permission: meowduels.admin
+  leaderboard:
+    description: Show the ranked ELO leaderboard.
+    usage: /leaderboard [size]
+    aliases: [lb, elotop]
+  duel:
+    description: Challenge a player to a duel.
+    usage: /duel <player> [kit] [rounds]
+  leave:
+    description: Leave your current duel, spectate session, or queues.
+    usage: /leave
+  ff:
+    description: Forfeit your current duel.
+    usage: /ff
+  event:
+    description: Join a hosted event, or host one.
+    usage: /event | /event host <kit> <minutes> [slots] | /event host force_start
+  eventspec:
+    description: Spectate the current event.
+    usage: /eventspec
+  eventleave:
+    description: Leave the event you're playing or spectating.
+    usage: /eventleave
+  meowduelsspawnitems:
+    description: Give yourself the spawn hotbar items (for /spawn hooks).
+    usage: /meowduelsspawnitems
+  queue:
+    description: Join a kit queue directly, open the queue menu, or /queue leave.
+    usage: /queue [kit|leave]
+  meowduelstab:
+    description: Configure the per-fight tab (title, discord, store).
+    usage: /meowduelstab
+    permission: meowduels.admin
+    aliases: [vduelstab]
+  editkit:
+    description: Edit a kit's starting effects.
+    usage: /editkit [kit]
+    permission: meowduels.admin
+  changekit:
+    description: Equip a kit into your inventory.
+    usage: /changekit <kit>
+    permission: meowduels.changekit
+  spectate:
+    description: Spectate a player (or /spectate to stop).
+    usage: /spectate [player]
+    aliases: [spec]
+  givegoldenhead:
+    description: Give a player Golden Heads (modern UHC healing item).
+    usage: /givegoldenhead [player] [amount]
+    permission: uhc.admin.givehead
+  resetconfig:
+    description: Reset MeowDuels config.yml and wipe all arenas back to defaults.
+    usage: /meowduels:resetconfig
+    permission: meowduels.admin
+  meowduelsserver:
+    description: Set the server name shown as the duel scoreboard title.
+    usage: /meowduelsserver <name...>
+    permission: meowduels.admin
+  meowduelstrims:
+    description: Open the armor-trim editor for a kit.
+    usage: /meowduelstrims [kit]
+    permission: meowduels.trims
+    aliases: [trims, vduelstrims]
+
+permissions:
+  meowduels.admin:
+    description: Access to MeowDuels administration commands.
+    default: op
+  meowduels.use:
+    description: Access to the /duel command.
+    default: true
+  meowduels.changekit:
+    description: Access to the /changekit command (grant explicitly - not even ops have it by default).
+    default: false
+  uhc.admin.givehead:
+    description: Access to the /givegoldenhead command.
+    default: op
+  meowduels.trims:
+    description: Access to the /meowduelstrims armor-trim editor.
+    default: op
+  meowduels.event.host:
+    description: Access to host events with /event host.
+    default: op

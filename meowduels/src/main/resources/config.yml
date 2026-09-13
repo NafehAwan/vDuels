@@ -1,0 +1,121 @@
+# ============================================================================
+#  MeowDuels  -  config.yml   (ONE file for everything)
+#  New options are auto-added on startup - your values are never overwritten.
+# ============================================================================
+
+# ---- Duel requests ----
+duel:
+  request-expiry-seconds: 60
+  default-rounds: 1
+
+# ---- Ranked / ELO ----
+ranked:
+  # Anti alt-grinding: after you gain ELO off a player, beating that SAME player
+  # again within this many minutes awards no ELO (stats/streak still count).
+  # Set 0 to disable. Queue matches are always ranked; /duel has a toggle.
+  elo-cooldown-minutes: 30
+
+# ---- Rounds / pacing (seconds, decimals allowed) ----
+rounds:
+  match-found-seconds: 4.0
+  # Pre-fight ready-up countdown: players may move (but not fight); both sneaking
+  # to "ready" ends it early.
+  countdown-seconds: 5
+  transition-seconds: 3.5
+  end-seconds: 3.5
+  # After you die, how long you spectate the spot you died before the next round
+  # teleports you into the arena.
+  death-spectate-seconds: 2.0
+  # Seconds the match lingers (winner in arena / loser spectating) before everyone
+  # is teleported to spawn when the match ends.
+  win-teleport-seconds: 2.0
+
+# ---- Golden Head (modern-UHC healing head) ----
+golden-head:
+  # Seconds a player must wait between eating Golden Heads. 0 = no cooldown.
+  cooldown-seconds: 5.0
+  # Head skin. Paste the base64 "Value" string from minecraft-heads.com (search
+  # "Golden Head") between the quotes to give it a golden skin. Leave empty for a
+  # plain head. Applies to heads given after you set it (re-give with /givegoldenhead).
+  texture: ""
+
+# ---- Event world border (FFA events shrink the border over time) ----
+event:
+  border:
+    enabled: true
+    # Starting size in blocks. 0 = auto-fit the arena's size.
+    start-size: 0
+    # The border stops shrinking here (a 30x30 area by default).
+    min-size: 30
+    # How often the border shrinks one step.
+    interval-seconds: 120
+    # How many blocks smaller each step is.
+    step: 20
+    # How long each shrink animation takes (the border glows red while moving).
+    shrink-seconds: 8
+
+# When a player joins, reset them: clear potion effects + inventory, heal to full,
+# and teleport to the duel spawn. Great for a dedicated PvP server; turn OFF if
+# players keep a normal survival inventory.
+on-join-reset: true
+
+# ---- Tab list handoff (TAB draws the tab list; MeowDuels draws the sidebar) ----
+external-tab: true
+
+# Server IP shown by {server_ip} / {server_ip_sc} (small-caps version).
+# Set in-game with: /scoreboardip <ip> [color]
+scoreboard-ip: "example.net"
+scoreboard-ip-color: "<#FF78C1>"
+
+# Server name shown as the duel scoreboard title ({server_name}).
+# Set in-game with: /meowduelsserver <name...>
+server-name: "server"
+
+# Tab branding (only used when external-tab is false).
+tab:
+  title: "<gold><bold>ServerName</bold></gold>"
+  discord: "<aqua>discord.example.net</aqua>"
+  store: "<yellow>store.example.net</yellow>"
+
+# ============================================================================
+#  SIDEBAR SCOREBOARD
+# ----------------------------------------------------------------------------
+#  global -> shown when NOT fighting.   duel -> shown while fighting.
+#  MiniMessage text. "" = blank line. Max 15 lines.
+#  Tokens: {player} {online} {in_duels} {server_ip} {server_ip_sc}
+#          {ip_color} {ping} {kills} {deaths} {playtime} {streak}
+#          {date} {server_name}
+#          (duel board also: {score} {opponent_score} {opponent} {kit}
+#           {arena} {wins} {losses} {round} {time} etc.)
+# ============================================================================
+scoreboard:
+  # Master switch. The sidebar only shows while in a duel or spectating one.
+  enabled: true
+  date-format: "dd/MM/yyyy"
+  # Action bar shown while fighting/spectating. {score} is always YOUR side
+  # (or the spectated player's), {opponent_score} the enemy.
+  action-bar: "{score} <gray>-</gray> {opponent_score}"
+  # Out-of-duel sidebar is OFF - the board only appears in duels/spectate.
+  global:
+    enabled: false
+    title: "<bold><red>ʙʟᴏᴏᴅᴛʜɪʀꜱᴛ"
+    lines:
+    - "<gray><strikethrough>                    </strikethrough>"
+    - "<#D90707>⚔ ᴋɪʟʟꜱ <dark_gray>: <red>{kills}"
+    - "<#D90707>☠ ᴅᴇᴀᴛʜꜱ <dark_gray>: <red>{deaths}"
+    - "<#D90707>⌚ ᴘʟᴀʏᴛɪᴍᴇ <dark_gray>: <red>{playtime}"
+    - "<gray><strikethrough>                    </strikethrough>"
+    - "{ip_color}{server_ip}"
+  # Shown while fighting or spectating a fight. Compact - no divider bars.
+  duel:
+    enabled: true
+    title: "<bold><gradient:#FF2D95:#FF8AD0>{server_name}</gradient></bold>"
+    lines:
+    - "<gray>⚔ <white>{player}"
+    - "<#FF5FB0>◆ <#FF5FB0>{score} <gray>-</gray> <#FF5FB0>{opponent_score}"
+    - ""
+    - "<#FF5FB0>✦ <white>{kit}"
+    - "<#FF5FB0>◈ <white>game_{game}"
+    - "<#FF5FB0>⌚ <white>{date}"
+    - ""
+    - "{ip_color}{server_ip}"

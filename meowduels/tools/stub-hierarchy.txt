@@ -1,0 +1,5 @@
+# Type relationships bytecode doesn't record. Each line: <child> extends|implements <parent>
+org/bukkit/plugin/java/JavaPlugin implements org/bukkit/plugin/Plugin
+net/md_5/bungee/api/chat/TextComponent extends net/md_5/bungee/api/chat/BaseComponent
+org/bukkit/event/player/PlayerTeleportEvent extends org/bukkit/event/player/PlayerMoveEvent
+net/kyori/adventure/text/format/NamedTextColor implements net/kyori/adventure/text/format/TextColor

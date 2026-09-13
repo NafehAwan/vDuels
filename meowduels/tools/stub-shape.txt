@@ -1,0 +1,8 @@
+# Type shapes bytecode can't reveal. Interfaces are auto-detected from the
+# plugin's own `implements` clauses; annotations must be listed here.
+org/bukkit/event/EventHandler annotation
+org/bukkit/event/EventPriority enum
+org/bukkit/plugin/Plugin interface
+org/bukkit/Keyed interface
+io/papermc/paper/chat/ChatRenderer interface
+net/kyori/adventure/text/format/TextColor interface

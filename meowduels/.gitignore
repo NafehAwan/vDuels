@@ -1,0 +1,6 @@
+target/
+tools/stub-out/
+tools/stub-files.txt
+tools/paper-api-stub.jar
+tools/javap.txt
+tools/classes/

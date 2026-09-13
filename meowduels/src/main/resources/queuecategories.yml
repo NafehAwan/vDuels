@@ -1,0 +1,25 @@
+categories:
+  mctiers:
+    header: MCTIERS.COM
+    kits:
+    - NetheriteOP
+    - ModernUHC
+    - Potion
+    - ModernSMP
+    - Sword
+    - ModernAxe
+    - Mace
+    - MoneySMP
+    - crystalio
+  subtiers:
+    header: SUBTIERS
+    kits:
+    - Speed
+    - Diasmp
+    - Creeper
+    - Cartht
+    - Cartlt
+    - ogv
+    - bow
+    - elytra
+    - trident
