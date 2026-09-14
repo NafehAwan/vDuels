@@ -107,6 +107,7 @@ public class TabService {
             if (e.getValue() != duel) continue;
             bubble.add(e.getKey());
         }
+        // Each fighter/spectator sees only the others in their own match.
         for (UUID mid : bubble) {
             Player member = Bukkit.getPlayer((UUID)mid);
             if (member == null) continue;
@@ -119,14 +120,10 @@ public class TabService {
                 member.hidePlayer((Plugin)this.plugin, online);
             }
         }
-        for (Player online : Bukkit.getOnlinePlayers()) {
-            if (bubble.contains(online.getUniqueId())) continue;
-            for (UUID mid : bubble) {
-                Player member = Bukkit.getPlayer((UUID)mid);
-                if (member == null) continue;
-                online.hidePlayer((Plugin)this.plugin, member);
-            }
-        }
+        // Deliberately one-directional. Fighters don't see anyone outside their
+        // match, so their tab list is just the fight - but the rest of the server
+        // still sees THEM, because they are online and should look it. Hiding
+        // both ways made duellists vanish from everyone's tab list mid-match.
     }
 
     private void applyTeams(Player viewer, ActiveDuel duel) {

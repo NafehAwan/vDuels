@@ -24,14 +24,24 @@ public class KitEditorMenu
 extends Menu {
     private static final int[] SLOTS = new int[]{10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, 42, 43};
     private final MeowDuels plugin;
+    /** Personal: each kit opens the player's OWN layout. Global: admins editing
+     *  the kit for everyone. */
+    private final boolean personal;
 
     public KitEditorMenu(MeowDuels plugin) {
+        this(plugin, false);
+    }
+
+    public KitEditorMenu(MeowDuels plugin, boolean personal) {
+        this.personal = personal;
         this.plugin = plugin;
     }
 
     @Override
     public void build() {
-        this.create(6, "&d&lKit Editor &7- pick a gamemode");
+        this.create(6, this.personal
+                ? "&d&lYour Kits &7- pick a gamemode"
+                : "&d&lKit Editor &7- pick a gamemode");
         ItemStack filler = Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build();
         for (int i = 0; i < 54; ++i) {
             this.inventory.setItem(i, filler);
@@ -47,7 +57,9 @@ extends Menu {
     }
 
     private ItemStack icon(Kit kit) {
-        Items item = Items.of(kit.getIcon()).lore("", "&7Click to edit this gamemode's items,", "&7armor and offhand item.").hideTooltip().tag(this.plugin.keyKit(), kit.getName());
+        Items item = this.personal
+                ? Items.of(kit.getIcon()).lore("", "&7Click to arrange this kit", "&7the way YOU want it.").hideTooltip().tag(this.plugin.keyKit(), kit.getName())
+                : Items.of(kit.getIcon()).lore("", "&7Click to edit this gamemode's items,", "&7armor and offhand item.", "&cChanges apply to everyone.").hideTooltip().tag(this.plugin.keyKit(), kit.getName());
         if (kit.getDisplayName() != null && !kit.getDisplayName().isEmpty()) {
             item.miniName(kit.getDisplayName());
         } else {
@@ -64,7 +76,7 @@ extends Menu {
         }
         Kit kit = this.plugin.getKitManager().get(kitName);
         if (kit != null) {
-            new KitItemsEditMenu(this.plugin, kit).open(player);
+            new KitItemsEditMenu(this.plugin, kit, this.personal, player.getUniqueId()).open(player);
         }
     }
 }

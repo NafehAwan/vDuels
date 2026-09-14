@@ -410,7 +410,9 @@ public class DuelManager {
             // empty catch block
         }
         if (kit != null) {
-            kit.applyTo(player);
+            // The player's own arrangement of this kit if they saved one,
+            // otherwise the server default.
+            this.plugin.getKitLayouts().applyTo(player, kit);
             this.applyPlayerTrims(player, kit.getName());
             for (StartEffect startEffect : kit.getStartEffects()) {
                 player.addPotionEffect(startEffect.toPotionEffect());
@@ -420,7 +422,7 @@ public class DuelManager {
             Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
                 Player p = Bukkit.getPlayer((UUID)uUID);
                 if (p != null) {
-                    fixed.applyOffhand(p);
+                    this.plugin.getKitLayouts().applyOffhand(p, fixed);
                 }
             }, 1L);
         }

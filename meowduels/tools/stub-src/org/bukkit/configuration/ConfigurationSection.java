@@ -6,7 +6,6 @@ public interface ConfigurationSection {
     org.bukkit.configuration.ConfigurationSection getConfigurationSection(java.lang.String a0);
     double getDouble(java.lang.String a0);
     int getInt(java.lang.String a0, int a1);
-    org.bukkit.inventory.ItemStack getItemStack(java.lang.String a0);
     java.lang.String getString(java.lang.String a0);
     java.lang.String getString(java.lang.String a0, java.lang.String a1);
     boolean isConfigurationSection(java.lang.String a0);
@@ -14,4 +13,5 @@ public interface ConfigurationSection {
     java.util.Set<String> getKeys(boolean a0);
     java.util.List<String> getStringList(String a0);
     java.util.List<?> getList(String a0);
+    org.bukkit.inventory.ItemStack getItemStack(String a0);
 }

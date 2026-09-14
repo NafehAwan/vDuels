@@ -44,6 +44,7 @@ import com.meowduels.managers.SpectateManager;
 import com.meowduels.managers.StatsManager;
 import com.meowduels.managers.TabEditManager;
 import com.meowduels.managers.TabService;
+import com.meowduels.managers.KitLayoutManager;
 import com.meowduels.managers.TrimPreferenceManager;
 import com.meowduels.util.SpawnItems;
 import java.io.File;
@@ -83,6 +84,7 @@ extends JavaPlugin {
     private StatsManager statsManager;
     private EventManager eventManager;
     private TrimPreferenceManager trimPreferenceManager;
+    private KitLayoutManager kitLayoutManager;
     private PlayerSettingsManager playerSettingsManager;
     private TabHook tabHook;
     private NamespacedKey keyKit;
@@ -126,6 +128,7 @@ extends JavaPlugin {
         this.statsManager = new StatsManager(this);
         this.eventManager = new EventManager(this);
         this.trimPreferenceManager = new TrimPreferenceManager(this);
+        this.kitLayoutManager = new KitLayoutManager(this);
         this.playerSettingsManager = new PlayerSettingsManager(this);
         this.tabHook = new TabHook();
         if (this.tabHook.isAvailable()) {
@@ -248,6 +251,10 @@ extends JavaPlugin {
 
     public EventManager getEventManager() {
         return this.eventManager;
+    }
+
+    public KitLayoutManager getKitLayouts() {
+        return this.kitLayoutManager;
     }
 
     public TrimPreferenceManager getTrimPreferences() {

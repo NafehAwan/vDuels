@@ -796,9 +796,21 @@ TabCompleter {
             sender.sendMessage(Text.prefixed("&cNo kit named &f" + args[0] + "&c."));
             return;
         }
-        kit.captureFrom(player);
-        this.plugin.getKitManager().put(kit);
-        sender.sendMessage(Text.prefixed("&aThe &e" + kit.getName() + "&a kit is now your current inventory - updated for everyone."));
+        // This used to overwrite the shared kit, so one player rearranging their
+        // inventory changed that kit for the whole server. It now saves a layout
+        // that belongs to this player only. Admins change the kit itself with
+        // /kiteditor.
+        org.bukkit.inventory.PlayerInventory inv = player.getInventory();
+        if (!this.plugin.getKitLayouts().matchesKit(kit, inv.getStorageContents(),
+                inv.getArmorContents(), inv.getItemInOffHand())) {
+            sender.sendMessage(Text.prefixed("&cYour inventory isn't the same set of items as the &e"
+                    + kit.getName() + "&c kit. &7Rearrange it, don't change it."));
+            return;
+        }
+        this.plugin.getKitLayouts().store(player.getUniqueId(), kit.getName(),
+                inv.getStorageContents(), inv.getArmorContents(), inv.getItemInOffHand());
+        sender.sendMessage(Text.prefixed("&aSaved your own &e" + kit.getName()
+                + "&a layout &7- only you get it."));
     }
 
     private void spectate(CommandSender sender, String[] args) {

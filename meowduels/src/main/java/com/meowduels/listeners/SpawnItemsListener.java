@@ -95,11 +95,12 @@ implements Listener {
             this.plugin.getQueueManager().quickJoin(player);
         } else if ("spawn-kiteditor".equals(btn)) {
             event.setCancelled(true);
-            if (!player.hasPermission("meowduels.admin")) {
-                player.sendMessage(this.plugin.messages().get("general.no-permission", new String[0]));
+            if (this.busy(player)) {
                 return;
             }
-            new KitEditorMenu(this.plugin).open(player);
+            // Everyone can arrange their own layouts. /kiteditor stays the
+            // admin door to editing the kits themselves.
+            new KitEditorMenu(this.plugin, true).open(player);
         } else if ("spawn-settings".equals(btn)) {
             event.setCancelled(true);
             new SettingsMenu(this.plugin, player).open(player);
