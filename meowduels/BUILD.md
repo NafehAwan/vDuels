@@ -42,6 +42,23 @@ A stub whose signature differs from the real API compiles fine and then throws
    diff /tmp/a.txt /tmp/b.txt      # must be empty
    ```
 
+## Verifying a rebuild
+
+```bash
+tools/verify_build.sh <known-good.jar> target/MeowDuels-1.0.0.jar
+```
+
+Checks the two things that compile perfectly and then fail silently on a server:
+
+- **API descriptors.** A wrong signature throws `NoSuchMethodError` at runtime.
+- **`@EventHandler` retention.** Java annotations default to `CLASS` retention,
+  which javac writes into `RuntimeInvisibleAnnotations`. Bukkit only scans the
+  *visible* ones, so a stub annotation missing `@Retention(RUNTIME)` registers
+  **no listeners at all** - the plugin enables, commands work, and every event
+  handler is dead. `genstub.py` now emits `@Retention(RUNTIME)` on every
+  annotation it generates, and this check fails the build if the count drops
+  below the reference jar's.
+
 ## Regenerating the stub (only when the API surface changes)
 
 Adding a call to a Paper method the stub lacks is a compile error. Add the

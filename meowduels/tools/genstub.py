@@ -189,7 +189,14 @@ def render(internal, hier, nested, indent="", shapes=None, extra=None):
         out.append("%s}" % indent)
         return "\n".join(out) + "\n"
     if kind == "annotation":
-        out = ["%spublic @interface %s {" % (indent, simple)]
+        # RUNTIME retention is not optional here. Java's default is CLASS, which
+        # javac writes into RuntimeInvisibleAnnotations - and a framework that
+        # scans for annotations at runtime (Bukkit looking for @EventHandler)
+        # then finds nothing, silently registering no listeners at all. Any
+        # annotation worth stubbing is one somebody reads at runtime.
+        out = ["%s@java.lang.annotation.Retention("
+               "java.lang.annotation.RetentionPolicy.RUNTIME)" % indent,
+               "%spublic @interface %s {" % (indent, simple)]
         for decl in extra.get(internal, []):
             out.append("%s    %s" % (indent, decl))
         out.append("%s}" % indent)
