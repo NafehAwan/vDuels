@@ -10,10 +10,12 @@
 package com.meowduels.gui;
 
 import com.meowduels.MeowDuels;
+import com.meowduels.gui.KitItemsEditMenu;
 import com.meowduels.gui.Menu;
 import com.meowduels.model.Kit;
 import com.meowduels.model.StartEffect;
 import com.meowduels.util.Items;
+import com.meowduels.util.Text;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -40,6 +42,17 @@ extends Menu {
         this.inventory.setItem(12, this.toggle(Material.SUGAR, "&dSpeed II &7(1:30)", StartEffect.SPEED2_90));
         this.inventory.setItem(14, this.toggle(Material.FEATHER, "&dSpeed II &7(Infinite)", StartEffect.SPEED2_INFINITE));
         this.inventory.setItem(16, this.toggle(Material.GHAST_TEAR, "&aRegeneration II &7(1:30)", StartEffect.REGEN2_90));
+        // Admin-only, server-wide actions. Everything above is this kit's start
+        // effects; everything here changes what the kit IS for every player.
+        this.inventory.setItem(21, Items.of(Material.CHEST)
+                .name("&d&lEdit Items")
+                .lore("&7Open the kit's item grid.", "", "&cChanges apply to everyone.")
+                .tag(this.plugin.keyButton(), "edit-items").build());
+        this.inventory.setItem(23, Items.of(Material.PLAYER_HEAD)
+                .name("&a&lChange Kit")
+                .lore("&7Make this kit exactly what you", "&7are holding right now.", "",
+                      "&cReplaces the kit for everyone.", "&eShift-click to confirm.")
+                .tag(this.plugin.keyButton(), "capture").build());
     }
 
     private ItemStack toggle(Material material, String name, StartEffect effect) {
@@ -51,6 +64,25 @@ extends Menu {
     public void onClick(Player player, InventoryClickEvent event) {
         String button = Items.readTag(event.getCurrentItem(), this.plugin.keyButton());
         if (button == null) {
+            return;
+        }
+        if ("edit-items".equals(button)) {
+            player.closeInventory();
+            new KitItemsEditMenu(this.plugin, this.kit).open(player); // global mode
+            return;
+        }
+        if ("capture".equals(button)) {
+            if (!event.isShiftClick()) {
+                player.sendMessage(Text.prefixed("&eShift-click to replace the &d"
+                        + this.kit.getName() + "&e kit with your inventory &7- for everyone."));
+                return;
+            }
+            this.kit.captureFrom(player);
+            this.plugin.getKitManager().put(this.kit);
+            this.plugin.getKitManager().save();
+            player.closeInventory();
+            player.sendMessage(Text.prefixed("&aThe &d" + this.kit.getName()
+                    + "&a kit is now your inventory &7- for everyone."));
             return;
         }
         try {

@@ -182,7 +182,7 @@ extends JavaPlugin {
         } else {
             this.getLogger().warning("Command 'leaderboard' is missing from plugin.yml.");
         }
-        for (String name : new String[]{"meowduels", "createarena", "arena", "deletearena", "kitcreate", "deletekit", "kiticon", "kitdisplayname", "editgui", "category", "categoryqueue", "scoreboardip", "duel", "leave", "queue", "meowduelstab", "editkit", "changekit", "spectate", "meowduelssetspawn", "kiteditor", "givegoldenhead", "resetconfig", "meowduelsserver", "meowduelstrims", "ff", "event", "eventspec", "eventleave", "meowduelsspawnitems"}) {
+        for (String name : new String[]{"meowduels", "createarena", "arena", "deletearena", "kitcreate", "deletekit", "kiticon", "kitdisplayname", "editgui", "category", "categoryqueue", "scoreboardip", "duel", "leave", "queue", "meowduelstab", "editkit", "spectate", "meowduelssetspawn", "kiteditor", "givegoldenhead", "resetconfig", "meowduelsserver", "meowduelstrims", "ff", "event", "eventspec", "eventleave", "meowduelsspawnitems"}) {
             PluginCommand command = this.getCommand(name);
             if (command != null) {
                 command.setExecutor((CommandExecutor)handler);

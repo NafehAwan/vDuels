@@ -8,4 +8,5 @@ public class InventoryClickEvent {
     public org.bukkit.entity.HumanEntity getWhoClicked() { return null; }
     public boolean isRightClick() { return false; }
     public void setCancelled(boolean a0) {}
+    public boolean isShiftClick() { return false; }
 }

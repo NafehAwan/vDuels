@@ -116,10 +116,6 @@ TabCompleter {
                 this.editKit(sender, args);
                 break;
             }
-            case "changekit": {
-                this.changeKit(sender, args);
-                break;
-            }
             case "spectate": {
                 this.spectate(sender, args);
                 break;
@@ -344,11 +340,13 @@ TabCompleter {
         sender.sendMessage(Text.prefixed("&aDuel spawn set to your current location. Players will be teleported here whenever a duel finishes."));
     }
 
+    /** Everyone's personal kit editor: rearrange the kits you get in a duel.
+     *  The kits themselves are admin territory - see /editkit. */
     private void openKitEditor(CommandSender sender) {
-        if (!this.requireAdmin(sender) || !this.requirePlayer(sender)) {
+        if (!this.requirePlayer(sender)) {
             return;
         }
-        new KitEditorMenu(this.plugin).open((Player)sender);
+        new KitEditorMenu(this.plugin, true).open((Player)sender);
     }
 
     private void deleteArena(CommandSender sender, String[] args) {
@@ -774,45 +772,6 @@ TabCompleter {
         new EditKitListMenu(this.plugin).open(player);
     }
 
-    private void changeKit(CommandSender sender, String[] args) {
-        if (!this.requirePlayer(sender)) {
-            return;
-        }
-        Player player = (Player)sender;
-        if (!player.hasPermission("meowduels.changekit")) {
-            sender.sendMessage(this.msg("general.no-permission", new String[0]));
-            return;
-        }
-        if (args.length < 1) {
-            sender.sendMessage(Text.prefixed("&cUsage: /changekit <kit>"));
-            return;
-        }
-        if (this.plugin.getDuelManager().isInDuel(player.getUniqueId())) {
-            sender.sendMessage(Text.prefixed("&cYou can't change your kit while in a duel."));
-            return;
-        }
-        Kit kit = this.plugin.getKitManager().get(args[0]);
-        if (kit == null) {
-            sender.sendMessage(Text.prefixed("&cNo kit named &f" + args[0] + "&c."));
-            return;
-        }
-        // This used to overwrite the shared kit, so one player rearranging their
-        // inventory changed that kit for the whole server. It now saves a layout
-        // that belongs to this player only. Admins change the kit itself with
-        // /kiteditor.
-        org.bukkit.inventory.PlayerInventory inv = player.getInventory();
-        if (!this.plugin.getKitLayouts().matchesKit(kit, inv.getStorageContents(),
-                inv.getArmorContents(), inv.getItemInOffHand())) {
-            sender.sendMessage(Text.prefixed("&cYour inventory isn't the same set of items as the &e"
-                    + kit.getName() + "&c kit. &7Rearrange it, don't change it."));
-            return;
-        }
-        this.plugin.getKitLayouts().store(player.getUniqueId(), kit.getName(),
-                inv.getStorageContents(), inv.getArmorContents(), inv.getItemInOffHand());
-        sender.sendMessage(Text.prefixed("&aSaved your own &e" + kit.getName()
-                + "&a layout &7- only you get it."));
-    }
-
     private void spectate(CommandSender sender, String[] args) {
         if (!this.requirePlayer(sender)) {
             return;
@@ -1166,7 +1125,7 @@ TabCompleter {
                                     }
                                     break block39;
                                 }
-                                if (!name.equals("deletekit") && !name.equals("kiticon") && !name.equals("kitdisplayname") && !name.equals("editkit") && !name.equals("changekit") || args.length != 1) break block40;
+                                if (!name.equals("deletekit") && !name.equals("kiticon") && !name.equals("kitdisplayname") && !name.equals("editkit") || args.length != 1) break block40;
                                 for (Kit kit : this.plugin.getKitManager().all()) {
                                     if (!this.startsWith(kit.getName(), args[0])) continue;
                                     out.add(kit.getName());

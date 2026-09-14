@@ -31,9 +31,8 @@ commands:
     usage: /kitcreate <name>
     permission: meowduels.admin
   kiteditor:
-    description: Open the GUI item editor for every kit/gamemode.
+    description: Arrange your own layout for each kit (personal, not server-wide).
     usage: /kiteditor
-    permission: meowduels.admin
   deletekit:
     description: Delete a kit.
     usage: /deletekit <name>
@@ -100,13 +99,9 @@ commands:
     permission: meowduels.admin
     aliases: [vduelstab]
   editkit:
-    description: Edit a kit's starting effects.
+    description: Admin kit editor - start effects, items, and Change Kit.
     usage: /editkit [kit]
     permission: meowduels.admin
-  changekit:
-    description: Equip a kit into your inventory.
-    usage: /changekit <kit>
-    permission: meowduels.changekit
   spectate:
     description: Spectate a player (or /spectate to stop).
     usage: /spectate [player]
@@ -136,9 +131,6 @@ permissions:
   meowduels.use:
     description: Access to the /duel command.
     default: true
-  meowduels.changekit:
-    description: Access to the /changekit command (grant explicitly - not even ops have it by default).
-    default: false
   uhc.admin.givehead:
     description: Access to the /givegoldenhead command.
     default: op
