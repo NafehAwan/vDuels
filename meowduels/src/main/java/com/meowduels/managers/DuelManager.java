@@ -830,8 +830,40 @@ public class DuelManager {
         this.arenasInUse.remove(name.toLowerCase());
     }
 
+    /** How many players are actually fighting right now.
+     *
+     *  <p>Counted rather than read off the map size, and stale entries are pruned
+     *  as we go: a player who went offline, or one whose entry still points at a
+     *  match that has already been paid out, would otherwise keep inflating the
+     *  figure until a restart - which is what made "In Duels" creep up towards
+     *  the online count. */
     public int playersInDuels() {
-        return this.playerDuels.size();
+        if (this.playerDuels.isEmpty()) {
+            return 0;
+        }
+        java.util.Iterator<Map.Entry<UUID, ActiveDuel>> it = this.playerDuels.entrySet().iterator();
+        int fighting = 0;
+        while (it.hasNext()) {
+            Map.Entry<UUID, ActiveDuel> e = it.next();
+            ActiveDuel duel = e.getValue();
+            if (duel == null || duel.isFinished() || Bukkit.getPlayer((UUID) e.getKey()) == null) {
+                it.remove();
+                continue;
+            }
+            fighting++;
+        }
+        return fighting;
+    }
+
+    /** Number of matches in progress (two players each). */
+    public int duelsInProgress() {
+        Set<ActiveDuel> seen = Collections.newSetFromMap(new IdentityHashMap<ActiveDuel, Boolean>());
+        for (ActiveDuel duel : this.playerDuels.values()) {
+            if (duel != null && !duel.isFinished()) {
+                seen.add(duel);
+            }
+        }
+        return seen.size();
     }
 
     public ActiveDuel getDuel(UUID id) {

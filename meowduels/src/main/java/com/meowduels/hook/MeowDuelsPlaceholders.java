@@ -57,6 +57,12 @@ extends PlaceholderExpansion {
             case "players_in_duels": {
                 return String.valueOf(this.plugin.getDuelManager().playersInDuels());
             }
+            case "duels": {
+                // Number of MATCHES, where players_in_duels counts people (two
+                // per match) - "In Duels: 6" with six online is six players in
+                // three fights, not everyone stuck in a duel.
+                return String.valueOf(this.plugin.getDuelManager().duelsInProgress());
+            }
             case "server_ip": {
                 return this.plugin.getScoreboardIp();
             }
@@ -109,6 +115,16 @@ extends PlaceholderExpansion {
                     return Colors.toSection(suffix);
                 }
                 return Ranks.tab(this.plugin.getStatsManager(), id);
+            }
+            case "tabsuffix": {
+                // One field after the name, so nothing can overlap: the duel
+                // marker while fighting, their MeowTags tag otherwise, and
+                // nothing at all when they have neither.
+                if (this.plugin.getDuelManager().isInDuel(id)) {
+                    return " \u00a78" + this.plugin.getDuelMarker();
+                }
+                String tag = com.meowduels.util.Colors.toSection(this.papi(player, "%luckperms_suffix%"));
+                return tag.trim().isEmpty() ? "" : " " + tag;
             }
             case "tag": {
                 if (this.plugin.getDuelManager().isInDuel(id)) {

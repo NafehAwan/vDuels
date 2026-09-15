@@ -265,6 +265,14 @@ extends JavaPlugin {
         return this.playerSettingsManager;
     }
 
+    /** The marker shown after a fighter's name in the tab list. Configurable
+     *  because the default is an emoji, which only renders with a resource pack
+     *  that provides the glyph - "duel-marker" in config.yml takes any text. */
+    public String getDuelMarker() {
+        String marker = this.getConfig().getString("duel-marker", "\ud83d\udde1");
+        return marker == null ? "" : marker;
+    }
+
     public void giveSpawnItems(Player player) {
         SpawnItems.give(this, player);
     }
