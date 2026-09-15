@@ -99,10 +99,11 @@ implements Relational {
                 return Ranks.mini(this.plugin.getStatsManager(), id);
             }
             case "tabprefix": {
-                ActiveDuel own = this.plugin.getDuelManager().getDuel(id);
-                if (own != null) {
-                    return own.isAqua(id) ? "\u00a7b\u26a1 \u00a7b" : "\u00a7c\u26a1 \u00a7c";
-                }
+                // Viewer-independent answer: their real rank, with its real
+                // colours. Replacing it with the team bolt here was showing the
+                // whole server a fighter in aqua/red instead of their rank -
+                // the bolt belongs only in the fighters' own tab list, which is
+                // what %rel_meowduels_tabprefix% handles.
                 return this.lpPrefix(player);
             }
             case "lpprefix": {
@@ -226,13 +227,28 @@ implements Relational {
         if (params == null || target == null) {
             return "";
         }
-        if (!"tabsuffix".equals(params.toLowerCase())) {
-            // Anything else falls through to the ordinary, viewer-independent form.
-            return this.onRequest((OfflinePlayer) target, params);
+        String key = params.toLowerCase();
+        UUID id = target.getUniqueId();
+        // Is the person LOOKING part of a match - fighting it or watching it?
+        // Everything in their tab list is that match, so it gets the fight
+        // styling. Everyone else is "global" and sees normal ranks.
+        boolean watchingAFight = viewer != null
+                && (this.plugin.getDuelManager().isInDuel(viewer.getUniqueId())
+                    || this.plugin.getSpectateManager().isSpectating(viewer.getUniqueId()));
+        if ("tabprefix".equals(key)) {
+            ActiveDuel fight = this.plugin.getDuelManager().getDuel(id);
+            if (watchingAFight && fight != null) {
+                return fight.isAqua(id) ? "\u00a7b\u26a1 \u00a7b" : "\u00a7c\u26a1 \u00a7c";
+            }
+            return this.lpPrefix(target); // global: their own rank and colours
         }
-        boolean viewerFighting = viewer != null
-                && this.plugin.getDuelManager().isInDuel(viewer.getUniqueId());
-        return this.suffixFor(target, target.getUniqueId(), !viewerFighting);
+        if ("tabsuffix".equals(key)) {
+            // The marker is for people outside the match; inside it, everyone
+            // already knows who is fighting.
+            return this.suffixFor(target, id, !watchingAFight);
+        }
+        // Anything else falls through to the ordinary, viewer-independent form.
+        return this.onRequest((OfflinePlayer) target, params);
     }
 
     /**

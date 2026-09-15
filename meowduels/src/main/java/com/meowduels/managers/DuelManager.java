@@ -350,6 +350,7 @@ public class DuelManager {
         p1.sendMessage(this.msg("duel.round", "round", round, "roundsToWin", toWin));
         p2.sendMessage(this.msg("duel.round", "round", round, "roundsToWin", toWin));
         duel.clearReady();
+        this.plugin.getSpectateManager().followRoundStart(duel.getPlayer1(), duel.getPlayer2());
         int countdown = duel.getArena().getCountdownOverride();
         this.countdownTick(duel, (countdown > 0 ? countdown : this.countdownSeconds) * 20);
     }
@@ -830,19 +831,30 @@ public class DuelManager {
         this.arenasInUse.remove(name.toLowerCase());
     }
 
-    /** How many players are actually fighting right now.
+    /** Live counts, refreshed on the main thread by {@link #tickCounts()}.
      *
-     *  <p>Counted rather than read off the map size, and stale entries are pruned
-     *  as we go: a player who went offline, or one whose entry still points at a
-     *  match that has already been paid out, would otherwise keep inflating the
-     *  figure until a restart - which is what made "In Duels" creep up towards
-     *  the online count. */
-    public int playersInDuels() {
+     *  <p>Volatile and cached on purpose: TAB resolves placeholders on its own
+     *  async thread, so counting these on demand would read - and, when pruning,
+     *  WRITE - the duel map off the main thread. */
+    private volatile int fightingPlayers = 0;
+    private volatile int fightingMatches = 0;
+
+    /** Recounts who is actually fighting and drops stale entries. Main thread,
+     *  once a second.
+     *
+     *  <p>An entry that outlives its match - the player went offline, or the
+     *  match was already paid out - would otherwise keep inflating the figure
+     *  until a restart, which is how "In Duels" crept up toward the online
+     *  count. */
+    public void tickCounts() {
         if (this.playerDuels.isEmpty()) {
-            return 0;
+            this.fightingPlayers = 0;
+            this.fightingMatches = 0;
+            return;
         }
+        Set<ActiveDuel> seen = Collections.newSetFromMap(new IdentityHashMap<ActiveDuel, Boolean>());
         java.util.Iterator<Map.Entry<UUID, ActiveDuel>> it = this.playerDuels.entrySet().iterator();
-        int fighting = 0;
+        int players = 0;
         while (it.hasNext()) {
             Map.Entry<UUID, ActiveDuel> e = it.next();
             ActiveDuel duel = e.getValue();
@@ -850,20 +862,21 @@ public class DuelManager {
                 it.remove();
                 continue;
             }
-            fighting++;
+            players++;
+            seen.add(duel);
         }
-        return fighting;
+        this.fightingPlayers = players;
+        this.fightingMatches = seen.size();
     }
 
-    /** Number of matches in progress (two players each). */
+    /** How many players are fighting right now (two per match). */
+    public int playersInDuels() {
+        return this.fightingPlayers;
+    }
+
+    /** How many matches are in progress. */
     public int duelsInProgress() {
-        Set<ActiveDuel> seen = Collections.newSetFromMap(new IdentityHashMap<ActiveDuel, Boolean>());
-        for (ActiveDuel duel : this.playerDuels.values()) {
-            if (duel != null && !duel.isFinished()) {
-                seen.add(duel);
-            }
-        }
-        return seen.size();
+        return this.fightingMatches;
     }
 
     public ActiveDuel getDuel(UUID id) {

@@ -145,6 +145,7 @@ extends JavaPlugin {
             this.spectateManager.tick();
             this.duelManager.tickWorldLocks();
             this.duelManager.tickArenaSafety();
+            this.duelManager.tickCounts();
             if (this.eventManager.isRunning() && this.eventManager.getArena() != null) {
                 DuelManager.applyWorldLocks(this.eventManager.getArena());
                 this.eventManager.tickBorderDamage();

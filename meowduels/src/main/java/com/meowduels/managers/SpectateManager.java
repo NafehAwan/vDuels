@@ -127,6 +127,24 @@ public class SpectateManager {
         GameModeGuard.setFreely(viewer, mode == null ? GameMode.SURVIVAL : mode);
     }
 
+    /** Pulls every spectator of this match back to the player they are watching.
+     *  Called when a round starts: the fighters are teleported to their spawns,
+     *  and without this their spectators are left behind at the previous round's
+     *  death spot, watching an empty arena. */
+    public void followRoundStart(UUID p1, UUID p2) {
+        for (Map.Entry<UUID, UUID> e : this.target.entrySet()) {
+            UUID watched = e.getValue();
+            if (watched == null || (!watched.equals(p1) && !watched.equals(p2))) {
+                continue;
+            }
+            Player viewer = Bukkit.getPlayer((UUID) e.getKey());
+            Player subject = Bukkit.getPlayer((UUID) watched);
+            if (viewer != null && subject != null) {
+                viewer.teleport(subject.getLocation());
+            }
+        }
+    }
+
     public void tick() {
         if (this.watchingFight.isEmpty()) {
             return;
