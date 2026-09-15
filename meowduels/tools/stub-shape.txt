@@ -6,3 +6,4 @@ org/bukkit/plugin/Plugin interface
 org/bukkit/Keyed interface
 io/papermc/paper/chat/ChatRenderer interface
 net/kyori/adventure/text/format/TextColor interface
+me/clip/placeholderapi/expansion/Relational interface

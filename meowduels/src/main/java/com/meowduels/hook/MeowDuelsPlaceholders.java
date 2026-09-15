@@ -19,12 +19,14 @@ import java.util.Locale;
 import java.util.UUID;
 import me.clip.placeholderapi.PlaceholderAPI;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
+import me.clip.placeholderapi.expansion.Relational;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 public class MeowDuelsPlaceholders
-extends PlaceholderExpansion {
+extends PlaceholderExpansion
+implements Relational {
     private final MeowDuels plugin;
 
     public MeowDuelsPlaceholders(MeowDuels plugin) {
@@ -117,14 +119,7 @@ extends PlaceholderExpansion {
                 return Ranks.tab(this.plugin.getStatsManager(), id);
             }
             case "tabsuffix": {
-                // One field after the name, so nothing can overlap: the duel
-                // marker while fighting, their MeowTags tag otherwise, and
-                // nothing at all when they have neither.
-                if (this.plugin.getDuelManager().isInDuel(id)) {
-                    return " \u00a78" + this.plugin.getDuelMarker();
-                }
-                String tag = com.meowduels.util.Colors.toSection(this.papi(player, "%luckperms_suffix%"));
-                return tag.trim().isEmpty() ? "" : " " + tag;
+                return this.suffixFor(player, id, true);
             }
             case "tag": {
                 if (this.plugin.getDuelManager().isInDuel(id)) {
@@ -215,6 +210,53 @@ extends PlaceholderExpansion {
             }
         }
         return "";
+    }
+
+    /**
+     * Viewer-aware placeholders: {@code %rel_meowduels_...%}.
+     *
+     * <p>PlaceholderAPI hands us both the player looking at the tab list and the
+     * player being described, which a normal expansion never sees - it only ever
+     * knows the target. That is the whole reason this exists: the duel marker is
+     * for everyone OUTSIDE the match. The two fighters already know they are
+     * fighting, and their tab list holds nothing but each other, so a dagger on
+     * both rows is just noise.
+     */
+    public String onPlaceholderRequest(Player viewer, Player target, String params) {
+        if (params == null || target == null) {
+            return "";
+        }
+        if (!"tabsuffix".equals(params.toLowerCase())) {
+            // Anything else falls through to the ordinary, viewer-independent form.
+            return this.onRequest((OfflinePlayer) target, params);
+        }
+        boolean viewerFighting = viewer != null
+                && this.plugin.getDuelManager().isInDuel(viewer.getUniqueId());
+        return this.suffixFor(target, target.getUniqueId(), !viewerFighting);
+    }
+
+    /**
+     * What goes after a player's name in the tab list: the duel marker while
+     * they fight, otherwise their MeowTags tag - one field deciding between the
+     * two, so they can never collide.
+     *
+     * <p>Always opens with a reset so neither the rank's colour nor the tag's
+     * bleeds into it, and always starts with a space so it never runs into the
+     * name.
+     *
+     * @param showMarker false to leave a fighter's row bare (the viewer is in a
+     *                   duel themselves, so the marker tells them nothing)
+     */
+    private String suffixFor(OfflinePlayer player, UUID id, boolean showMarker) {
+        if (this.plugin.getDuelManager().isInDuel(id)) {
+            String marker = this.plugin.getDuelMarker();
+            if (!showMarker || marker.isEmpty()) {
+                return "";
+            }
+            return " \u00a7r\u00a78" + marker;
+        }
+        String tag = Colors.toSection(this.papi(player, "%luckperms_suffix%"));
+        return tag.trim().isEmpty() ? "" : " \u00a7r" + tag;
     }
 
     private String lpPrefix(OfflinePlayer player) {

@@ -1,6 +1,6 @@
 package org.bukkit.entity;
 
-public interface Player {
+public interface Player extends org.bukkit.OfflinePlayer {
     org.bukkit.permissions.PermissionAttachment addAttachment(org.bukkit.plugin.Plugin a0, java.lang.String a1, boolean a2);
     boolean addPotionEffect(org.bukkit.potion.PotionEffect a0);
     boolean addScoreboardTag(java.lang.String a0);

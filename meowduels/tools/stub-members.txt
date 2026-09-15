@@ -65,3 +65,6 @@ io/papermc/paper/chat/ChatRenderer | net.kyori.adventure.text.Component render(o
 # InventoryClickEvent.isShiftClick - real Paper API, first used by the admin
 # "Change Kit" confirmation, so it appears in no earlier jar.
 org/bukkit/event/inventory/InventoryClickEvent | public boolean isShiftClick() { return false; }
+# Relational placeholders are viewer-aware: PlaceholderAPI passes BOTH the player
+# looking and the player being described, which a normal expansion never sees.
+me/clip/placeholderapi/expansion/Relational | String onPlaceholderRequest(org.bukkit.entity.Player a0, org.bukkit.entity.Player a1, String a2);
