@@ -27,9 +27,11 @@ import org.bukkit.entity.Player;
 
 public class SpectateManager {
     private final MeowDuels plugin;
-    private final Map<UUID, Location> returnLocation = new HashMap<UUID, Location>();
+    // Concurrent: isSpectating()/getWatchedTarget() are read from TAB's thread
+    // while the main thread starts and stops spectating.
+    private final Map<UUID, Location> returnLocation = new java.util.concurrent.ConcurrentHashMap<UUID, Location>();
     private final Map<UUID, GameMode> returnMode = new HashMap<UUID, GameMode>();
-    private final Map<UUID, UUID> target = new HashMap<UUID, UUID>();
+    private final Map<UUID, UUID> target = new java.util.concurrent.ConcurrentHashMap<UUID, UUID>();
     private final Set<UUID> watchingFight = new HashSet<UUID>();
 
     public SpectateManager(MeowDuels plugin) {

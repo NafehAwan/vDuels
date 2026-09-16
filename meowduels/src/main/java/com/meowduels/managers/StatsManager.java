@@ -23,11 +23,13 @@ import org.bukkit.configuration.file.YamlConfiguration;
 public class StatsManager {
     private final MeowDuels plugin;
     private final File file;
-    private final Map<UUID, Integer> streak = new HashMap<UUID, Integer>();
-    private final Map<UUID, Integer> wins = new HashMap<UUID, Integer>();
-    private final Map<UUID, Integer> losses = new HashMap<UUID, Integer>();
-    private final Map<UUID, Integer> elo = new HashMap<UUID, Integer>();
-    private final Map<UUID, Integer> played = new HashMap<UUID, Integer>();
+    private final Map<UUID, Integer> streak = new java.util.concurrent.ConcurrentHashMap<UUID, Integer>();
+    private final Map<UUID, Integer> wins = new java.util.concurrent.ConcurrentHashMap<UUID, Integer>();
+    private final Map<UUID, Integer> losses = new java.util.concurrent.ConcurrentHashMap<UUID, Integer>();
+    // Concurrent: the rank placeholders are resolved on TAB's thread while
+    // matches on the main thread are writing new ratings.
+    private final Map<UUID, Integer> elo = new java.util.concurrent.ConcurrentHashMap<UUID, Integer>();
+    private final Map<UUID, Integer> played = new java.util.concurrent.ConcurrentHashMap<UUID, Integer>();
     public static final int DEFAULT_ELO = 1000;
 
     public StatsManager(MeowDuels plugin) {

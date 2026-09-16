@@ -94,7 +94,10 @@ public class DuelManager {
     private final long winEndTicks;
     private final long matchFoundTicks;
     private final Map<UUID, Map<UUID, DuelRequest>> requests = new HashMap<UUID, Map<UUID, DuelRequest>>();
-    private final Map<UUID, ActiveDuel> playerDuels = new HashMap<UUID, ActiveDuel>();
+    // Concurrent because TAB resolves placeholders on its own thread: it calls
+    // isInDuel/getDuel while the main thread is starting and ending matches, and
+    // a plain HashMap read during a resize can spin forever.
+    private final Map<UUID, ActiveDuel> playerDuels = new java.util.concurrent.ConcurrentHashMap<UUID, ActiveDuel>();
     private final Map<UUID, PlayerSnapshot> snapshots = new HashMap<UUID, PlayerSnapshot>();
     private final Set<String> arenasInUse = new HashSet<String>();
     private final Map<UUID, UUID> lastOpponent = new HashMap<UUID, UUID>();
@@ -640,16 +643,13 @@ public class DuelManager {
         }
     }
 
-    private void restoreTab(UUID id) {
-        Player player = Bukkit.getPlayer((UUID)id);
-        if (player != null) {
-            this.plugin.getTabHook().restoreRank(player);
-            this.plugin.getTabHook().setNametagSuffix(player, null);
-        }
-    }
-
+    /** True while {@code duel} is still the live duel for its players - guards
+     *  every delayed callback, so a timer from a finished match can never touch
+     *  the new match those players have already started. */
     private boolean isStill(ActiveDuel duel) {
-        return !duel.isFinished() && (this.playerDuels.get(duel.getPlayer1()) == duel || this.playerDuels.get(duel.getPlayer2()) == duel);
+        return !duel.isFinished()
+                && (this.playerDuels.get(duel.getPlayer1()) == duel
+                 || this.playerDuels.get(duel.getPlayer2()) == duel);
     }
 
     private void endMatch(ActiveDuel duel, UUID winnerId, EndReason reason) {
@@ -660,8 +660,6 @@ public class DuelManager {
         duel.setFinished(true);
         duel.setState(ActiveDuel.State.ENDING);
         this.regenArena(duel);
-        this.restoreTab(duel.getPlayer1());
-        this.restoreTab(duel.getPlayer2());
         this.restorePlayer(duel.getPlayer1(), true);
         this.restorePlayer(duel.getPlayer2(), true);
         this.giveSpawnItemsTo(duel.getPlayer1());
@@ -1089,8 +1087,6 @@ public class DuelManager {
         String booked = this.msg("duel.arena-booked", new String[0]);
         Player p1 = Bukkit.getPlayer((UUID)duel.getPlayer1());
         Player p2 = Bukkit.getPlayer((UUID)duel.getPlayer2());
-        this.restoreTab(duel.getPlayer1());
-        this.restoreTab(duel.getPlayer2());
         this.restorePlayer(duel.getPlayer1(), true);
         this.restorePlayer(duel.getPlayer2(), true);
         this.giveSpawnItemsTo(duel.getPlayer1());
