@@ -1,0 +1,15 @@
+name: MeowTags
+version: 1.0.0
+main: com.meowtags.MeowTags
+api-version: '1.21'
+authors: [MeowDuels]
+description: GUI cosmetic suffix tags with bold small-caps gradients.
+softdepend: [LuckPerms, TAB]
+commands:
+  tags:
+    description: Open the cosmetic tag menu.
+    usage: "/tags [add|delete|off|reload]"
+permissions:
+  meowtags.admin:
+    description: Manage tags (add, delete, reload).
+    default: op

@@ -22,6 +22,7 @@ public interface Player extends org.bukkit.OfflinePlayer {
     int getPing();
     float getSaturation();
     org.bukkit.scoreboard.Scoreboard getScoreboard();
+    java.util.Set getScoreboardTags();
     int getStatistic(org.bukkit.Statistic a0);
     int getTotalExperience();
     java.util.UUID getUniqueId();

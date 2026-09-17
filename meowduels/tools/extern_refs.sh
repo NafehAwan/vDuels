@@ -5,9 +5,10 @@
 # NoSuchMethodError at runtime instead of a compile error.
 # Usage: extern_refs.sh <jar> <out.txt>   (absolute paths)
 set -e
+PKG="${PKG:-com/meowduels/*}"
 JAR="$1"; OUT="$2"
 TMP=$(mktemp -d)
-unzip -o -q "$JAR" 'com/meowduels/*' -d "$TMP"
+unzip -o -q "$JAR" "$PKG" -d "$TMP"
 CLASSES=$(cd "$TMP" && find com -name '*.class' | sed 's/\.class$//' | tr '/' '.')
 javap -p -c -classpath "$TMP" $CLASSES 2>/dev/null \
   | grep -oE '// (InterfaceMethod|Method|Field) [^ ]+' \

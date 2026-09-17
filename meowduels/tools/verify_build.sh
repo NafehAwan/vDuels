@@ -5,6 +5,7 @@
 #   2. @EventHandler retention - CLASS instead of RUNTIME registers NO listeners
 # Usage: verify_build.sh <reference.jar> <rebuilt.jar>
 set -e
+PKG="${PKG:-com/meowduels/*}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 REF="$1"; NEW="$2"; FAIL=0
 
@@ -19,7 +20,7 @@ fi
 
 count_ann() {
   local T; T=$(mktemp -d)
-  unzip -o -q "$1" 'com/meowduels/*' -d "$T"
+  unzip -o -q "$1" "$PKG" -d "$T"
   local C; C=$(cd "$T" && find com -name '*.class' | sed 's/\.class$//' | tr '/' '.')
   javap -v -p -classpath "$T" $C 2>/dev/null | grep -c "$2" || true
   rm -rf "$T"

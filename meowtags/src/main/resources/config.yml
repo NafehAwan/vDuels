@@ -1,0 +1,21 @@
+# =====================================================================
+#  MeowTags configuration
+# =====================================================================
+
+# LuckPerms suffix priority used for tags. A high number keeps our tag
+# above other suffixes. Only ONE tag is ever stored at this priority.
+suffix-priority: 10000
+
+# The chest menu title (& colour codes; §/hex not needed here).
+gui-title: "&8&lꜱᴇʟᴇᴄᴛ ᴀ ᴛᴀɢ"
+
+# MeowDuels adds this scoreboard tag to a player while they're in a duel.
+# Whenever a player carries it, their tag is hidden from the tab list and
+# restored the moment it's gone. Leave as-is unless you renamed it.
+duel-scoreboard-tag: "meowduel"
+
+# How often (in ticks, 20 = 1s) to reconcile the duel-hide state.
+reconcile-interval-ticks: 40
+
+# Default tags are written to tags.yml on first run. Edit THAT file (or use
+# /tags add ...) to change them - this file only holds global settings.
