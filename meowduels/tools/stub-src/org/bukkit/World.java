@@ -6,6 +6,7 @@ public interface World {
     int getMaxHeight();
     int getMinHeight();
     java.lang.String getName();
+    org.bukkit.Location getSpawnLocation();
     void setStorm(boolean a0);
     void setThundering(boolean a0);
     void setTime(long a0);

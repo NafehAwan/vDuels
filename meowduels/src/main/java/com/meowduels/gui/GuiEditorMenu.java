@@ -86,7 +86,10 @@ extends Menu {
                 this.inventory.setItem(10, this.buttonMarker("map", Material.FILLED_MAP, "&dArena button"));
                 this.inventory.setItem(12, this.buttonMarker("kit", Material.GOLDEN_APPLE, "&6Kit button"));
                 this.inventory.setItem(14, this.buttonMarker("clock", Material.CLOCK, "&eRounds button"));
-                this.inventory.setItem(16, this.buttonMarker("confirm", Material.GREEN_STAINED_GLASS_PANE, "&aConfirm button"));
+                this.inventory.setItem(16, this.buttonMarker("ranked", Material.LIME_DYE, "&bRanked toggle"));
+                this.inventory.setItem(22, this.buttonMarker("target", Material.PLAYER_HEAD, "&fOpponent head"));
+                this.inventory.setItem(29, this.buttonMarker("confirm", Material.LIME_DYE, "&aConfirm button"));
+                this.inventory.setItem(33, this.buttonMarker("cancel", Material.BARRIER, "&cCancel button"));
                 break;
             }
             case "mapselect": {
@@ -164,7 +167,10 @@ extends Menu {
                 this.ensureButton(layout, "map", Material.FILLED_MAP, "&dArena button", 10);
                 this.ensureButton(layout, "kit", Material.GOLDEN_APPLE, "&6Kit button", 12);
                 this.ensureButton(layout, "clock", Material.CLOCK, "&eRounds button", 14);
-                this.ensureButton(layout, "confirm", Material.GREEN_STAINED_GLASS_PANE, "&aConfirm button", 16);
+                this.ensureButton(layout, "ranked", Material.LIME_DYE, "&bRanked toggle", 16);
+                this.ensureButton(layout, "target", Material.PLAYER_HEAD, "&fOpponent head", 22);
+                this.ensureButton(layout, "confirm", Material.LIME_DYE, "&aConfirm button", 29);
+                this.ensureButton(layout, "cancel", Material.BARRIER, "&cCancel button", 33);
                 break;
             }
             case "mapselect": {

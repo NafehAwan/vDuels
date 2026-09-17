@@ -12,5 +12,6 @@ public class Bukkit {
     public static org.bukkit.scheduler.BukkitScheduler getScheduler() { return null; }
     public static org.bukkit.scoreboard.ScoreboardManager getScoreboardManager() { return null; }
     public static org.bukkit.World getWorld(java.lang.String a0) { return null; }
+    public static java.util.List<org.bukkit.World> getWorlds() { return null; }
     public static java.util.Collection<? extends org.bukkit.entity.Player> getOnlinePlayers() { return null; }
 }

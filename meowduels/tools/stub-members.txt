@@ -68,3 +68,8 @@ org/bukkit/event/inventory/InventoryClickEvent | public boolean isShiftClick() {
 # Relational placeholders are viewer-aware: PlaceholderAPI passes BOTH the player
 # looking and the player being described, which a normal expansion never sees.
 me/clip/placeholderapi/expansion/Relational | String onPlaceholderRequest(org.bukkit.entity.Player a0, org.bukkit.entity.Player a1, String a2);
+
+# --- World lookup: the join handler's fallback when no duel spawn is set ----
+# Real Paper signatures; both are plain getters, nothing generic to erase.
+org/bukkit/Bukkit | public static java.util.List<org.bukkit.World> getWorlds() { return null; }
+org/bukkit/World | org.bukkit.Location getSpawnLocation();

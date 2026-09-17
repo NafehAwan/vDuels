@@ -11,6 +11,7 @@
  */
 package com.meowduels.gui;
 
+import com.meowduels.util.Colors;
 import com.meowduels.util.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -25,6 +26,15 @@ implements InventoryHolder {
 
     protected Inventory create(int rows, String title) {
         this.inventory = Bukkit.createInventory((InventoryHolder)this, (int)(rows * 9), (String)Text.color(title));
+        return this.inventory;
+    }
+
+    /**
+     * Same as {@link #create}, but the title is taken literally: {@link #create}
+     * small-caps every letter, which mangles a player's name in a title.
+     */
+    protected Inventory createRaw(int rows, String title) {
+        this.inventory = Bukkit.createInventory((InventoryHolder)this, (int)(rows * 9), (String)Colors.toSection(title));
         return this.inventory;
     }
 

@@ -191,18 +191,46 @@ implements Listener {
         event.setDeathMessage(message);
     }
 
+    /**
+     * Where a death puts you back.
+     *
+     * <p>Inside a duel, on your own side of the arena - that part is unchanged.
+     * Anywhere else you come back at spawn holding the spawn items, which is the
+     * half that was missing: a lobby death used to leave players at whatever bed
+     * or world spawn vanilla picked, with an empty hotbar and no way to queue.
+     *
+     * <p>Only this plugin can tell those two cases apart, which is why the FFA
+     * script does not try to. An FFA death lands here first and gets sent to
+     * spawn, and the script's own respawn handler pulls the player back into
+     * their arena ten ticks later with the arena kit - the same sequence it
+     * already ran, just starting from spawn instead of a bed.
+     */
     @EventHandler
     public void onRespawn(PlayerRespawnEvent event) {
         Player player = event.getPlayer();
         ActiveDuel duel = this.plugin.getDuelManager().getDuel(player.getUniqueId());
-        if (duel == null) {
+        if (duel != null) {
+            Location spawn = player.getUniqueId().equals(duel.getPlayer1()) ? duel.getArena().getSpawn1() : duel.getArena().getSpawn2();
+            if (spawn != null) {
+                event.setRespawnLocation(spawn);
+            }
             return;
         }
-        Location spawn = player.getUniqueId().equals(duel.getPlayer1()) ? duel.getArena().getSpawn1() : duel.getArena().getSpawn2();
-        Location location = spawn;
+        if (!this.plugin.getConfig().getBoolean("on-death-spawn", true)
+                || this.plugin.getEventManager().isInvolved(player.getUniqueId())) {
+            return;
+        }
+        Location spawn = this.spawnPoint();
         if (spawn != null) {
             event.setRespawnLocation(spawn);
         }
+        // A tick later: the inventory is not ours to touch until the respawn has
+        // actually happened, and a duel could still have started in between.
+        Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
+            if (player.isOnline() && !this.plugin.getDuelManager().isInDuel(player.getUniqueId())) {
+                this.plugin.giveSpawnItems(player);
+            }
+        }, 1L);
     }
 
     @EventHandler(priority=EventPriority.MONITOR)
@@ -430,7 +458,6 @@ implements Listener {
             for (PotionEffect e : player.getActivePotionEffects()) {
                 player.removePotionEffect(e.getType());
             }
-            this.plugin.giveSpawnItems(player);
             try {
                 player.setHealth(player.getMaxHealth());
             }
@@ -441,15 +468,65 @@ implements Listener {
             player.setSaturation(20.0f);
             player.setExhaustion(0.0f);
             player.setFireTicks(0);
-            Location dest = this.plugin.getDuelSpawn();
-            if (dest != null) {
-                Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
-                    if (player.isOnline()) {
-                        player.teleport(dest);
-                    }
-                }, 2L);
-            }
         }
+        this.sendToSpawn(player);
+    }
+
+    /**
+     * Everyone lands at spawn holding the spawn items, every join.
+     *
+     * <p>This used to sit inside the {@code on-join-reset} block, so turning that
+     * off - or never running {@code /meowduelssetspawn}, which left the location
+     * null - silently dropped both. Neither is optional now: a duels server whose
+     * players arrive somewhere random with an empty hotbar has no way in.
+     *
+     * <p>The items are given twice and the teleport checked twice, one second
+     * apart, because other plugins also act on join. A world manager restoring a
+     * last-known position, or anything that reinstates a saved inventory, runs
+     * after us on the same tick; the second pass runs after all of them. It only
+     * re-teleports if the player is in the wrong world, so someone who walked off
+     * on their own is left alone.
+     */
+    private void sendToSpawn(Player player) {
+        Location dest = this.spawnPoint();
+        if (dest == null) {
+            this.plugin.giveSpawnItems(player);
+            return;
+        }
+        Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
+            if (!player.isOnline() || this.plugin.getDuelManager().isInDuel(player.getUniqueId())) {
+                return;
+            }
+            player.teleport(dest);
+            this.plugin.giveSpawnItems(player);
+        }, 2L);
+        Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
+            if (!player.isOnline() || this.plugin.getDuelManager().isInDuel(player.getUniqueId())
+                    || this.plugin.getEventManager().isInvolved(player.getUniqueId())
+                    || this.plugin.getSpectateManager().isSpectating(player.getUniqueId())) {
+                return;
+            }
+            if (player.getLocation().getWorld() != dest.getWorld()) {
+                player.teleport(dest);
+            }
+            this.plugin.giveSpawnItems(player);
+        }, 22L);
+    }
+
+    /**
+     * Where spawn is: the configured duel spawn, or the main world's spawn if
+     * nobody has set one. Falling back beats doing nothing - an unset spawn is
+     * the single most likely reason a join lands the player in the wrong place.
+     */
+    private Location spawnPoint() {
+        Location dest = this.plugin.getDuelSpawn();
+        if (dest != null) {
+            return dest;
+        }
+        if (Bukkit.getWorlds().isEmpty()) {
+            return null;
+        }
+        return Bukkit.getWorlds().get(0).getSpawnLocation();
     }
 
     @EventHandler

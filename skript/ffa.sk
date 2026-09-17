@@ -1,0 +1,464 @@
+options:
+    prefix: <##FF0000>ʙ<##FF2400>ʟ<##FF4800>ᴏ<##FF6D00>ᴏ<##FF9100>ᴅ<##FFB500>ᴛ<##FFD900>ʜ<##FFA500>ɪʀsᴛ sᴍᴘ &8»&7
+    # How long (in FFA) a player is combat-tagged after dealing/taking damage.
+    combat_seconds: 15
+    # The command that sends a player to spawn, and the one that hands out the
+    # MeowDuels spawn hotbar. Change these if your server names them otherwise.
+    spawn_command: spawn
+    spawn_items_command: meowduelsspawnitems
+
+# ---------------------------------------------------------
+# RUN THIS ONCE TO WIPE BROKEN/CORRUPTED COMMANDS
+# ---------------------------------------------------------
+command /ffafixcmds:
+    permission: ffa.admin
+    trigger:
+        delete {ffa::cmd_map::*}
+        send "{@prefix} &aWiped all corrupted custom commands! Please set them again in /ffaedit." to player
+
+# True while the player is combat-tagged inside an FFA arena.
+# {ffa::combat::%player%} holds the seconds remaining (counted down each second).
+function ffaInCombat(p: player) :: boolean:
+    if {ffa::combat::%{_p}%} is set:
+        if {ffa::combat::%{_p}%} is greater than 0:
+            return true
+    return false
+
+# Drops a player's combat tag and tells them so. One function, because the tag
+# has to be cleared in several places and each one also owes the player the
+# action bar - otherwise "Combat 9s" just freezes on their screen until the next
+# fight overwrites it.
+function clearFFACombat(p: player):
+    if {ffa::combat::%{_p}%} is set:
+        delete {ffa::combat::%{_p}%}
+        delete {ffa::lastattacker::%{_p}%}
+        send action bar "&aCombat over!" to {_p}
+
+# Heals and refreshes the kit of a player who just got a kill (in their arena),
+# and takes them out of combat: the fight they were tagged for is over, so making
+# them stand around for the rest of the timer only punishes them for winning.
+# This also runs for a combat-log kill, where the winner never landed the last
+# hit - same reasoning, the opponent is gone either way.
+function rewardFFAKill(att: player):
+    set {_w} to {ffa::active::%{_att}%}
+    if {_w} is set:
+        clearFFACombat({_att})
+        set health of {_att} to max health of {_att}
+        set food level of {_att} to 20
+        clear inventory of {_att}
+        set {_kit} to {ffa::arena::%{_w}%::kit}
+        if {_kit} is set:
+            execute console command "playerkits give %{_kit}% %name of {_att}%"
+            execute console command "playerkits give %name of {_att}% %{_kit}%"
+
+# Direct Join Helper Function
+function joinFFAArena(p: player, w: text):
+    if {ffa::arena::%{_w}%::enabled} is true:
+        if {ffa::arena::%{_w}%::spawn} is set:
+            # If they were queued for a duel, pull them out first.
+            make {_p} execute command "leave"
+
+            set {ffa::active::%{_p}%} to {_w}
+            teleport {_p} to {ffa::arena::%{_w}%::spawn}
+
+            # Send Title
+            set {_title_text} to {ffa::arena::%{_w}%::title}
+            if {_title_text} is not set:
+                set {_title_text} to "<##FF0000>s<##FF2A00>ᴡ<##FF5500>ᴏ<##FF7F00>ʀ<##FFA500>ᴅ <##FF8800>ᴀ<##FF6600>ʀ<##FF4400>ᴇ<##FF2200>ɴ<##FF0000>ᴀ"
+            make console execute command "/title %name of {_p}% title %{_title_text}%"
+
+            # Console Kit Distribution
+            wait 10 ticks
+            if {ffa::active::%{_p}%} is {_w}:
+                clear inventory of {_p}
+                # Heal on entry to any FFA arena.
+                set health of {_p} to max health of {_p}
+                set food level of {_p} to 20
+                set {_p} on fire for 0 seconds
+                set {_kit} to {ffa::arena::%{_w}%::kit}
+                if {_kit} is set:
+                    execute console command "playerkits give %{_kit}% %name of {_p}%"
+                    execute console command "playerkits give %name of {_p}% %{_kit}%"
+                    execute console command "pkit give %{_kit}% %name of {_p}%"
+                    execute console command "pkit give %name of {_p}% %{_kit}%"
+                else:
+                    send "{@prefix} Warning: No kit is configured for this arena!" to {_p}
+        else:
+            send "{@prefix} Spawn point for arena &e%{_w}%&7 is not set!" to {_p}
+    else:
+        send "{@prefix} That arena is currently disabled or does not exist." to {_p}
+
+# Main Admin Menu (/ffa)
+command /ffa:
+    permission: ffa.admin
+    trigger:
+        set {_gui} to chest inventory with 3 rows named "<##FF0000>FFA Admin Manager"
+        set {_w} to "%player's world%"
+
+        set slot 11 of {_gui} to emerald block named "<##00FF00>+ Create Arena (%{_w}%)" with lore "&7Click to register your current world" and "&7as a new FFA arena."
+        set slot 15 of {_gui} to book named "<##FF9100>Manage Existing Arenas" with lore "&7Click to view and edit existing arenas."
+
+        open {_gui} to player
+
+# Setup Panel for Specific World
+command /ffaedit <text>:
+    permission: ffa.admin
+    trigger:
+        set {_w} to arg-1
+        set {_gui} to chest inventory with 3 rows named "<##FF0000>FFA Setup Panel (%{_w}%)"
+
+        set {_name} to {ffa::arena::%{_w}%::name}
+        if {_name} is not set:
+            set {_name} to "&c%{_w}% Arena"
+
+        set {_kit} to {ffa::arena::%{_w}%::kit}
+        if {_kit} is not set:
+            set {_kit} to "Not Set"
+
+        set {_cmd} to {ffa::arena::%{_w}%::cmd}
+        if {_cmd} is not set:
+            set {_cmd} to "Not Set"
+
+        set {_title} to {ffa::arena::%{_w}%::title}
+        if {_title} is not set:
+            set {_title} to "<##FF0000>s<##FF2A00>ᴡ<##FF5500>ᴏ<##FF7F00>ʀ<##FFA500>ᴅ <##FF8800>ᴀ<##FF6600>ʀ<##FF4400>ᴇ<##FF2200>ɴ<##FF0000>ᴀ"
+
+        set {_enabled} to {ffa::arena::%{_w}%::enabled}
+        if {_enabled} is true:
+            set {_status} to "&aEnabled"
+        else:
+            set {_status} to "&cDisabled"
+
+        set slot 10 of {_gui} to diamond sword named "<##FF4800>Set Arena Spawn" with lore "&7Sets warp spawn point" and "&7at your current location."
+        set slot 11 of {_gui} to command block named "<##FF5500>Set Custom Command" with lore "&7Current Command: &e/%{_cmd}%" and "" and "&7Click to type trigger command in chat."
+        set slot 12 of {_gui} to anvil named "<##FF6D00>Set Display Name" with lore "&7Current: %{_name}%" and "" and "&7Click to type name in chat."
+        set slot 13 of {_gui} to item frame named "<##FF9100>Set Arena Icon/Logo" with lore "&7Hold an item in hand" and "&7and click to set GUI icon."
+        set slot 14 of {_gui} to name tag named "<##FFB500>Link PlayerKit" with lore "&7Current Kit: &e%{_kit}%" and "" and "&7Click to type exact kit name."
+        set slot 15 of {_gui} to paper named "<##FF8800>Set Arena Title" with lore "&7Current Title:" and "&f%{_title}%" and "" and "&7Click to type title format in chat."
+        set slot 16 of {_gui} to redstone block named "<##FFA500>Toggle Arena Status" with lore "&7Status: %{_status}%"
+
+        open {_gui} to player
+
+# List All Arenas for Admin
+command /ffalist:
+    permission: ffa.admin
+    trigger:
+        set {_gui} to chest inventory with 3 rows named "<##FF0000>Existing Arenas"
+        set {_slot} to 0
+        loop {ffa::arena_list::*}:
+            set {_w} to loop-value
+            set {_icon} to {ffa::arena::%{_w}%::icon}
+            if {_icon} is not set:
+                set {_icon} to diamond sword
+            set {_name} to {ffa::arena::%{_w}%::name}
+            if {_name} is not set:
+                set {_name} to "&c%{_w}% Arena"
+            set slot {_slot} of {_gui} to {_icon} named (formatted {_name}) with lore "&7World: &f%{_w}%" and "" and "&eClick to edit this arena!"
+            set {ffa::admin_slot::%player%::%{_slot}%} to {_w}
+            add 1 to {_slot}
+        open {_gui} to player
+
+# Player Warp Selector (/ffawarp)
+command /ffawarp:
+    trigger:
+        set {_gui} to chest inventory with 3 rows named "<##FF0000>S<##FF1C00>e<##FF3800>l<##FF5500>e<##FF7100>c<##FF8E00>t <##FFAA00>F<##FFC600>F<##FFE300>A <##FFC600>A<##FFAA00>r<##FF8E00>e<##FF7100>n<##FF5500>a"
+        set {_slot} to 10
+        delete {ffa::gui_slot::%player%::*}
+
+        loop {ffa::arena_list::*}:
+            set {_w} to loop-value
+            if {ffa::arena::%{_w}%::enabled} is true:
+                set {_icon} to {ffa::arena::%{_w}%::icon}
+                if {_icon} is not set:
+                    set {_icon} to diamond sword
+
+                set {_name} to {ffa::arena::%{_w}%::name}
+                if {_name} is not set:
+                    set {_name} to "&c&l%{_w}% Arena"
+
+                set {_item} to {_icon} named (formatted {_name}) with lore "" and "&a» Click to join!"
+                set slot {_slot} of {_gui} to {_item}
+                set {ffa::gui_slot::%player%::%{_slot}%} to {_w}
+                add 1 to {_slot}
+
+        open {_gui} to player
+
+on inventory click:
+    set {_title} to uncolored name of event-inventory
+
+    if {_title} is "FFA Admin Manager":
+        cancel event
+        set {_w} to "%player's world%"
+        if index of event-slot is 11:
+            if {ffa::arena_list::*} does not contain {_w}:
+                add {_w} to {ffa::arena_list::*}
+                set {ffa::arena::%{_w}%::enabled} to true
+                send "{@prefix} Created new arena for world &e%{_w}%&7!"
+            else:
+                send "{@prefix} Opening settings for world &e%{_w}%&7."
+            execute player command "ffaedit %{_w}%"
+        else if index of event-slot is 15:
+            execute player command "ffalist"
+
+    else if {_title} starts with "FFA Setup Panel":
+        cancel event
+        replace all "FFA Setup Panel (" and ")" with "" in {_title}
+        set {_w} to {_title}
+
+        if index of event-slot is 10:
+            set {ffa::arena::%{_w}%::spawn} to player's location
+            send "{@prefix} Arena spawn set to your location in world &e%{_w}%&7."
+            close player's inventory
+
+        else if index of event-slot is 11:
+            set {ffa::prompt::%player%::type} to "cmd"
+            set {ffa::prompt::%player%::world} to {_w}
+            send "{@prefix} Type the command trigger name in chat (e.g. sword or swordffa)."
+            close player's inventory
+
+        else if index of event-slot is 12:
+            set {ffa::prompt::%player%::type} to "name"
+            set {ffa::prompt::%player%::world} to {_w}
+            send "{@prefix} Type the display name for this arena in chat."
+            close player's inventory
+
+        else if index of event-slot is 13:
+            if player's tool is air:
+                send "{@prefix} Please hold an item in your main hand to set as the icon."
+            else:
+                set {ffa::arena::%{_w}%::icon} to type of player's tool
+                send "{@prefix} Set arena icon to &a%type of player's tool%&7."
+            close player's inventory
+
+        else if index of event-slot is 14:
+            set {ffa::prompt::%player%::type} to "kit"
+            set {ffa::prompt::%player%::world} to {_w}
+            send "{@prefix} Type the exact kit name in chat (e.g. sword or Diasmp)."
+            close player's inventory
+
+        else if index of event-slot is 15:
+            set {ffa::prompt::%player%::type} to "title"
+            set {ffa::prompt::%player%::world} to {_w}
+            send "{@prefix} Type full title string in chat."
+            close player's inventory
+
+        else if index of event-slot is 16:
+            if {ffa::arena::%{_w}%::enabled} is true:
+                set {ffa::arena::%{_w}%::enabled} to false
+                send "{@prefix} Arena for world &e%{_w}%&7 is now &cDisabled&7."
+            else:
+                set {ffa::arena::%{_w}%::enabled} to true
+                send "{@prefix} Arena for world &e%{_w}%&7 is now &aEnabled&7!"
+            close player's inventory
+
+    else if {_title} is "Existing Arenas":
+        cancel event
+        set {_slot} to index of event-slot
+        set {_w} to {ffa::admin_slot::%player%::%{_slot}%}
+        if {_w} is set:
+            delete {ffa::admin_slot::%player%::*}
+            execute player command "ffaedit %{_w}%"
+
+    else if {_title} is "Select FFA Arena":
+        cancel event
+        set {_slot} to index of event-slot
+        set {_w} to {ffa::gui_slot::%player%::%{_slot}%}
+
+        if {_w} is set:
+            close player's inventory
+            delete {ffa::gui_slot::%player%::*}
+            joinFFAArena(player, {_w})
+
+on chat:
+    if {ffa::prompt::%player%::type} is "name":
+        cancel event
+        set {_w} to {ffa::prompt::%player%::world}
+        delete {ffa::prompt::%player%::type}
+        delete {ffa::prompt::%player%::world}
+        set {ffa::arena::%{_w}%::name} to message
+        send "{@prefix} Arena name set to: %message%"
+
+    else if {ffa::prompt::%player%::type} is "cmd":
+        cancel event
+        set {_w} to {ffa::prompt::%player%::world}
+        delete {ffa::prompt::%player%::type}
+        delete {ffa::prompt::%player%::world}
+
+        set {_cmd} to message
+        # FIX: Force lowercase and strip ALL spaces so it never breaks!
+        replace all "/" with "" in {_cmd}
+        replace all " " with "" in {_cmd}
+        set {_cmd} to lowercase {_cmd}
+
+        set {ffa::arena::%{_w}%::cmd} to {_cmd}
+        set {ffa::cmd_map::%{_cmd}%} to {_w}
+        send "{@prefix} Set command trigger to: &e/%{_cmd}%"
+
+    else if {ffa::prompt::%player%::type} is "kit":
+        cancel event
+        set {_w} to {ffa::prompt::%player%::world}
+        delete {ffa::prompt::%player%::type}
+        delete {ffa::prompt::%player%::world}
+        set {ffa::arena::%{_w}%::kit} to message
+        send "{@prefix} Linked PlayerKit set to: %message%"
+
+    else if {ffa::prompt::%player%::type} is "title":
+        cancel event
+        set {_w} to {ffa::prompt::%player%::world}
+        delete {ffa::prompt::%player%::type}
+        delete {ffa::prompt::%player%::world}
+        set {ffa::arena::%{_w}%::title} to message
+        send "{@prefix} Arena title updated to: %message%"
+
+# Combat tag: any PvP damage inside an FFA arena tags both players for
+# {@combat_seconds} seconds (refreshed on every hit).
+on damage:
+    attacker is a player
+    victim is a player
+    if {ffa::active::%victim%} is set:
+        set {ffa::combat::%victim%} to {@combat_seconds}
+        # Remember who last hit them, so combat-logging still rewards that player.
+        set {ffa::lastattacker::%victim%} to attacker
+    if {ffa::active::%attacker%} is set:
+        set {ffa::combat::%attacker%} to {@combat_seconds}
+
+# Combat timer countdown + action-bar display, once per second.
+every second:
+    loop all players:
+        {ffa::combat::%loop-player%} is set
+        remove 1 from {ffa::combat::%loop-player%}
+        if {ffa::combat::%loop-player%} is greater than 0:
+            send action bar "&cCombat &8» &f%{ffa::combat::%loop-player%}%s" to loop-player
+        else:
+            delete {ffa::combat::%loop-player%}
+            send action bar "&aCombat over!" to loop-player
+
+# FFA restrictions: while in an arena you can't duel/queue, and while
+# combat-tagged you can't use ANY command (no combat-logging via commands).
+on command:
+    if {ffa::active::%player%} is set:
+        set {_cmd} to lowercase command
+        # 1) Combat tag blocks every command for the tag duration (OPs bypass).
+        if ffaInCombat(player) is true:
+            if player is not op:
+                cancel event
+                send "&cCombat &8» &7Wait &f%{ffa::combat::%player%}%s&7 before using commands." to player
+                stop
+        # 2) No dueling or queueing while inside an FFA arena.
+        if {_cmd} starts with "duel" or "queue" or "1v1":
+            cancel event
+            send "&cYou can't duel or queue while in an FFA arena!" to player
+            stop
+
+# Block manual kit commands for non-admins (Console is ignored)
+on command:
+    if command is "kit" or "kits" or "playerkit" or "playerkits" or "pkit":
+        if sender is a player:
+            if sender does not have permission "ffa.admin":
+                cancel event
+                send "{@prefix} You cannot use kit commands directly!" to sender
+
+# Dynamic Command Execution Handler
+on command:
+    set {_cmd} to lowercase command
+    # Never let FFA warps / spawn / leave fire while combat-tagged (the handler
+    # above already cancelled the command and warned the player).
+    if {ffa::active::%player%} is set:
+        if ffaInCombat(player) is true:
+            if player is not op:
+                stop
+    if {ffa::cmd_map::%{_cmd}%} is set:
+        cancel event
+        set {_w} to {ffa::cmd_map::%{_cmd}%}
+        joinFFAArena(player, {_w})
+    else if {_cmd} is "spawn" or "hub" or "lobby" or "leave":
+        delete {ffa::active::%player%}
+        delete {ffa::combat::%player%}
+        delete {ffa::lastattacker::%player%}
+        clear player's inventory
+
+# Death, Healing, & Auto-Kit Reclaim Handler
+on death of player:
+    if {ffa::active::%victim%} is set:
+        # Let the MeowDuels death message show instead of a custom one - we don't
+        # blank it or broadcast our own line here.
+        delete {ffa::active::%victim%}
+        delete {ffa::combat::%victim%}
+        delete {ffa::lastattacker::%victim%}
+
+        if attacker is a player:
+            rewardFFAKill(attacker)
+    else if attacker is a player:
+        # Killed someone outside an arena: still end the killer's combat tag if
+        # they happen to be carrying one.
+        clearFFACombat(attacker)
+
+# Combat-logging: leaving the game while combat-tagged in FFA kills you (so you
+# lose your items) and rewards whoever you were last fighting.
+on quit:
+    if {ffa::active::%player%} is set:
+        if ffaInCombat(player) is true:
+            set {_att} to {ffa::lastattacker::%player%}
+            kill player
+            delete {ffa::active::%player%}
+            delete {ffa::combat::%player%}
+            delete {ffa::lastattacker::%player%}
+            if {_att} is set:
+                {_att} is online
+                rewardFFAKill({_att})
+
+# Respawn handling.
+#
+# Only the FFA case lives here. A player who died anywhere else - the lobby, a
+# MeowDuels duel, an event - is MeowDuels' business: it sets the respawn point
+# to the configured spawn and hands back the spawn hotbar, and it is the only
+# one of the two that can tell a lobby death from a duel death. Adding a second
+# teleport here would drag people out of duels they are still fighting.
+#
+# The order works out for FFA: MeowDuels puts them at spawn on the respawn tick,
+# then this block pulls them back into their arena ten ticks later with the
+# arena kit, exactly as before.
+on respawn:
+    if {ffa::active::%player%} is set:
+        set {_w} to {ffa::active::%player%}
+        wait 10 ticks
+        if {ffa::active::%player%} is set:
+            if {ffa::arena::%{_w}%::spawn} is set:
+                teleport player to {ffa::arena::%{_w}%::spawn}
+            clear player's inventory
+            set health of player to max health of player
+            set food level of player to 20
+            set {_kit} to {ffa::arena::%{_w}%::kit}
+            if {_kit} is set:
+                execute console command "playerkits give %{_kit}% %name of player%"
+                execute console command "playerkits give %name of player% %{_kit}%"
+
+on world change:
+    set {_w} to "%player's world%"
+    if {ffa::arena_list::*} does not contain {_w}:
+        if {ffa::active::%player%} is set:
+            delete {ffa::active::%player%}
+            delete {ffa::combat::%player%}
+            delete {ffa::lastattacker::%player%}
+            clear player's inventory
+
+# Every join lands at spawn, holding the spawn items.
+#
+# MeowDuels already does this on its own, and this block is deliberately the
+# second pass rather than the only one: it also wipes FFA state left over from a
+# disconnect inside an arena, so nobody logs back in still combat-tagged or
+# still counted as being in a fight that ended while they were offline.
+#
+# The wait is what makes it stick. Join teleports are contested - a world
+# manager restoring a last-known position, a lobby plugin with its own spawn
+# hook - and the winner is whoever moves the player last.
+on join:
+    delete {ffa::combat::%player%}
+    delete {ffa::lastattacker::%player%}
+    delete {ffa::active::%player%}
+    wait 15 ticks
+    player is online
+    make player execute command "{@spawn_command}"
+    wait 3 ticks
+    player is online
+    make player execute command "{@spawn_items_command}"

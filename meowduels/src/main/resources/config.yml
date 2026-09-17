@@ -54,16 +54,21 @@ event:
     # How long each shrink animation takes (the border glows red while moving).
     shrink-seconds: 8
 
-# When a player joins, reset them: clear potion effects + inventory, heal to full,
-# and teleport to the duel spawn. Great for a dedicated PvP server; turn OFF if
-# players keep a normal survival inventory.
 # Shown in dark grey after a fighter's name in the tab list.
 # NOTE: the default is an emoji, which Minecraft's built-in font does not have -
 # without a resource pack providing the glyph it renders as a box. Vanilla-safe
 # alternatives that always render: the crossed swords U+2694, or a dagger-ish
 # U+271D. Set to '' to show nothing.
 duel-marker: "\U0001F5E1"
+# Health, hunger and potion effects are reset on join. The teleport to spawn and
+# the spawn hotbar are NOT part of this - they happen on every join regardless,
+# because a player who lands somewhere random with an empty hotbar has no way in.
 on-join-reset: true
+
+# Dying outside a duel or an event puts you back at spawn holding the spawn
+# items. Duel deaths still respawn on your side of the arena. Turn this off if
+# another plugin owns respawns on this server.
+on-death-spawn: true
 
 # ---- Tab list handoff (TAB draws the tab list; MeowDuels draws the sidebar) ----
 external-tab: true
