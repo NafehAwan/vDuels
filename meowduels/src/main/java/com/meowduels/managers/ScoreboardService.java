@@ -561,7 +561,17 @@ public class ScoreboardService {
             if (sidebarLines > 0) {
                 Objective sidebar = this.scoreboard.registerNewObjective("mdside", Criteria.DUMMY, "");
                 sidebar.setDisplaySlot(DisplaySlot.SIDEBAR);
-                sidebar.numberFormat(NumberFormat.blank());
+                // Hiding the red score column is cosmetic, so it must not be
+                // able to take the sidebar down with it. It already did once:
+                // a mis-shaped NumberFormat stub threw IncompatibleClassChangeError
+                // here, and because this line sits in the constructor the whole
+                // board failed to build - every tick, for every player.
+                try {
+                    sidebar.numberFormat(NumberFormat.blank());
+                }
+                catch (Throwable t) {
+                    // older/forked server without the API: the numbers just show
+                }
                 for (int i = 0; i < sidebarLines; ++i) {
                     String entry = LINE_KEYS[i % LINE_KEYS.length].toString();
                     Team team = this.scoreboard.registerNewTeam("line" + i);

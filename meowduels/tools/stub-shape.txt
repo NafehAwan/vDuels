@@ -7,3 +7,7 @@ org/bukkit/Keyed interface
 io/papermc/paper/chat/ChatRenderer interface
 net/kyori/adventure/text/format/TextColor interface
 me/clip/placeholderapi/expansion/Relational interface
+# Only ever touched through static methods, so no invokeinterface names it and
+# the generator has nothing else to go on. Getting this wrong compiles cleanly
+# and then throws IncompatibleClassChangeError on the first scoreboard tick.
+io/papermc/paper/scoreboard/numbers/NumberFormat interface

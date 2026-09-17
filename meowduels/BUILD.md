@@ -32,7 +32,36 @@ A stub whose signature differs from the real API compiles fine and then throws
    (`MiniMessage.deserialize(Object)`, not `(String)`) come out right by
    construction.
 
-2. **`tools/extern_refs.sh` verifies it.** It dumps every API member a jar links
+2. **The reference KIND has to match too, not just the descriptor.**
+
+   `Method` and `InterfaceMethod` are different constant-pool entries, and the
+   JVM will not accept one where it wants the other. A static method on an
+   interface - `NumberFormat.blank()` - is invoked with `invokestatic` but must
+   be written as an `InterfaceMethodref`. A stub that declares `NumberFormat` as
+   a class produces byte-for-byte identical descriptors, compiles without a
+   warning, links fine, and then throws `IncompatibleClassChangeError` the first
+   time the line executes.
+
+   This shipped once, and it took the sidebar down on every tick because the
+   call sat in a constructor. Two things stop it recurring:
+
+   - `genstub.py` now takes the kind from javap's `// InterfaceMethod` marker
+     rather than inferring interface-ness from `invokeinterface`. A type only
+     ever touched through static methods has no `invokeinterface` anywhere, so
+     the opcode alone could never have told it apart from a class.
+   - `tools/paper-refs.txt` records all 433 members the original real-paper-api
+     build linked against, with their kinds, and `tools/verify_kinds.sh` checks
+     a rebuild against it:
+
+     ```bash
+     tools/verify_kinds.sh target/MeowDuels-1.0.0.jar
+     ```
+
+     Members added since that build aren't in the baseline and are listed for a
+     human to confirm. The rule is short: constructors are always `Method`;
+     anything called on an interface type is `InterfaceMethod`.
+
+3. **`tools/extern_refs.sh` verifies it.** It dumps every API member a jar links
    against. Run it on a reference jar and on your rebuild; the output must be
    identical:
 

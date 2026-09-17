@@ -64,7 +64,7 @@ api = collections.defaultdict(
 types = set()
 REF = re.compile(r"\b(invokestatic|invokevirtual|invokeinterface|invokespecial|"
                  r"getstatic|putstatic|getfield|putfield)\b.*?"
-                 r"//\s*(?:InterfaceMethod|Method|Field)\s+([\w/$]+)\.\"?([\w$<>]+)\"?:(\S+)")
+                 r"//\s*(InterfaceMethod|Method|Field)\s+([\w/$]+)\.\"?([\w$<>]+)\"?:(\S+)")
 
 
 def note_descriptor(desc):
@@ -78,11 +78,19 @@ def collect(javap_path, classes_dir):
     for line in open(javap_path, encoding="utf-8", errors="replace"):
         m = REF.search(line)
         if m:
-            op, owner, name, desc = m.groups()
+            op, kind, owner, name, desc = m.groups()
             if is_external(owner):
                 e = api[owner]
                 types.add(owner)
-                if op == "invokeinterface":
+                # The constant-pool KIND decides, not the opcode. A static method
+                # on an interface is called with invokestatic but still lives in
+                # an InterfaceMethodref, and the JVM rejects the two being mixed
+                # up: emit the owner as a class and every call site throws
+                # IncompatibleClassChangeError at runtime, having compiled and
+                # linked without a word of complaint. NumberFormat.blank() is
+                # exactly that shape - two static methods, no instance call
+                # anywhere, so "is it an interface?" has no other witness.
+                if kind == "InterfaceMethod":
                     e["iface"] = True
                 note_descriptor(desc)
                 if op in ("getstatic", "putstatic", "getfield", "putfield"):
