@@ -146,6 +146,8 @@ extends JavaPlugin {
             this.duelManager.tickWorldLocks();
             this.duelManager.tickArenaSafety();
             this.duelManager.tickCounts();
+            this.duelManager.tickArenaReservations();
+            this.queueManager.tickMatch();
             if (this.eventManager.isRunning() && this.eventManager.getArena() != null) {
                 DuelManager.applyWorldLocks(this.eventManager.getArena());
                 this.eventManager.tickBorderDamage();

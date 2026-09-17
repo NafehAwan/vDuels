@@ -150,6 +150,7 @@ public class DuelManager {
         }
         if (!this.hasFreeArenaFor(kit)) {
             sender.sendMessage(this.msg("duel.no-arenas", new String[0]));
+            this.explainNoArena(sender, kit);
             return;
         }
         DuelRequest request = new DuelRequest(sender.getUniqueId(), target.getUniqueId(), kit, rounds, arena);
@@ -827,6 +828,81 @@ public class DuelManager {
 
     public void freeArena(String name) {
         this.arenasInUse.remove(name.toLowerCase());
+    }
+
+    /** Releases arenas that nothing is actually using any more.
+     *
+     *  <p>arenasInUse is bookkeeping: a name goes in when a match or event claims
+     *  an arena and comes out when it ends. Any path that ends a match without
+     *  reaching the release - an exception mid-teardown, a reload, an event torn
+     *  down oddly - strands the name in the set, and that arena is unusable until
+     *  the next restart. That is the "no free arenas" report with arenas plainly
+     *  sitting there empty.
+     *
+     *  <p>So rather than trust the bookkeeping, this rebuilds it once a second
+     *  from what is really happening: the arenas of live duels, plus the event's
+     *  arena. Anything else in the set is stale and gets released. Self-healing,
+     *  and it covers leak paths that don't exist yet. */
+    public void tickArenaReservations() {
+        if (this.arenasInUse.isEmpty()) {
+            return;
+        }
+        Set<String> claimed = new HashSet<String>();
+        for (ActiveDuel duel : this.playerDuels.values()) {
+            if (duel != null && !duel.isFinished() && duel.getArena() != null) {
+                claimed.add(duel.getArena().getName().toLowerCase());
+            }
+        }
+        Arena eventArena = this.plugin.getEventManager().getArena();
+        if (eventArena != null) {
+            claimed.add(eventArena.getName().toLowerCase());
+        }
+        java.util.Iterator<String> it = this.arenasInUse.iterator();
+        while (it.hasNext()) {
+            String name = it.next();
+            if (!claimed.contains(name)) {
+                it.remove();
+                this.plugin.getLogger().info("Released arena '" + name
+                        + "' - it was still reserved but no duel or event is using it.");
+            }
+        }
+    }
+
+    /** Tells an admin WHY there was no arena - the plain message can't say
+     *  whether they are all busy, all unconfigured, or none support the kit. */
+    public void explainNoArena(Player who, String kit) {
+        if (who != null && who.hasPermission("meowduels.admin")) {
+            who.sendMessage(Text.prefixed("&8" + this.arenaAvailability(kit)));
+        }
+    }
+
+    /** Why no arena can host this kit, for the admin who has to fix it. */
+    public String arenaAvailability(String kit) {
+        int total = 0;
+        int configured = 0;
+        int enabled = 0;
+        int supporting = 0;
+        int free = 0;
+        for (Arena arena : this.plugin.getArenaManager().all()) {
+            total++;
+            if (!arena.isConfigured()) {
+                continue;
+            }
+            configured++;
+            if (!arena.isEnabled()) {
+                continue;
+            }
+            enabled++;
+            if (!arena.supportsKit(kit)) {
+                continue;
+            }
+            supporting++;
+            if (!this.arenasInUse.contains(arena.getName().toLowerCase())) {
+                free++;
+            }
+        }
+        return total + " arena(s): " + configured + " configured, " + enabled
+                + " enabled, " + supporting + " support this kit, " + free + " free.";
     }
 
     /** Live counts, refreshed on the main thread by {@link #tickCounts()}.

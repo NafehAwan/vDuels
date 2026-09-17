@@ -118,6 +118,7 @@ public class QueueManager {
         }
         if (!this.plugin.getDuelManager().hasUsableArena(kit)) {
             player.sendMessage(this.msg("queue.no-arena", new String[0]));
+            this.plugin.getDuelManager().explainNoArena(player, kit);
             return;
         }
         for (PotionEffect e : player.getActivePotionEffects()) {
@@ -181,29 +182,61 @@ public class QueueManager {
     }
 
     private void tryMatch(String kit) {
-        Player p2;
+        this.tryMatch(kit, true);
+    }
+
+    /** Pairs up whoever is waiting in one kit's queue.
+     *
+     *  @param announce tell the pair when there was no arena. Only the join that
+     *                  triggered it should say so - the retry runs every second,
+     *                  and announcing there would spam them once a second for as
+     *                  long as every arena stayed busy.
+     */
+    private void tryMatch(String kit, boolean announce) {
         Player p1;
+        Player p2;
         while (true) {
-            LinkedHashSet<UUID> set;
-            if ((set = this.queues.get(kit)) == null || set.size() < 2) {
+            LinkedHashSet<UUID> set = this.queues.get(kit);
+            if (set == null || set.size() < 2) {
                 return;
             }
             ArrayList<UUID> ids = new ArrayList<UUID>(set);
-            p1 = Bukkit.getPlayer((UUID)ids.get(0));
+            p1 = Bukkit.getPlayer((UUID) ids.get(0));
             if (p1 == null || this.plugin.getDuelManager().isInDuel(ids.get(0))) {
-                this.remove(ids.get(0));
+                this.remove(ids.get(0)); // offline or already fighting - drop it
                 continue;
             }
-            p2 = Bukkit.getPlayer((UUID)ids.get(1));
+            p2 = Bukkit.getPlayer((UUID) ids.get(1));
             if (p2 == null || this.plugin.getDuelManager().isInDuel(ids.get(1))) {
                 this.remove(ids.get(1));
                 continue;
             }
-            boolean started = this.plugin.getDuelManager().startQueuedDuel(p1, p2, kit);
-            if (!started) break;
+            if (!this.plugin.getDuelManager().startQueuedDuel(p1, p2, kit)) {
+                break; // every arena busy - they stay queued and we retry later
+            }
         }
-        p1.sendMessage(this.msg("queue.no-arena", new String[0]));
-        p2.sendMessage(this.msg("queue.no-arena", new String[0]));
+        if (announce) {
+            p1.sendMessage(this.msg("queue.no-arena", new String[0]));
+            p2.sendMessage(this.msg("queue.no-arena", new String[0]));
+        }
+    }
+
+    /** Retries every queue once a second.
+     *
+     *  <p>Matching used to be attempted only when somebody joined a queue. If all
+     *  arenas happened to be busy at that moment, the pair simply sat there -
+     *  nothing tried again when an arena freed up, so they waited forever and had
+     *  to re-queue by hand. */
+    public void tickMatch() {
+        if (this.queues.isEmpty()) {
+            return;
+        }
+        for (String kit : new ArrayList<String>(this.queues.keySet())) {
+            LinkedHashSet<UUID> set = this.queues.get(kit);
+            if (set != null && set.size() >= 2) {
+                this.tryMatch(kit, false);
+            }
+        }
     }
 
     private Component queuedLine(String textKey, String kit) {
