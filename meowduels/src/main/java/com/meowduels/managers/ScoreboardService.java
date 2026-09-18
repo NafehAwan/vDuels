@@ -96,7 +96,12 @@ public class ScoreboardService {
         }
         this.masterEnabled = sb.getBoolean("enabled", true);
         this.rankNametags = sb.getBoolean("rank-above-head", false);
-        this.externalNametags = sb.getBoolean("external-nametags", false);
+        // Defaults to TRUE now. When MeowDuels draws nametags it does it by
+        // giving the viewer its own scoreboard, which fights TAB for ownership
+        // of scoreboard teams - and TAB sorts the tab list with those teams.
+        // The duel/FFA nametag comes through %rel_meowduels_tagprefix% instead,
+        // which TAB renders itself, so there is only ever one owner.
+        this.externalNametags = sb.getBoolean("external-nametags", true);
         // Deliberately NOT read from config any more. The ELO rank under the
         // nametag is gone, and a server that already has rank-below-name: true
         // in its config would otherwise keep it - existing values are never

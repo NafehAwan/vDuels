@@ -120,6 +120,14 @@ implements Relational {
                 // what %rel_meowduels_tabprefix% handles.
                 return this.lpPrefix(player);
             }
+            case "tagprefix": {
+                // Viewer-independent fallback, for a TAB build that does not
+                // resolve relational placeholders in tagprefix.
+                if (this.plugin.getEventManager().isPlaying(id)) {
+                    return "\u00a7e\u26a1 \u00a7e";
+                }
+                return this.lpPrefix(player);
+            }
             case "lpprefix": {
                 return this.lpPrefix(player);
             }
@@ -349,6 +357,29 @@ implements Relational {
             // of the name - the same idea as the duel marker, telling the rest of
             // the server "busy, in a fight" without touching their rank.
             return this.matchMark(target) + this.lpPrefix(target);
+        }
+        if ("tagprefix".equals(key)) {
+            // The name ABOVE THE HEAD, per viewer.
+            //
+            // This exists so TAB never has to switch its scoreboard-teams off
+            // for a fighter. It used to, via disable-condition, so that
+            // MeowDuels could draw the duel nametag itself - and TAB implements
+            // tab-list SORTING with those same teams, so a fighter lost their
+            // sort team and the client floated them to the top of the list.
+            // Drawing the nametag through TAB instead costs nothing and keeps
+            // one owner for teams.
+            ActiveDuel fight = this.plugin.getDuelManager().getDuel(id);
+            if (watchingAFight && fight != null) {
+                return fight.isAqua(id) ? "\u00a7b\u26a1 \u00a7b" : "\u00a7c\u26a1 \u00a7c";
+            }
+            if (this.plugin.getEventManager().isPlaying(id)) {
+                return "\u00a7e\u26a1 \u00a7e";
+            }
+            String partyTag = this.partyPrefix(viewer, target);
+            if (partyTag != null) {
+                return partyTag;
+            }
+            return this.lpPrefix(target);
         }
         if ("tabsuffix".equals(key)) {
             // The marker is for people outside the match; inside it, everyone

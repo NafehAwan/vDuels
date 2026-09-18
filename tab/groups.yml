@@ -7,7 +7,9 @@
 #   tabprefix = tab list, before the name  -> their real LuckPerms rank; the "⚡"
 #                                             team bolt only inside a match
 #   tabsuffix = tab list, after the name   -> 🗡 while duelling, else their tag
-#   tagprefix = above the head, before the name -> LuckPerms rank
+#   tagprefix = above the head, before the name -> rank, or the ⚡ team
+#               colour while they are fighting (relational: only the
+#               people in that fight see it)
 #   tagsuffix = above the head, after the name  -> live health
 #
 # tabsuffix is ONE field deciding between the duel marker and the tag, so the two
@@ -34,5 +36,5 @@
 _DEFAULT_:
   tabprefix: '%rel_meowduels_tabprefix%'
   tabsuffix: '%rel_meowduels_tabsuffix%'
-  tagprefix: '%meowduels_lpprefix%'
+  tagprefix: '%rel_meowduels_tagprefix%'
   tagsuffix: ' %meowduels_health%'
