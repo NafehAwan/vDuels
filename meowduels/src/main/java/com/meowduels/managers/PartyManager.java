@@ -225,12 +225,13 @@ public class PartyManager {
      * yes that is never coming.
      */
     private void sendInviteCard(Player target, Player leader, Party party) {
-        String kit = party.getKit() == null ? "" : party.getKit();
         target.sendMessage("");
         target.sendMessage(this.msg("party.invite-header"));
         target.sendMessage(this.msg("party.invite-from", "leader", leader.getName()));
-        target.sendMessage(this.msg("party.invite-info", "members", String.valueOf(party.size()),
-                "kit", kit.isEmpty() ? "-" : kit));
+        // Members only. The kit was on here and did not belong: at invite time
+        // the leader usually has not picked one, and it can change any number of
+        // times before a match starts - so it told you nothing you could act on.
+        target.sendMessage(this.msg("party.invite-info", "members", String.valueOf(party.size())));
         target.sendMessage("");
         TextComponent accept = new TextComponent(this.msg("party.invite-accept"));
         accept.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/party accept " + leader.getName()));

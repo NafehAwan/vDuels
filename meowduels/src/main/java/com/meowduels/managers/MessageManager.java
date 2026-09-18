@@ -153,7 +153,7 @@ public class MessageManager {
         DEFAULTS.put("event.already-spectating", "&cYou're already spectating the event.");
         DEFAULTS.put("party.invite-header", "  &d\u2605 &f&lPARTY INVITE");
         DEFAULTS.put("party.invite-from", "  &7{leader} &7wants you in their party.");
-        DEFAULTS.put("party.invite-info", "  &8Members: &f{members} &8\u2022 Kit: &f{kit}");
+        DEFAULTS.put("party.invite-info", "  &8Members: &f{members}");
         DEFAULTS.put("party.invite-accept", "  &a&l[ ACCEPT ]");
         DEFAULTS.put("party.invite-gap", "   ");
         DEFAULTS.put("party.invite-decline", "&c&l[ DECLINE ]");
