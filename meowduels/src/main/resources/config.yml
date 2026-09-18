@@ -116,6 +116,16 @@ server-name: "server"
 #           {party_alive} {party_role}
 # ============================================================================
 tab:
+  # The duel/party tab bubble hides everyone you are not fighting or partied
+  # with. false (default) hides them from the TAB LIST ONLY - they are still
+  # there in the world, visible and hittable.
+  #
+  # Turn it true only if they keep reappearing in the list. TAB re-adds rows
+  # MeowDuels removes, and MeowDuels puts them back once a second; if your TAB
+  # build wins that argument, this switches to the cruder hide that nothing can
+  # undo - at the cost of those players vanishing from the world too.
+  bubble-hides-world: false
+
   # Branding, used by the duel/party layouts below and by the built-in tab when
   # external-tab is false.
   title: "<gold><bold>ServerName</bold></gold>"

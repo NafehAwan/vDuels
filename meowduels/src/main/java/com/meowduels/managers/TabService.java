@@ -191,10 +191,8 @@ public class TabService {
             if (e.getValue() != group) continue;
             bubble.add(e.getKey());
         }
-        // Tab-list only, for duels as well as parties now. Taking a player out
-        // of the WORLD was never what either bubble wanted - it just happened to
-        // be the only thing hidePlayer could do.
-        boolean tabOnly = true;
+        // Tab-list only unless the fallback is switched on - see hidesWorld.
+        boolean tabOnly = !this.hidesWorld();
         for (UUID mid : bubble) {
             Player member = Bukkit.getPlayer((UUID)mid);
             if (member == null) continue;
@@ -450,12 +448,74 @@ public class TabService {
     }
 
     public void tick() {
+        // Before the external check on purpose: the bubble is ours whether or
+        // not TAB is drawing the rest of the list, and with TAB installed it is
+        // the case that needs this most.
+        this.reassertBubbles();
         if (this.external) {
             return;
         }
         for (Player p : Bukkit.getOnlinePlayers()) {
             this.sendHeaderFooter(p);
         }
+    }
+
+    /**
+     * Puts back the tab entries TAB keeps re-adding.
+     *
+     * <p>unlistPlayer tells the client to drop a row. TAB then sends its own
+     * player-info updates for everyone - names, prefixes, sorting - and an
+     * update for a UUID the client no longer has makes the client create the row
+     * again. So the bubble came apart within a second of being applied, which is
+     * exactly what "we can see everyone in tab during a duel" was.
+     *
+     * <p>It is a list-then-unlist rather than a plain unlist, because Paper
+     * tracks who it thinks is already unlisted and a repeat call can be a no-op
+     * - and a no-op is the one thing that cannot help here, since the client's
+     * state has changed without Paper knowing. Both packets land in the same
+     * tick, so nothing flickers.
+     *
+     * <p>Costs nothing while nobody is in a duel or a party, which is the state
+     * a server is in most of the time.
+     */
+    private void reassertBubbles() {
+        if (this.memberGroup.isEmpty() || this.hidesWorld()) {
+            // hidePlayer is not undone by TAB, so that mode needs no upkeep.
+            return;
+        }
+        for (Map.Entry<UUID, Object> entry : this.memberGroup.entrySet()) {
+            Player member = Bukkit.getPlayer((UUID)entry.getKey());
+            if (member == null) {
+                continue;
+            }
+            Object group = entry.getValue();
+            for (Player online : Bukkit.getOnlinePlayers()) {
+                UUID id = online.getUniqueId();
+                if (id.equals(entry.getKey()) || this.memberGroup.get(id) == group) {
+                    continue;
+                }
+                try {
+                    member.listPlayer(online);
+                    member.unlistPlayer(online);
+                }
+                catch (Throwable t) {
+                    // not visible to this player; nothing to unlist
+                }
+            }
+        }
+    }
+
+    /**
+     * Whether the bubble should hide players from the WORLD as well as the tab
+     * list.
+     *
+     * <p>Off by default, which is what was asked for: people you are not
+     * fighting stay visible around you. On, the bubble uses hidePlayer instead -
+     * cruder, but nothing else can undo it, so it is the fallback if TAB ever
+     * wins the argument above.
+     */
+    private boolean hidesWorld() {
+        return this.plugin.getConfig().getBoolean("tab.bubble-hides-world", false);
     }
 
     private static Component mm(String miniMessage) {
