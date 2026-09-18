@@ -102,6 +102,40 @@ implements Listener {
         this.plugin = plugin;
     }
 
+    /**
+     * The two protections a party match was missing.
+     *
+     * <p>Everything in this listener keys off a duel, so a party fighter had
+     * none of it. Two of them matter enough to be bugs rather than gaps:
+     *
+     * <p>The countdown only blocked PvP, through the friendly-fire handler. Fall
+     * damage, fire and the void all still applied - so you could be eliminated
+     * before FIGHT ever appeared, which is the one thing a countdown is supposed
+     * to make impossible.
+     *
+     * <p>And falling out of the arena simply killed you. A duel teleports the
+     * player back to their spawn on void damage; a party match in an arena with
+     * open edges had no such rescue, so a misstep was an elimination.
+     */
+    private void guardPartyFighter(EntityDamageEvent event, Player player) {
+        Party party = this.plugin.getPartyManager().partyOf(player.getUniqueId());
+        if (party == null || !party.isFighting() || !party.getAlive().contains(player.getUniqueId())) {
+            return;
+        }
+        if (party.isCountingDown()) {
+            event.setCancelled(true);
+            return;
+        }
+        if (event.getCause() == EntityDamageEvent.DamageCause.VOID) {
+            event.setCancelled(true);
+            Location spawn = party.getArena() == null ? null : party.getArena().getEventSpawn();
+            if (spawn != null) {
+                player.setFallDistance(0.0f);
+                player.teleport(spawn);
+            }
+        }
+    }
+
     @EventHandler(ignoreCancelled=true)
     public void onDamage(EntityDamageEvent event) {
         Entity entity = event.getEntity();
@@ -111,6 +145,7 @@ implements Listener {
         Player player = (Player)entity;
         ActiveDuel duel = this.plugin.getDuelManager().getDuel(player.getUniqueId());
         if (duel == null) {
+            this.guardPartyFighter(event, player);
             return;
         }
         if (duel.getState() != ActiveDuel.State.FIGHTING) {
@@ -487,7 +522,12 @@ implements Listener {
 
     @EventHandler(ignoreCancelled=true)
     public void onDrop(PlayerDropItemEvent event) {
-        if (this.plugin.getDuelManager().isInDuel(event.getPlayer().getUniqueId())) {
+        // Party fighters too. Their kit is handed to them for the match and
+        // dropped for them when they die - throwing it on the floor mid-fight
+        // is either a mistake or a way to hand someone else an advantage.
+        UUID id = event.getPlayer().getUniqueId();
+        if (this.plugin.getDuelManager().isInDuel(id)
+                || this.plugin.getPartyManager().inPartyMatch(id)) {
             event.setCancelled(true);
         }
     }

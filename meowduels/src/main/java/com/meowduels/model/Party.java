@@ -1,6 +1,8 @@
 package com.meowduels.model;
 
 import com.meowduels.model.PlayerSnapshot;
+import org.bukkit.Location;
+import org.bukkit.block.data.BlockData;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -32,6 +34,10 @@ public class Party {
     private final Set<UUID> watching = new HashSet<UUID>();
     private final Map<UUID, PlayerSnapshot> snapshots = new HashMap<UUID, PlayerSnapshot>();
     private final Map<UUID, Integer> kills = new HashMap<UUID, Integer>();
+    /** Blocks this match changed, with what was there before - the fallback for
+     *  restoring an arena that has no saved snapshot. Same contract as
+     *  ActiveDuel's. */
+    private final Map<Location, BlockData> changedBlocks = new HashMap<Location, BlockData>();
     private State state = State.IDLE;
     private String kit;
     private Arena arena;
@@ -203,6 +209,15 @@ public class Party {
         return out;
     }
 
+    public void recordChange(Location loc, BlockData original) {
+        Location key = new Location(loc.getWorld(), (double)loc.getBlockX(), (double)loc.getBlockY(), (double)loc.getBlockZ());
+        this.changedBlocks.putIfAbsent(key, original);
+    }
+
+    public Map<Location, BlockData> getChangedBlocks() {
+        return this.changedBlocks;
+    }
+
     public void resetMatch() {
         this.state = State.IDLE;
         this.finished = false;
@@ -213,5 +228,6 @@ public class Party {
         this.arena = null;
         this.startedAt = 0L;
         this.fightStartsAt = 0L;
+        this.changedBlocks.clear();
     }
 }

@@ -31,6 +31,7 @@ import com.meowduels.MeowDuels;
 import com.meowduels.managers.EventManager;
 import com.meowduels.model.ActiveDuel;
 import com.meowduels.model.Arena;
+import com.meowduels.model.Party;
 import java.util.function.Consumer;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -79,6 +80,12 @@ implements Listener {
         }
         ActiveDuel duel = this.plugin.getDuelManager().getDuel(player.getUniqueId());
         if (duel == null) {
+            Party party = this.partyMatchOf(player);
+            if (party != null) {
+                this.partyBlock(party, event.getBlock().getBlockData(), loc,
+                        arg_0 -> event.setCancelled(arg_0.booleanValue()), true);
+                return;
+            }
             this.protectIdleArena(player, loc, arg_0 -> event.setCancelled(arg_0.booleanValue()));
             return;
         }
@@ -104,6 +111,12 @@ implements Listener {
         }
         ActiveDuel duel = this.plugin.getDuelManager().getDuel(player.getUniqueId());
         if (duel == null) {
+            Party party = this.partyMatchOf(player);
+            if (party != null) {
+                this.partyBlock(party, event.getBlockReplacedState().getBlockData(), loc,
+                        arg_0 -> event.setCancelled(arg_0.booleanValue()), false);
+                return;
+            }
             this.protectIdleArena(player, loc, arg_0 -> event.setCancelled(arg_0.booleanValue()));
             return;
         }
@@ -281,6 +294,42 @@ implements Listener {
         Location key = new Location(loc.getWorld(), (double)loc.getBlockX(), (double)loc.getBlockY(), (double)loc.getBlockZ());
         BlockData original = duel.getChangedBlocks().get(key);
         return original != null && original.getMaterial() == Material.AIR;
+    }
+
+    /** The party match this player is actually fighting in, or null. */
+    private Party partyMatchOf(Player player) {
+        Party party = this.plugin.getPartyManager().partyOf(player.getUniqueId());
+        if (party == null || !party.isFighting() || party.getArena() == null) {
+            return null;
+        }
+        return party.getAlive().contains(player.getUniqueId()) ? party : null;
+    }
+
+    /**
+     * A party match follows its arena's own build rules, the way a duel does.
+     *
+     * <p>Before this, a party fighter fell through to protectIdleArena, which
+     * refuses every block and says "you cannot edit this arena" - in an arena
+     * they are fighting in, possibly configured to allow building, and once per
+     * attempt. So an arena set up for a kit that needs blocks could not be used
+     * for a party match at all, and an admin - who protectIdleArena lets
+     * through - could change blocks that nothing was recording.
+     *
+     * <p>Recording matters because regen falls back to replaying these when an
+     * arena has no saved snapshot. Unrecorded changes to such an arena are
+     * permanent.
+     */
+    private void partyBlock(Party party, BlockData original, Location loc, Consumer<Boolean> cancel, boolean breaking) {
+        Arena arena = party.getArena();
+        if (!arena.contains(loc)) {
+            cancel.accept(true);
+            return;
+        }
+        if (breaking ? arena.canBreak(loc) : arena.canPlace(loc)) {
+            party.recordChange(loc, original);
+        } else {
+            cancel.accept(true);
+        }
     }
 
     private void protectIdleArena(Player player, Location loc, Consumer<Boolean> cancel) {

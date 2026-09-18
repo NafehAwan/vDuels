@@ -572,7 +572,14 @@ public class PartyManager {
             // Regenerating an arena an admin deliberately left persistent is the
             // kind of difference nobody notices until a build is gone.
             if (arena.isAutoRegenerate()) {
-                this.plugin.getArenaManager().regenArena(arena);
+                // Same two-step as a duel: paste the snapshot if there is one,
+                // and otherwise replay the blocks this match changed. An arena
+                // with no snapshot would keep the damage permanently without
+                // the second half.
+                if (this.plugin.getArenaManager().regenArena(arena) < 0
+                        && !party.getChangedBlocks().isEmpty()) {
+                    this.plugin.getArenaManager().restoreBlocks(party.getChangedBlocks());
+                }
                 this.plugin.getArenaManager().clearDirty(arena.getName());
             }
         }
