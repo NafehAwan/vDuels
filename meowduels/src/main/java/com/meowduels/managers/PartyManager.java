@@ -107,6 +107,7 @@ public class PartyManager {
         this.byPlayer.put(id, party);
         player.sendMessage(Text.prefixed("&aParty created. &7Invite someone with &f/party invite <player>&7."));
         this.refreshItems(player);
+        this.plugin.getTabService().attachParty(party);
     }
 
     public void invite(Player leader, Player target) {
@@ -165,6 +166,7 @@ public class PartyManager {
         this.broadcast(party, "&f" + player.getName() + "&a joined the party.");
         // Old spawn items out, party items in - see refreshItems.
         this.refreshItems(player);
+        this.plugin.getTabService().attachParty(party);
         player.sendMessage(Text.prefixed("&7The party is run by &f" + leader.getName()
                 + "&7 - they pick the kit and start the match."));
     }
@@ -192,6 +194,8 @@ public class PartyManager {
         this.broadcast(party, "&f" + player.getName() + "&7 left the party.");
         player.sendMessage(Text.prefixed("&7You left the party."));
         this.refreshItems(player);
+        this.plugin.getTabService().detach(id);
+        this.plugin.getTabService().attachParty(party);
         this.checkWin(party);
     }
 
@@ -202,6 +206,7 @@ public class PartyManager {
         if (party.isFighting()) {
             this.endMatch(party, null);
         }
+        this.plugin.getTabService().detachParty(party);
         for (UUID id : new ArrayList<UUID>(party.getMembers())) {
             this.byPlayer.remove(id);
             Player p = Bukkit.getPlayer((UUID)id);
@@ -432,8 +437,13 @@ public class PartyManager {
         }
         if (arena != null) {
             this.plugin.getDuelManager().freeArena(arena.getName());
-            this.plugin.getArenaManager().regenArena(arena);
-            this.plugin.getArenaManager().clearDirty(arena.getName());
+            // Honour the arena's own auto-regenerate flag, the way duels do.
+            // Regenerating an arena an admin deliberately left persistent is the
+            // kind of difference nobody notices until a build is gone.
+            if (arena.isAutoRegenerate()) {
+                this.plugin.getArenaManager().regenArena(arena);
+                this.plugin.getArenaManager().clearDirty(arena.getName());
+            }
         }
         party.resetMatch();
     }
@@ -456,6 +466,8 @@ public class PartyManager {
         }
         party.remove(id);
         this.byPlayer.remove(id);
+        this.plugin.getTabService().detach(id);
+        this.plugin.getTabService().attachParty(party);
         this.broadcast(party, "&f" + this.nameOf(id) + "&7 left the server.");
         this.checkWin(party);
     }

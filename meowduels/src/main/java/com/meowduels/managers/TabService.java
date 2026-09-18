@@ -41,10 +41,11 @@ public class TabService {
     /**
      * Who shares a tab list with whom.
      *
-     * <p>Only duels populate this - see the note above detach about why parties
-     * do not. The value is kept as the thing players are grouped BY rather than
-     * as an ActiveDuel, and is only ever compared by identity, so a second kind
-     * of group can be added without touching the rule itself.
+     * <p>The value is whatever the players are grouped BY - an ActiveDuel or a
+     * Party - and is only ever compared by identity. Generalising it is what
+     * lets parties reuse the bubble: "you see the people in your own group and
+     * nobody else" is one rule, and writing it twice would be two places for it
+     * to drift.
      */
     private final Map<UUID, Object> memberGroup = new HashMap<UUID, Object>();
 
@@ -79,19 +80,54 @@ public class TabService {
         this.reconcileAll();
     }
 
-    /*
-     * A party deliberately has NO tab-list bubble.
+    /**
+     * Gives a party its own tab list.
      *
-     * <p>It had one, copied from duels, and it was wrong: forming a party made
-     * the rest of the server vanish from your tab list, for no reason anyone in
-     * the party benefits from. A duel hides the server because the two fighters
-     * genuinely have nothing to do with it for the next minute; a party is just
-     * a group of people standing around the same lobby as everyone else.
+     * <p>Exactly the duel arrangement, and one-directional for exactly the same
+     * reason: the party sees the party, and the rest of the server still sees
+     * them, with their real rank, because they are online and should look it.
+     * Hiding both ways is what makes people vanish from everyone's list.
      *
-     * <p>Parties are grouped in the tab list by sorting instead - see
-     * %meowduels_party_sort% - which puts them together without taking anyone
-     * away.
+     * <p>Rebuilt wholesale on every membership change rather than patched. A
+     * party is small, and the patched version is how someone ends up hidden
+     * from a list they are no longer in, with nothing to tell them why.
      */
+    public void attachParty(Party party) {
+        if (party == null) {
+            return;
+        }
+        for (Map.Entry<UUID, Object> e : new HashMap<UUID, Object>(this.memberGroup).entrySet()) {
+            if (e.getValue() == party) {
+                this.release(e.getKey());
+            }
+        }
+        // A party of one has nobody to share a tab list with. Bubbling it would
+        // EMPTY the list rather than filter it - which is what "everyone
+        // disappeared when I made a party" was: a solo party hiding the server
+        // from its only member.
+        if (party.size() >= 2) {
+            for (UUID id : party.getMembers()) {
+                if (Bukkit.getPlayer((UUID)id) != null) {
+                    this.memberGroup.put(id, party);
+                }
+            }
+        }
+        this.reconcileAll();
+    }
+
+    /** Takes a whole party out of its bubble - disband, or the last member
+     *  leaving a pair. */
+    public void detachParty(Party party) {
+        if (party == null) {
+            return;
+        }
+        for (Map.Entry<UUID, Object> e : new HashMap<UUID, Object>(this.memberGroup).entrySet()) {
+            if (e.getValue() == party) {
+                this.release(e.getKey());
+            }
+        }
+        this.reconcileAll();
+    }
 
     public void detach(UUID id) {
         this.leave(id);
@@ -102,18 +138,26 @@ public class TabService {
     }
 
     private void leave(UUID id) {
+        this.release(id);
+        this.reconcileAll();
+    }
+
+    /** Out of whatever bubble they were in, and able to see everyone again.
+     *  Split out of {@link #leave} so a rebuild can release several players
+     *  before reconciling once, instead of reconciling per player. */
+    private void release(UUID id) {
         if (this.memberGroup.remove(id) == null) {
             return;
         }
         Player viewer = Bukkit.getPlayer((UUID)id);
-        if (viewer != null) {
-            for (Player online : Bukkit.getOnlinePlayers()) {
-                if (online.getUniqueId().equals(id)) continue;
-                viewer.showPlayer((Plugin)this.plugin, online);
-                online.showPlayer((Plugin)this.plugin, viewer);
-            }
+        if (viewer == null) {
+            return;
         }
-        this.reconcileAll();
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            if (online.getUniqueId().equals(id)) continue;
+            viewer.showPlayer((Plugin)this.plugin, online);
+            online.showPlayer((Plugin)this.plugin, viewer);
+        }
     }
 
     public void onPlayerJoin(Player joiner) {

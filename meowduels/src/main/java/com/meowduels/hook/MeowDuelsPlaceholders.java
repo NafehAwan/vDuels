@@ -203,12 +203,21 @@ implements Relational {
                 if (p == null) {
                     return "";
                 }
+                // Capped. A full party's names on one footer line wraps into
+                // an unreadable block, and the roster is a glance, not a census
+                // - the tab list itself is the full list.
                 StringBuilder out = new StringBuilder();
+                int shown = 0;
                 for (UUID member : p.getMembers()) {
-                    if (out.length() > 0) {
+                    if (shown == 5) {
+                        out.append("\u00a78 +").append(p.size() - shown);
+                        break;
+                    }
+                    if (shown > 0) {
                         out.append("\u00a78, ");
                     }
                     out.append(this.memberTag(p, member));
+                    ++shown;
                 }
                 return out.toString();
             }
