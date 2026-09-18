@@ -40,7 +40,7 @@ header-footer:
       - ''
       - '&d★ &7Leader: &f%meowduels_party_leader% &8• &7Members: &f%meowduels_party_size%'
       - '&7Kit: &f%meowduels_party_kit% &8• &7Status: &f%meowduels_party_status%'
-      - '&7You: &f%meowduels_party_role% &8• &7Alive: &f%meowduels_party_alive%'
+      - '%meowduels_party_members%'
       - ''
     default:
       display-condition: '%world%!=disabledworld'
@@ -91,6 +91,11 @@ placeholder-refresh-intervals:
   '%meowduels_party_status%': 1000
   '%meowduels_in_fight%': 500
   '%meowduels_in_party%': 500
+  '%meowduels_party_members%': 1000
+  # Drives tab-list SORTING, so every change reorders the list for everyone.
+  # 1000ms is deliberate: faster buys nothing a human can see and costs a
+  # re-sort packet to every player each time.
+  '%meowduels_party_sort%': 1000
   '%rel_meowduels_tabprefix%': 500
   '%rel_meowduels_tabsuffix%': 500
 global-playerlist:
@@ -125,6 +130,16 @@ scoreboard-teams:
   case-sensitive-sorting: true
   can-see-friendly-invisibles: false
   sorting-types:
+  # The party section. This is FIRST on purpose and it does not disturb the rank
+  # order below it: %meowduels_party_sort% answers "ZZZZ" for everyone not in a
+  # party, so they all tie on this level and fall through to GROUPS exactly as
+  # before. Only party members get a different value - "A" plus their leader's
+  # name - which lifts them to the top and keeps each party's members together.
+  #
+  # It is a plain sort, not a relational one, so it is one order for everybody:
+  # parties as a block at the top, not "my party first". TAB sorting cannot be
+  # per-viewer. The per-viewer view of your own party is the footer roster.
+  - PLACEHOLDER_A_TO_Z:%meowduels_party_sort%
   - GROUPS:wraith,founder,owner,developer,co-owner,manager,sr-admin,admin,dev,goat,builder,good-boy,miwi,sr-mod,staff,mod,jr-mod,helper,media,famous,ht3,vip,popular1,popular,active,default
   - PLACEHOLDER_A_TO_Z:%player%
   # Release nametags while a player is in a duel so MeowDuels can draw the

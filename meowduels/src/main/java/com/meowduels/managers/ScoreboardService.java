@@ -26,6 +26,7 @@ import com.meowduels.managers.EventManager;
 import com.meowduels.managers.QueueManager;
 import com.meowduels.model.ActiveDuel;
 import com.meowduels.model.Kit;
+import com.meowduels.model.Party;
 import com.meowduels.util.Ranks;
 import io.papermc.paper.scoreboard.numbers.NumberFormat;
 import java.time.LocalDate;
@@ -71,6 +72,7 @@ public class ScoreboardService {
     private Layout global = new Layout();
     private Layout duel = new Layout();
     private Layout ffa = new Layout();
+    private Layout party = new Layout();
     private final Map<UUID, Integer> rankTeamIndex = new HashMap<UUID, Integer>();
     private int rankTeamCounter = 0;
     private boolean rankNametags = false;
@@ -93,6 +95,7 @@ public class ScoreboardService {
             this.global = new Layout();
             this.duel = new Layout();
             this.ffa = new Layout();
+            this.party = new Layout();
             return;
         }
         this.masterEnabled = sb.getBoolean("enabled", true);
@@ -102,6 +105,7 @@ public class ScoreboardService {
         this.global = this.loadLayout(sb.getConfigurationSection("global"));
         this.duel = this.loadLayout(sb.getConfigurationSection("duel"));
         this.ffa = this.loadLayout(sb.getConfigurationSection("ffa"));
+        this.party = this.loadLayout(sb.getConfigurationSection("party"));
     }
 
     private Layout loadLayout(ConfigurationSection section) {
@@ -246,11 +250,18 @@ public class ScoreboardService {
         Layout sidebar = null;
         boolean boardOn = this.plugin.getPlayerSettings().isScoreboard(id);
         boolean inEvent = this.plugin.getEventManager().isInvolved(id);
+        boolean inParty = this.plugin.getPartyManager().inParty(id);
         if (this.masterEnabled && boardOn) {
+            // Most specific first. A duel is the narrowest thing you can be
+            // doing, then an event, then a party - which shows from the moment
+            // the party exists, not just once it is fighting, because the board
+            // is how you see who is in it and what it is waiting for.
             if (active && this.duel.enabled) {
                 sidebar = this.duel;
             } else if (inEvent && this.ffa.enabled) {
                 sidebar = this.ffa;
+            } else if (inParty && this.party.enabled) {
+                sidebar = this.party;
             } else if (!inFight && this.global.enabled) {
                 sidebar = this.global;
             }
@@ -452,6 +463,16 @@ public class ScoreboardService {
         t.put("ffa_kills", String.valueOf(ev.killsOf(recordId)));
         t.put("ffa_kit", this.kitLabel(ev.getKit()));
         t.put("ffa_time", ScoreboardService.clock(ev.runningSeconds()));
+        Party party = this.plugin.getPartyManager().partyOf(id);
+        t.put("party_leader", party == null ? "" : this.nameOf(party.getLeader()));
+        t.put("party_size", party == null ? "0" : String.valueOf(party.size()));
+        t.put("party_kit", party == null || party.getKit() == null ? "" : this.kitLabel(party.getKit()));
+        t.put("party_status", party == null ? "" : (party.isFighting() ? "Fighting" : "Waiting"));
+        t.put("party_alive", party == null ? "0" : String.valueOf(party.getAlive().size()));
+        t.put("party_role", party == null ? "" : (party.isLeader(id) ? "Leader" : "Member"));
+        t.put("party_kills", party == null ? "0" : String.valueOf(party.killsOf(id)));
+        t.put("party_time", ScoreboardService.clock(party == null || party.getStartedAt() == 0L
+                ? 0L : Math.max(0L, (System.currentTimeMillis() - party.getStartedAt()) / 1000L)));
         String[] duelKeys = new String[]{"score", "opponent_score", "opponent", "kit", "arena", "round", "rounds_to_win", "time", "team", "team_color", "opponent_color", "game", "spectators"};
         if (ctx == null) {
             for (String k : duelKeys) {

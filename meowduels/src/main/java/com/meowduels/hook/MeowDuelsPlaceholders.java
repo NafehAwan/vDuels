@@ -110,6 +110,9 @@ implements Relational {
                 return Ranks.mini(this.plugin.getStatsManager(), id);
             }
             case "tabprefix": {
+                if (this.plugin.getPartyManager().inPartyMatch(id)) {
+                    return this.partyMarker() + this.lpPrefix(player);
+                }
                 // Viewer-independent answer: their real rank, with its real
                 // colours. Replacing it with the team bolt here was showing the
                 // whole server a fighter in aqua/red instead of their rank -
@@ -185,6 +188,29 @@ implements Relational {
             case "party_alive": {
                 Party p = this.plugin.getPartyManager().partyOf(id);
                 return p == null ? "0" : String.valueOf(p.getAlive().size());
+            }
+            case "party_sort": {
+                // TAB sorts the whole list by this, one order for everyone, so
+                // it cannot be "my party first" - that would have to be
+                // relational and sorting is not. What it CAN do is keep each
+                // party's members next to each other and above everyone else,
+                // which is what makes a party read as a block in the list.
+                Party p = this.plugin.getPartyManager().partyOf(id);
+                return p == null ? "ZZZZ" : "A" + this.nameOf(p.getLeader()).toLowerCase(Locale.ROOT);
+            }
+            case "party_members": {
+                Party p = this.plugin.getPartyManager().partyOf(id);
+                if (p == null) {
+                    return "";
+                }
+                StringBuilder out = new StringBuilder();
+                for (UUID member : p.getMembers()) {
+                    if (out.length() > 0) {
+                        out.append("\u00a78, ");
+                    }
+                    out.append(this.memberTag(p, member));
+                }
+                return out.toString();
             }
             case "party_role": {
                 Party p = this.plugin.getPartyManager().partyOf(id);
@@ -310,7 +336,10 @@ implements Relational {
             if (party != null) {
                 return party;
             }
-            return this.lpPrefix(target); // global: their own rank and colours
+            // Outside the party, a party that is mid-match gets a sword in front
+            // of the name - the same idea as the duel marker, telling the rest of
+            // the server "busy, in a fight" without touching their rank.
+            return this.matchMark(target) + this.lpPrefix(target);
         }
         if ("tabsuffix".equals(key)) {
             // The marker is for people outside the match; inside it, everyone
@@ -323,6 +352,30 @@ implements Relational {
         }
         // Anything else falls through to the ordinary, viewer-independent form.
         return this.onRequest((OfflinePlayer) target, params);
+    }
+
+    /** The sword shown to everyone outside a party that is fighting. */
+    private String matchMark(Player target) {
+        return this.plugin.getPartyManager().inPartyMatch(target.getUniqueId())
+                ? this.partyMarker() : "";
+    }
+
+    private String partyMarker() {
+        return "\u00a77\u2694 \u00a7r";
+    }
+
+    /** One name in the party roster line, marked by what they are. */
+    private String memberTag(Party party, UUID id) {
+        String name = this.nameOf(id);
+        if (party.isFighting()) {
+            if (party.getAlive().contains(id)) {
+                return "\u00a7a" + name;
+            }
+            if (party.getWatching().contains(id)) {
+                return "\u00a78\u2620 " + name;
+            }
+        }
+        return party.isLeader(id) ? "\u00a76\u2605 " + name : "\u00a7f" + name;
     }
 
     /**

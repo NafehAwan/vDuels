@@ -41,11 +41,10 @@ public class TabService {
     /**
      * Who shares a tab list with whom.
      *
-     * <p>The value is whatever the players are grouped BY - an ActiveDuel or a
-     * Party - and is only ever compared by identity. Generalising it is what
-     * lets parties reuse the bubble: the rule "you see the people in your own
-     * group and nobody else" is the same rule, and writing it twice would be two
-     * places for it to drift.
+     * <p>Only duels populate this - see the note above detach about why parties
+     * do not. The value is kept as the thing players are grouped BY rather than
+     * as an ActiveDuel, and is only ever compared by identity, so a second kind
+     * of group can be added without touching the rule itself.
      */
     private final Map<UUID, Object> memberGroup = new HashMap<UUID, Object>();
 
@@ -80,59 +79,19 @@ public class TabService {
         this.reconcileAll();
     }
 
-    /**
-     * Puts a party in its own tab list.
+    /*
+     * A party deliberately has NO tab-list bubble.
      *
-     * <p>Rebuilt wholesale on every membership change rather than patched: a
-     * party is small, and "remove exactly the right entries" is the kind of
-     * bookkeeping that leaves someone hidden from a tab list they are no longer
-     * in, with nothing to tell them why.
+     * <p>It had one, copied from duels, and it was wrong: forming a party made
+     * the rest of the server vanish from your tab list, for no reason anyone in
+     * the party benefits from. A duel hides the server because the two fighters
+     * genuinely have nothing to do with it for the next minute; a party is just
+     * a group of people standing around the same lobby as everyone else.
+     *
+     * <p>Parties are grouped in the tab list by sorting instead - see
+     * %meowduels_party_sort% - which puts them together without taking anyone
+     * away.
      */
-    public void attachParty(Party party) {
-        if (party == null) {
-            return;
-        }
-        for (Map.Entry<UUID, Object> e : new HashMap<UUID, Object>(this.memberGroup).entrySet()) {
-            if (e.getValue() == party) {
-                this.memberGroup.remove(e.getKey());
-            }
-        }
-        for (UUID id : party.getMembers()) {
-            if (Bukkit.getPlayer((UUID)id) != null) {
-                this.memberGroup.put(id, party);
-            }
-        }
-        this.restoreVisibility(party);
-        this.reconcileAll();
-    }
-
-    /** Takes a whole party out of its bubble - used when it disbands. */
-    public void detachParty(Party party) {
-        if (party == null) {
-            return;
-        }
-        for (Map.Entry<UUID, Object> e : new HashMap<UUID, Object>(this.memberGroup).entrySet()) {
-            if (e.getValue() == party) {
-                this.leave(e.getKey());
-            }
-        }
-    }
-
-    /** Everyone in the group can see everyone again, before the bubble is
-     *  re-drawn. Without this a member who just left stays hidden from the
-     *  members who are still in it. */
-    private void restoreVisibility(Object group) {
-        for (Player viewer : Bukkit.getOnlinePlayers()) {
-            if (this.memberGroup.get(viewer.getUniqueId()) != group) {
-                continue;
-            }
-            for (Player online : Bukkit.getOnlinePlayers()) {
-                if (!online.getUniqueId().equals(viewer.getUniqueId())) {
-                    viewer.showPlayer((Plugin)this.plugin, online);
-                }
-            }
-        }
-    }
 
     public void detach(UUID id) {
         this.leave(id);

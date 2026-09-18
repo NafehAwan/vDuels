@@ -41,6 +41,21 @@ MeowDuels flattens everything to `§` codes first, which always render.
 ## Who is in whose list
 
 MeowDuels also controls *visibility*, which no config can express: a duel's
-players and spectators see only each other, and a party sees only the party.
-That is why a duel or party tab list is short - it is not TAB filtering, it is
-everyone else being hidden from those players for the duration.
+players and spectators see only each other. That is why a duel tab list is short
+- it is not TAB filtering, it is everyone else being hidden for the duration.
+
+**Parties are not hidden.** They tried being, and it was wrong: forming a party
+made the rest of the server vanish from your list. A duel hides the server
+because the two fighters have nothing to do with it for the next minute; a party
+is a group of people standing in the same lobby as everybody else.
+
+Instead a party is a *section*, made by sorting:
+`PLACEHOLDER_A_TO_Z:%meowduels_party_sort%` sits first in `sorting-types` and
+answers `ZZZZ` for everyone not in a party - so they all tie on that level and
+fall through to the rank order exactly as before, while party members answer
+`A<leader>` and lift to the top, grouped by party.
+
+Sorting is one order for everyone, so it cannot be "my party first"; TAB sorting
+is not relational. The per-viewer view of your own party is the footer roster,
+`%meowduels_party_members%`, which marks the leader with a star and, mid-match,
+greys out whoever is out.
