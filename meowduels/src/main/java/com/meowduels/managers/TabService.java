@@ -162,13 +162,14 @@ public class TabService {
         // Undo whichever kind of hiding this group applied. Calling the wrong
         // one leaves them released from a bubble they are still missing people
         // from - unlistPlayer is not undone by showPlayer.
-        boolean tabOnly = group instanceof Party;
         for (Player online : Bukkit.getOnlinePlayers()) {
             if (online.getUniqueId().equals(id)) continue;
-            this.setVisible(viewer, online, true, tabOnly);
-            if (!tabOnly) {
-                this.setVisible(online, viewer, true, false);
-            }
+            this.setVisible(viewer, online, true, true);
+            // Undo the old world-hiding too, for anyone carrying it from a
+            // build where the bubble still used hidePlayer. Harmless when there
+            // is nothing to undo, and the alternative is a player stuck
+            // invisible until they relog.
+            this.setVisible(viewer, online, true, false);
         }
     }
 
@@ -190,7 +191,10 @@ public class TabService {
             if (e.getValue() != group) continue;
             bubble.add(e.getKey());
         }
-        boolean tabOnly = group instanceof Party;
+        // Tab-list only, for duels as well as parties now. Taking a player out
+        // of the WORLD was never what either bubble wanted - it just happened to
+        // be the only thing hidePlayer could do.
+        boolean tabOnly = true;
         for (UUID mid : bubble) {
             Player member = Bukkit.getPlayer((UUID)mid);
             if (member == null) continue;

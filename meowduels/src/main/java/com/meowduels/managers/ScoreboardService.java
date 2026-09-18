@@ -70,7 +70,6 @@ public class ScoreboardService {
     private static final long SCORE_BAR_MS = 10000L;
     private boolean masterEnabled = true;
     private Layout global = new Layout();
-    private Layout duel = new Layout();
     private Layout ffa = new Layout();
     private final Map<UUID, Integer> rankTeamIndex = new HashMap<UUID, Integer>();
     private int rankTeamCounter = 0;
@@ -92,7 +91,6 @@ public class ScoreboardService {
         if (sb == null) {
             this.masterEnabled = false;
             this.global = new Layout();
-            this.duel = new Layout();
             this.ffa = new Layout();
             return;
         }
@@ -113,7 +111,6 @@ public class ScoreboardService {
             this.setupRankBelowName(Bukkit.getScoreboardManager().getMainScoreboard());
         }
         this.global = this.loadLayout(sb.getConfigurationSection("global"));
-        this.duel = this.loadLayout(sb.getConfigurationSection("duel"));
         this.ffa = this.loadLayout(sb.getConfigurationSection("ffa"));
     }
 
@@ -259,15 +256,20 @@ public class ScoreboardService {
         Layout sidebar = null;
         boolean boardOn = this.plugin.getPlayerSettings().isScoreboard(id);
         boolean inEvent = this.plugin.getEventManager().isInvolved(id);
-        if (this.masterEnabled && boardOn) {
-            // Most specific first: a duel is the narrowest thing you can be
-            // doing, then an event. A party has no sidebar of its own - the
-            // party tab list already says everything a board would have.
-            if (active && this.duel.enabled) {
-                sidebar = this.duel;
-            } else if (inEvent && this.ffa.enabled) {
+        boolean inParty = this.plugin.getPartyManager().inParty(id);
+        if (this.masterEnabled && boardOn && !inParty) {
+            // A party gets no sidebar at all - not even the global one. Everyone
+            // else falls through to global, INCLUDING duellists: there is no
+            // duel-specific board any more, and the !inFight guard that used to
+            // keep the global one off them has gone with it.
+            //
+            // scoreboard.duel is not read. Defaulting it to false would have
+            // changed nothing on a server that already has it true, because
+            // existing config values are never overwritten - and it is the
+            // server that already has it true where this needed to take effect.
+            if (inEvent && this.ffa.enabled) {
                 sidebar = this.ffa;
-            } else if (!inFight && this.global.enabled) {
+            } else if (this.global.enabled) {
                 sidebar = this.global;
             }
         }

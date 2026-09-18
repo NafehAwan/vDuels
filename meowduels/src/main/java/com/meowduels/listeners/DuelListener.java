@@ -226,16 +226,17 @@ implements Listener {
         }
     }
 
+    /**
+     * An ordinary death says nothing.
+     *
+     * <p>This used to broadcast one of four randomised lines to the whole
+     * server. On a PvP server that is constant noise for an event nobody
+     * outside the two players involved cares about - and the deaths that DO
+     * matter, in a duel, an FFA or a party match, announce themselves to the
+     * people they concern. The death.normal.* messages are unused now.
+     */
     private void applyNormalDeathMessage(PlayerDeathEvent event, Player victim) {
-        String message;
-        Player killer = victim.getKiller();
-        if (killer != null && !killer.getUniqueId().equals(victim.getUniqueId())) {
-            int pick = 1 + ThreadLocalRandom.current().nextInt(4);
-            message = this.plugin.messages().get("death.normal.pvp." + pick, "killer", killer.getName(), "victim", victim.getName());
-        } else {
-            message = this.plugin.messages().get("death.normal.generic", "victim", victim.getName());
-        }
-        event.setDeathMessage(message);
+        event.setDeathMessage(null);
     }
 
     /**

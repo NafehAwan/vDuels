@@ -7,6 +7,7 @@
 package com.meowduels.managers;
 
 import com.meowduels.MeowDuels;
+import com.meowduels.util.Colors;
 import com.meowduels.util.Text;
 import java.io.File;
 import java.io.IOException;
@@ -67,9 +68,17 @@ public class MessageManager {
         if (key.startsWith("request.") || key.startsWith("titles.")) {
             return Text.color(value);
         }
-        if (key.startsWith("event.") || key.startsWith("match.") || key.startsWith("round.") || key.startsWith("death.")) {
+        if (key.startsWith("party.") || key.startsWith("event.")) {
+            // Colors.toSection rather than colorNormal: these lines carry hex
+            // and gradients, which the &-only translator leaves as literal text.
+            return Colors.toSection(value);
+        }
+        if (key.startsWith("match.") || key.startsWith("round.") || key.startsWith("death.")) {
             return Text.colorNormal(value);
         }
+        // Everything else is deliberately flattened to grey - see Text.grayEmoji.
+        // Anything that wants its own colours needs a branch above, or it loses
+        // them here without a word.
         return Text.grayEmoji(value);
     }
 
@@ -166,14 +175,14 @@ public class MessageManager {
         DEFAULTS.put("party.countdown-title", "&d{seconds}");
         DEFAULTS.put("party.countdown-subtitle", "&7Free-for-all \u2022 last one standing");
         DEFAULTS.put("party.countdown-go", "&a&lFIGHT!");
-        DEFAULTS.put("party.kill-pvp", "&4\u2620 &c{victim} &7was killed by &a{killer} &8\u2022 &f{alive} &7left");
-        DEFAULTS.put("party.kill-generic", "&4\u2620 &c{victim} &7died &8\u2022 &f{alive} &7left");
-        DEFAULTS.put("party.winner", "&6\u2605 &e{winner} &7won the party match!");
+        DEFAULTS.put("party.kill-pvp", "<#FF3B57>\u2620 <#FF8A93>{victim} <#6B7079>was killed by <#7CFF6B>{killer} <dark_gray>\u2022 <#E6E8EB>{alive} <#6B7079>left");
+        DEFAULTS.put("party.kill-generic", "<#FF3B57>\u2620 <#FF8A93>{victim} <#6B7079>died <dark_gray>\u2022 <#E6E8EB>{alive} <#6B7079>left");
+        DEFAULTS.put("party.winner", "<#FFD65C>\u2605 <gradient:#FFE9A3:#FFB02E>{winner}</gradient> <#6B7079>won the party match!");
         DEFAULTS.put("party.no-winner", "&7The party match ended with no winner.");
         DEFAULTS.put("party.win-title", "&6&lVICTORY");
         DEFAULTS.put("party.win-subtitle", "&7Last one standing");
-        DEFAULTS.put("event.kill.pvp", "&4\u2620 &c{victim} &7was eliminated by &a{killer} &8\u2022 &f{alive} &7left");
-        DEFAULTS.put("event.kill.generic", "&4\u2620 &c{victim} &7was eliminated &8\u2022 &f{alive} &7left");
+        DEFAULTS.put("event.kill.pvp", "<#FF3B57>\u2620 <#FF8A93>{victim} <#6B7079>was eliminated by <#7CFF6B>{killer} <dark_gray>\u2022 <#E6E8EB>{alive} <#6B7079>left");
+        DEFAULTS.put("event.kill.generic", "<#FF3B57>\u2620 <#FF8A93>{victim} <#6B7079>was eliminated <dark_gray>\u2022 <#E6E8EB>{alive} <#6B7079>left");
         DEFAULTS.put("event.win", "&a&l{winner} has won the event! &4\u2620");
         DEFAULTS.put("event.joined", "&aYou joined the event! Wait for it to start.");
         DEFAULTS.put("event.left", "&7You left the event.");

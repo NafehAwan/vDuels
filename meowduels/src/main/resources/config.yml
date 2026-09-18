@@ -180,9 +180,10 @@ scoreboard:
   # Action bar shown while fighting/spectating. {score} is always YOUR side
   # (or the spectated player's), {opponent_score} the enemy.
   action-bar: "{score} <gray>-</gray> {opponent_score}"
-  # Out-of-duel sidebar is OFF - the board only appears in duels/spectate.
+  # The ordinary sidebar. Duellists see this one too now - there is no separate
+  # duel board - and a party sees no sidebar at all.
   global:
-    enabled: false
+    enabled: true
     title: "<bold><red>ʙʟᴏᴏᴅᴛʜɪʀꜱᴛ"
     lines:
     - "<gray><strikethrough>                    </strikethrough>"
@@ -208,16 +209,7 @@ scoreboard:
     - "<#FFC53D>⌚ <gray>ᴛɪᴍᴇ <dark_gray>» <white>{ffa_time}"
     - ""
     - "{ip_color}{server_ip}"
-  # Shown while fighting or spectating a fight. Compact - no divider bars.
-  duel:
-    enabled: true
-    title: "<bold><gradient:#FF2D95:#FF8AD0>{server_name}</gradient></bold>"
-    lines:
-    - "<gray>⚔ <white>{player}"
-    - "<#FF5FB0>◆ <#FF5FB0>{score} <gray>-</gray> <#FF5FB0>{opponent_score}"
-    - ""
-    - "<#FF5FB0>✦ <white>{kit}"
-    - "<#FF5FB0>◈ <white>game_{game}"
-    - "<#FF5FB0>⌚ <white>{date}"
-    - ""
-    - "{ip_color}{server_ip}"
+  # There is no duel-specific board. Duellists see the `global` one above, and
+  # a party sees no sidebar at all. The old duel layout is in git if you want it
+  # back; it is not read from here, so leaving a copy would be a switch that
+  # does nothing.

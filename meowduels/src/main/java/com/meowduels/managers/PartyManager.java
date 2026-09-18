@@ -6,6 +6,7 @@ import com.meowduels.model.Kit;
 import com.meowduels.model.Party;
 import com.meowduels.model.PlayerSnapshot;
 import com.meowduels.util.AntiCheatBypass;
+import com.meowduels.util.Colors;
 import com.meowduels.util.GameModeGuard;
 import com.meowduels.util.Sounds;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -125,8 +126,8 @@ public class PartyManager {
             player.sendMessage(Text.prefixed("&cYou have no invite from " + leader.getName() + "."));
             return;
         }
-        player.sendMessage(Text.prefixed(this.msg("party.invite-declined", "leader", leader.getName())));
-        leader.sendMessage(Text.prefixed(this.msg("party.invite-declined-by", "player", player.getName())));
+        player.sendMessage(this.msg("party.invite-declined", "leader", leader.getName()));
+        leader.sendMessage(this.msg("party.invite-declined-by", "player", player.getName()));
     }
 
     public int partyCount() {
@@ -176,7 +177,7 @@ public class PartyManager {
             return;
         }
         party.invite(targetId);
-        leader.sendMessage(Text.prefixed(this.msg("party.invite-sent", "player", target.getName())));
+        leader.sendMessage(this.msg("party.invite-sent", "player", target.getName()));
         this.sendInviteCard(target, leader, party);
     }
 
@@ -703,14 +704,25 @@ public class PartyManager {
         }
     }
 
+    /**
+     * A line to everyone in the party.
+     *
+     * <p>Colours survive. This used to go through Text.prefixed, which strips
+     * every colour code AND every non-ASCII character before forcing the whole
+     * line grey - so the kill messages arrived as grey text with the skull cut
+     * out of them, no matter what they were written as. Colors.toSection is
+     * idempotent, so a line that arrives already formatted passes through
+     * untouched and a raw one gets translated.
+     */
     public void broadcast(Party party, String message) {
         if (party == null) {
             return;
         }
+        String line = Colors.toSection(message);
         for (UUID id : party.getMembers()) {
             Player p = Bukkit.getPlayer((UUID)id);
             if (p != null) {
-                p.sendMessage(Text.prefixed(message));
+                p.sendMessage(line);
             }
         }
     }
