@@ -51,6 +51,11 @@ public class ArenaManager {
     private final MeowDuels plugin;
     private final File file;
     private final File snapshotDir;
+    /** Arenas a fight has touched since they were last regenerated. Written to
+     *  disk, because the whole point is to survive a server that stops without
+     *  running any of our shutdown code. */
+    private final Set<String> dirty = new HashSet<String>();
+    private final File dirtyFile;
     private final Map<String, Arena> arenas = new LinkedHashMap<String, Arena>();
     private final Map<UUID, RegionClipboard> clipboards = new HashMap<UUID, RegionClipboard>();
     private final Map<String, RegionClipboard> snapshots = new HashMap<String, RegionClipboard>();
@@ -60,10 +65,92 @@ public class ArenaManager {
         this.plugin = plugin;
         this.file = new File(plugin.getDataFolder(), "arenas.yml");
         this.snapshotDir = new File(plugin.getDataFolder(), "arena-snapshots");
+        this.dirtyFile = new File(plugin.getDataFolder(), "arenas-dirty.yml");
         if (!this.snapshotDir.exists()) {
             this.snapshotDir.mkdirs();
         }
         this.load();
+        this.loadDirty();
+    }
+
+    /**
+     * Notes that an arena is in use and its blocks may have been changed.
+     *
+     * <p>Cheap - the file only holds arena names, and only changes when a match
+     * starts or an arena is restored.
+     */
+    public void markDirty(String arenaName) {
+        if (arenaName != null && this.dirty.add(arenaName.toLowerCase(Locale.ROOT))) {
+            this.saveDirty();
+        }
+    }
+
+    /** The arena has been regenerated; it no longer needs recovering. */
+    public void clearDirty(String arenaName) {
+        if (arenaName != null && this.dirty.remove(arenaName.toLowerCase(Locale.ROOT))) {
+            this.saveDirty();
+        }
+    }
+
+    /**
+     * Restores every arena that was mid-fight when the server last stopped.
+     *
+     * <p>The ordinary teardown paths regenerate an arena when a match ends, and
+     * shutdown now does the same for matches still running. Neither helps if the
+     * process is killed outright, and nothing else would ever notice - an arena
+     * with a hole in it looks exactly like an arena that was built that way.
+     * This runs once on startup and closes that last gap.
+     */
+    public void recoverDirtyArenas() {
+        if (this.dirty.isEmpty()) {
+            return;
+        }
+        List<String> pending = new ArrayList<String>(this.dirty);
+        int done = 0;
+        for (String name : pending) {
+            Arena arena = this.get(name);
+            if (arena == null || !arena.isAutoRegenerate()) {
+                this.dirty.remove(name);
+                continue;
+            }
+            if (this.regenArena(arena) >= 0) {
+                done++;
+            }
+            this.dirty.remove(name);
+        }
+        this.saveDirty();
+        if (done > 0) {
+            this.plugin.getLogger().info("Regenerated " + done
+                    + " arena(s) left dirty by the last shutdown.");
+        }
+    }
+
+    private void loadDirty() {
+        if (!this.dirtyFile.exists()) {
+            return;
+        }
+        try {
+            YamlConfiguration cfg = YamlConfiguration.loadConfiguration((File)this.dirtyFile);
+            for (String name : cfg.getStringList("dirty")) {
+                if (name != null && !name.isEmpty()) {
+                    this.dirty.add(name.toLowerCase(Locale.ROOT));
+                }
+            }
+        }
+        catch (Throwable t) {
+            this.plugin.getLogger().warning("Could not read arenas-dirty.yml: " + t);
+        }
+    }
+
+    private void saveDirty() {
+        try {
+            YamlConfiguration cfg = new YamlConfiguration();
+            cfg.set("dirty", (Object)new ArrayList<String>(this.dirty));
+            cfg.save(this.dirtyFile);
+        }
+        catch (Throwable t) {
+            this.plugin.getLogger().warning("Could not write arenas-dirty.yml: " + t);
+        }
     }
 
     public void load() {

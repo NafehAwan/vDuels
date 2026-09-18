@@ -17,6 +17,7 @@ package com.meowduels.commands;
 import com.meowduels.MeowDuels;
 import com.meowduels.gui.ArenaMenu;
 import com.meowduels.gui.DuelConfirmMenu;
+import com.meowduels.gui.PartyMenu;
 import com.meowduels.gui.EditKitEffectsMenu;
 import com.meowduels.gui.EditKitListMenu;
 import com.meowduels.gui.EventMapMenu;
@@ -126,6 +127,10 @@ TabCompleter {
             }
             case "leave": {
                 this.leave(sender);
+                break;
+            }
+            case "party": {
+                this.party(sender, args);
                 break;
             }
             case "meowduelsspawnitems": {
@@ -586,6 +591,11 @@ TabCompleter {
 
     private boolean checkBusy(Player player, boolean spectate, boolean queue, boolean duel) {
         UUID id = player.getUniqueId();
+        // A party is exclusive: while you're in one, duelling, queueing,
+        // spectating and events are all off the table.
+        if (this.plugin.getPartyManager().busy(player)) {
+            return true;
+        }
         if (this.plugin.getEventManager().isInvolved(id)) {
             player.sendMessage(Text.prefixed("&cYou're in an event - type &f/leave&c first."));
             return true;
@@ -714,6 +724,54 @@ TabCompleter {
         }
     }
 
+    /**
+     * /party - the text door to everything the party items do.
+     *
+     * <p>Invite and accept only exist here: they need a player name, and a menu
+     * that lists every online player would be a worse way to type one.
+     */
+    private void party(CommandSender sender, String[] args) {
+        if (!this.requirePlayer(sender)) {
+            return;
+        }
+        Player player = (Player)sender;
+        String sub = args.length > 0 ? args[0].toLowerCase(Locale.ROOT) : "";
+        if (sub.equals("create")) {
+            this.plugin.getPartyManager().create(player);
+            return;
+        }
+        if (sub.equals("leave") || sub.equals("disband")) {
+            this.plugin.getPartyManager().leave(player);
+            return;
+        }
+        if (sub.equals("invite") || sub.equals("accept")) {
+            if (args.length < 2) {
+                player.sendMessage(Text.prefixed("&cUsage: &f/party " + sub + " <player>"));
+                return;
+            }
+            Player target = this.plugin.getServer().getPlayerExact(args[1]);
+            if (target == null) {
+                player.sendMessage(Text.prefixed("&c" + args[1] + " isn't online."));
+                return;
+            }
+            if (sub.equals("invite")) {
+                this.plugin.getPartyManager().invite(player, target);
+            } else {
+                this.plugin.getPartyManager().accept(player, target);
+            }
+            return;
+        }
+        if (sub.equals("spectate")) {
+            this.plugin.getPartyManager().spectate(player);
+            return;
+        }
+        if (this.plugin.getPartyManager().inParty(player.getUniqueId())) {
+            new PartyMenu(this.plugin).openFor(player);
+            return;
+        }
+        player.sendMessage(Text.prefixed("&7You aren't in a party. &f/party create&7 to start one."));
+    }
+
     private void leave(CommandSender sender) {
         if (!this.requirePlayer(sender)) {
             return;
@@ -725,6 +783,12 @@ TabCompleter {
                 this.plugin.giveSpawnItems(player);
             }
         }, 2L);
+        // Party match first: someone knocked out and watching is ALSO not in a
+        // duel, not in an event and not a SpectateManager spectator, so every
+        // check below would fall through and tell them they aren't in anything.
+        if (this.plugin.getPartyManager().leaveMatch(player)) {
+            return;
+        }
         if (this.plugin.getEventManager().isInvolved(id)) {
             this.plugin.getEventManager().leave(player);
             return;
@@ -739,6 +803,10 @@ TabCompleter {
         }
         if (this.plugin.getQueueManager().isQueued(id)) {
             this.plugin.getQueueManager().leaveAll(player);
+            return;
+        }
+        if (this.plugin.getPartyManager().inParty(id)) {
+            player.sendMessage(Text.prefixed("&7You're in a party - use the &fLeave Party&7 item, or &f/party leave&7."));
             return;
         }
         player.sendMessage(Text.prefixed("&7You aren't in an event, duel, queue, or spectating."));

@@ -73,3 +73,22 @@ me/clip/placeholderapi/expansion/Relational | String onPlaceholderRequest(org.bu
 # Real Paper signatures; both are plain getters, nothing generic to erase.
 org/bukkit/Bukkit | public static java.util.List<org.bukkit.World> getWorlds() { return null; }
 org/bukkit/World | org.bukkit.Location getSpawnLocation();
+
+# YamlConfiguration inherits this from FileConfiguration. Calling it on a
+# YamlConfiguration-typed variable records THAT as the owner, so the stub needs
+# its own copy; YamlConfiguration is a class in real Bukkit, so this stays a
+# plain Methodref and resolves up the hierarchy at runtime.
+org/bukkit/configuration/file/YamlConfiguration | public java.util.List<String> getStringList(String a0) { return null; }
+
+# Team.removeEntry - real Paper API, first used by the FFA nametag team, which
+# has to drop players as they leave the event. Team is an interface, so this is
+# an InterfaceMethodref.
+org/bukkit/scoreboard/Team | boolean removeEntry(String a0);
+
+# The hopper-window overload of createInventory, plus the enum constant it takes.
+org/bukkit/Bukkit | public static org.bukkit.inventory.Inventory createInventory(org.bukkit.inventory.InventoryHolder a0, org.bukkit.event.inventory.InventoryType a1, String a2) { return null; }
+
+# Inherited from EntityDamageEvent via Cancellable, but called on an
+# EntityDamageByEntityEvent-typed variable, so that is the recorded owner. It is
+# a class in real Bukkit, so this stays a Methodref.
+org/bukkit/event/entity/EntityDamageByEntityEvent | public void setCancelled(boolean a0) {}

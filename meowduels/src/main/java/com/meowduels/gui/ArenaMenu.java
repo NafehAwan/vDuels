@@ -58,7 +58,7 @@ extends Menu {
         this.inventory.setItem(19, this.toggle("&dAllow Breaking", this.arena.isAllowBreak(), "&7Players can break blocks", "&7anywhere inside the arena."));
         this.inventory.setItem(20, this.toggle("&dBreak Self-Placed Only", this.arena.isAllowRemoveAdded(), "&7Even with Breaking off, players", "&7can still break blocks they", "&7placed this match."));
         String eventSpawnState = this.arena.getEventSpawn() != null ? "&aset" : "&cnot set";
-        this.inventory.setItem(21, Items.of(Material.BEACON).name("&e&lEvent Spawn").lore("&7Where FFA event players spawn.", "&7Current: " + eventSpawnState, "", "&eClick&7, walk to the spot, type &edone&7.").build());
+        this.inventory.setItem(21, Items.of(Material.BEACON).name("&e&lFFA / Event Spawn").lore("&7Where FFA event AND party match", "&7players are teleported in.", "&7Current: " + eventSpawnState, "", "&cRequired&7 - an arena without this", "&7can't host FFA or party matches.", "", "&eClick&7, walk to the spot, type &edone&7.").build());
         String borderState = this.arena.hasBorderRegion() ? "&aset &7(" + (int)this.arena.getBorderStartSize() + " blocks)" : "&cnot set &7(auto-fit)";
         this.inventory.setItem(22, Items.of(Material.FILLED_MAP).name("&e&lEvent Border Area").lore("&7The starting border box.", "&7Current: " + borderState, "", "&eClick&7, walk to &fcorner 1&7 type &edone&7,", "&7then &fcorner 2&7 type &edone&7.").build());
         this.inventory.setItem(23, this.numberItem("&eEvent Border End", this.arena.getEventBorderEnd(), "blocks", "&7The border stops shrinking here."));

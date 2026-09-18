@@ -45,6 +45,7 @@ package com.meowduels.listeners;
 
 import com.meowduels.MeowDuels;
 import com.meowduels.model.ActiveDuel;
+import com.meowduels.model.Party;
 import com.meowduels.model.Arena;
 import com.meowduels.util.GameModeGuard;
 import io.papermc.paper.event.player.AsyncChatEvent;
@@ -162,7 +163,19 @@ implements Listener {
         Player victim = event.getEntity();
         ActiveDuel duel = this.plugin.getDuelManager().getDuel(victim.getUniqueId());
         if (duel == null) {
-            if (!this.plugin.getEventManager().isPlaying(victim.getUniqueId())) {
+            if (this.plugin.getPartyManager().inPartyMatch(victim.getUniqueId())) {
+                // Party FFA: the kit drops where you fell, same as an event.
+                this.dropEverything(event, victim);
+                Player killer = victim.getKiller();
+                UUID killerId = killer == null ? null : killer.getUniqueId();
+                UUID victimId = victim.getUniqueId();
+                Bukkit.getScheduler().runTask((Plugin)this.plugin, () -> {
+                    victim.spigot().respawn();
+                    this.plugin.getPartyManager().onDeath(victimId, killerId);
+                });
+            } else if (this.plugin.getEventManager().isPlaying(victim.getUniqueId())) {
+                this.dropEverything(event, victim);
+            } else {
                 this.applyNormalDeathMessage(event, victim);
             }
             return;
@@ -177,6 +190,40 @@ implements Listener {
             victim.spigot().respawn();
             this.plugin.getDuelManager().handleRoundLoss(loserId, deathLoc);
         });
+    }
+
+    /**
+     * FFA: what you were carrying stays where you fell.
+     *
+     * <p>Not left to vanilla, because it depends on a gamerule. With
+     * keepInventory on - which a duels server usually wants, so duel deaths
+     * don't scatter kits - Bukkit hands us an empty drop list and turning the
+     * flag off here does not refill it. So the drops are built from the
+     * inventory by hand, and the inventory is emptied so the kit cannot come
+     * back with the player as well as staying on the floor.
+     */
+    private void dropEverything(PlayerDeathEvent event, Player victim) {
+        event.setKeepInventory(false);
+        event.setDroppedExp(0);
+        if (event.getDrops().isEmpty()) {
+            this.addDrops(event, victim.getInventory().getStorageContents());
+            this.addDrops(event, victim.getInventory().getArmorContents());
+            this.addDrops(event, new ItemStack[]{victim.getInventory().getItemInOffHand()});
+        }
+        victim.getInventory().clear();
+        victim.getInventory().setArmorContents(new ItemStack[4]);
+        victim.getInventory().setItemInOffHand(null);
+    }
+
+    private void addDrops(PlayerDeathEvent event, ItemStack[] items) {
+        if (items == null) {
+            return;
+        }
+        for (ItemStack item : items) {
+            if (item != null && item.getType() != Material.AIR) {
+                event.getDrops().add(item.clone());
+            }
+        }
     }
 
     private void applyNormalDeathMessage(PlayerDeathEvent event, Player victim) {
@@ -216,8 +263,13 @@ implements Listener {
             }
             return;
         }
+        // Not for an FFA or party death. Both put the player somewhere specific
+        // a moment later - the arena, or spectating the rest of the match - and
+        // a teleport to spawn with a fresh hotbar would land in between and undo
+        // it. This is the same reasoning that keeps duel respawns above.
         if (!this.plugin.getConfig().getBoolean("on-death-spawn", true)
-                || this.plugin.getEventManager().isInvolved(player.getUniqueId())) {
+                || this.plugin.getEventManager().isInvolved(player.getUniqueId())
+                || this.plugin.getPartyManager().inPartyMatch(player.getUniqueId())) {
             return;
         }
         Location spawn = this.spawnPoint();
@@ -352,6 +404,39 @@ implements Listener {
                 p.updateInventory();
             }
         });
+    }
+
+    /**
+     * Party friendly fire.
+     *
+     * <p>Only outside a match. Inside one the whole point is that party members
+     * fight each other, and a friendly-fire setting that applied there would
+     * produce a free-for-all nobody can ever win.
+     */
+    @EventHandler(ignoreCancelled=true)
+    public void onPartyFriendlyFire(EntityDamageByEntityEvent event) {
+        ProjectileSource shooter;
+        if (!(event.getEntity() instanceof Player)) {
+            return;
+        }
+        Player victim = (Player)event.getEntity();
+        Entity damager = event.getDamager();
+        Player attacker = null;
+        if (damager instanceof Player) {
+            attacker = (Player)damager;
+        } else if (damager instanceof Projectile && (shooter = ((Projectile)damager).getShooter()) instanceof Player) {
+            attacker = (Player)shooter;
+        }
+        if (attacker == null || attacker.getUniqueId().equals(victim.getUniqueId())) {
+            return;
+        }
+        Party party = this.plugin.getPartyManager().partyOf(victim.getUniqueId());
+        if (party == null || party.isFighting() || party.isFriendlyFire()) {
+            return;
+        }
+        if (party.has(attacker.getUniqueId())) {
+            event.setCancelled(true);
+        }
     }
 
     @EventHandler
@@ -497,6 +582,7 @@ implements Listener {
             if (!player.isOnline() || this.plugin.getDuelManager().isInDuel(player.getUniqueId())) {
                 return;
             }
+            this.unstickSpectator(player);
             player.teleport(dest);
             this.plugin.giveSpawnItems(player);
         }, 2L);
@@ -511,6 +597,28 @@ implements Listener {
             }
             this.plugin.giveSpawnItems(player);
         }, 22L);
+    }
+
+    /**
+     * Rescues anyone who logged out mid-spectate.
+     *
+     * <p>Spectating an event or a party match puts you in SPECTATOR, and
+     * quitting from there saves that gamemode - the match that would have put it
+     * back is over by the time you return. The result is a player who can walk
+     * through walls at spawn and cannot work out why. Nothing else notices,
+     * because from every other angle they are an ordinary player standing at
+     * spawn.
+     */
+    private void unstickSpectator(Player player) {
+        if (player.getGameMode() != GameMode.SPECTATOR) {
+            return;
+        }
+        if (this.plugin.getEventManager().isInvolved(player.getUniqueId())
+                || this.plugin.getPartyManager().inPartyMatch(player.getUniqueId())
+                || this.plugin.getSpectateManager().isSpectating(player.getUniqueId())) {
+            return;
+        }
+        GameModeGuard.setFreely(player, GameMode.SURVIVAL);
     }
 
     /**
@@ -535,6 +643,7 @@ implements Listener {
         this.plugin.getSetupManager().cancel(player);
         this.plugin.getSpectateManager().clearOnQuit(player);
         this.plugin.getQueueManager().remove(player.getUniqueId());
+        this.plugin.getPartyManager().handleQuit(player.getUniqueId());
         if (this.plugin.getDuelManager().isInDuel(player.getUniqueId())) {
             this.plugin.getDuelManager().handleDisconnect(player.getUniqueId());
         }

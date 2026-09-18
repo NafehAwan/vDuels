@@ -3,6 +3,7 @@ package org.bukkit;
 public class Bukkit {
     public static org.bukkit.block.data.BlockData createBlockData(java.lang.String a0) { return null; }
     public static org.bukkit.inventory.Inventory createInventory(org.bukkit.inventory.InventoryHolder a0, int a1, java.lang.String a2) { return null; }
+    public static org.bukkit.inventory.Inventory createInventory(org.bukkit.inventory.InventoryHolder a0, org.bukkit.event.inventory.InventoryType a1, java.lang.String a2) { return null; }
     public static com.destroystokyo.paper.profile.PlayerProfile createProfile(java.util.UUID a0) { return null; }
     public static org.bukkit.WorldBorder createWorldBorder() { return null; }
     public static boolean dispatchCommand(org.bukkit.command.CommandSender a0, java.lang.String a1) { return false; }

@@ -57,6 +57,10 @@ public class EventManager {
     private final Set<UUID> spectators = new HashSet<UUID>();
     private final Map<UUID, PlayerSnapshot> snapshots = new HashMap<UUID, PlayerSnapshot>();
     private final Map<Location, BlockData> changedBlocks = new HashMap<Location, BlockData>();
+    /** Kills this event, per player. Reset when an event starts - a leaderboard
+     *  that carried over from the last one would be nonsense. */
+    private final Map<UUID, Integer> kills = new HashMap<UUID, Integer>();
+    private long runningSinceMs = 0L;
     private int borderGen = 0;
     private WorldBorder eventBorder;
     private double borderCenterX;
@@ -84,6 +88,43 @@ public class EventManager {
 
     public Arena getArena() {
         return this.arena;
+    }
+
+    /** How many are still in it. */
+    public int aliveCount() {
+        return this.alive.size();
+    }
+
+    /** How many are in the event at all - alive plus the ones watching after
+     *  being knocked out. */
+    public int playerCount() {
+        return this.players.size();
+    }
+
+    public int spectatorCount() {
+        return this.spectators.size();
+    }
+
+    public String getKit() {
+        return this.kit == null ? "" : this.kit;
+    }
+
+    public int killsOf(UUID id) {
+        Integer v = this.kills.get(id);
+        return v == null ? 0 : v;
+    }
+
+    /** Seconds since the fighting actually started, 0 while still waiting. */
+    public long runningSeconds() {
+        return this.runningSinceMs == 0L ? 0L : Math.max(0L, (System.currentTimeMillis() - this.runningSinceMs) / 1000L);
+    }
+
+    /** Everyone the event concerns - fighters and knocked-out spectators. They
+     *  all share one nametag team, so this is what feeds it. */
+    public Set<UUID> involved() {
+        HashSet<UUID> out = new HashSet<UUID>(this.players);
+        out.addAll(this.spectators);
+        return out;
     }
 
     public void recordChange(Location loc, BlockData data) {
@@ -149,6 +190,10 @@ public class EventManager {
 
     public void join(Player p) {
         UUID id = p.getUniqueId();
+        // A party is exclusive - see PartyManager.busy.
+        if (this.plugin.getPartyManager().busy(p)) {
+            return;
+        }
         if (this.state == State.RUNNING) {
             p.sendMessage(this.msg("event.started-cannot-join", new String[0]));
             return;
@@ -321,6 +366,9 @@ public class EventManager {
             --left;
         }
         Player player = killer = killerId == null ? null : Bukkit.getPlayer((UUID)killerId);
+        if (killerId != null && !killerId.equals(victimId) && this.players.contains(killerId)) {
+            this.kills.merge(killerId, 1, Integer::sum);
+        }
         if (killer != null && !killerId.equals(victimId)) {
             this.broadcast(this.msg("event.kill.pvp", "killer", killer.getName(), "victim", victimName, "alive", String.valueOf(left)));
         } else {
@@ -333,6 +381,8 @@ public class EventManager {
             return;
         }
         this.state = State.RUNNING;
+        this.runningSinceMs = System.currentTimeMillis();
+        this.kills.clear();
         this.broadcast(this.msg("event.started", new String[0]));
         this.startBorder();
         this.beginBorderShrink();
@@ -574,6 +624,7 @@ public class EventManager {
         }
         this.changedBlocks.clear();
         this.state = State.NONE;
+        this.runningSinceMs = 0L;
         this.host = null;
         this.kit = null;
         this.arena = null;

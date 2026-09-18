@@ -249,7 +249,7 @@ public class DuelManager {
         }
         this.plugin.getQueueManager().remove(p1.getUniqueId());
         this.plugin.getQueueManager().remove(p2.getUniqueId());
-        this.arenasInUse.add(arena.getName().toLowerCase());
+        this.markArenaInUse(arena.getName());
         this.snapshots.put(p1.getUniqueId(), PlayerSnapshot.capture(p1));
         this.snapshots.put(p2.getUniqueId(), PlayerSnapshot.capture(p2));
         ActiveDuel duel = new ActiveDuel(p1.getUniqueId(), p2.getUniqueId(), arena, kit, rounds);
@@ -609,22 +609,38 @@ public class DuelManager {
 
     private void regenArena(ActiveDuel duel) {
         Arena arena = duel.getArena();
-        if (!arena.isAutoRegenerate()) {
+        if (arena == null || !arena.isAutoRegenerate()) {
             return;
         }
-        Runnable doRegen = () -> {
-            int written = this.plugin.getArenaManager().regenArena(arena);
-            if (written < 0 && !duel.getChangedBlocks().isEmpty()) {
-                this.plugin.getArenaManager().restoreBlocks(duel.getChangedBlocks());
-            }
-            duel.getChangedBlocks().clear();
-            this.clearArenaEntities(arena);
-        };
         if (arena.getRegenDelayTicks() > 0) {
-            Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, doRegen, (long)arena.getRegenDelayTicks());
-        } else {
-            doRegen.run();
+            try {
+                Bukkit.getScheduler().runTaskLater((Plugin)this.plugin,
+                        () -> this.regenNow(duel), (long)arena.getRegenDelayTicks());
+                return;
+            }
+            catch (Throwable t) {
+                // The scheduler refuses new tasks once the plugin is disabling.
+                // A deferred regen would be silently dropped, so take the delay
+                // away rather than the regen.
+            }
         }
+        this.regenNow(duel);
+    }
+
+    /** The regen itself, with no scheduling in it, so it can be called from
+     *  shutdown where nothing deferred would ever run. */
+    private void regenNow(ActiveDuel duel) {
+        Arena arena = duel.getArena();
+        if (arena == null || !arena.isAutoRegenerate()) {
+            return;
+        }
+        int written = this.plugin.getArenaManager().regenArena(arena);
+        if (written < 0 && !duel.getChangedBlocks().isEmpty()) {
+            this.plugin.getArenaManager().restoreBlocks(duel.getChangedBlocks());
+        }
+        duel.getChangedBlocks().clear();
+        this.clearArenaEntities(arena);
+        this.plugin.getArenaManager().clearDirty(arena.getName());
     }
 
     private void clearArenaEntities(Arena arena) {
@@ -824,6 +840,11 @@ public class DuelManager {
 
     public void markArenaInUse(String name) {
         this.arenasInUse.add(name.toLowerCase());
+        // Journalled here rather than at each call site, so duels, events and
+        // party matches all get the same protection: a crash that runs no
+        // shutdown code still leaves a note for the next startup to regenerate
+        // this arena.
+        this.plugin.getArenaManager().markDirty(name);
     }
 
     public void freeArena(String name) {
@@ -844,6 +865,7 @@ public class DuelManager {
      *  arena. Anything else in the set is stale and gets released. Self-healing,
      *  and it covers leak paths that don't exist yet. */
     public void tickArenaReservations() {
+        this.tickAbandonedDuels();
         if (this.arenasInUse.isEmpty()) {
             return;
         }
@@ -857,6 +879,10 @@ public class DuelManager {
         if (eventArena != null) {
             claimed.add(eventArena.getName().toLowerCase());
         }
+        // Party matches claim arenas too. Without this the sweep would decide a
+        // party's arena was stale within a second and hand it to a duel, putting
+        // two fights in the same box.
+        claimed.addAll(this.plugin.getPartyManager().claimedArenas());
         java.util.Iterator<String> it = this.arenasInUse.iterator();
         while (it.hasNext()) {
             String name = it.next();
@@ -1245,7 +1271,31 @@ public class DuelManager {
         return true;
     }
 
+    /**
+     * Server stopping with fights in progress.
+     *
+     * <p>This used to restore the players and clear the maps - and leave every
+     * arena exactly as the fight left it. Stopping the server mid-duel is not a
+     * rare event (it is what "both players left" usually means in practice), and
+     * the damage was permanent: nothing regenerates an arena that no longer has
+     * a duel attached to it.
+     *
+     * <p>Regen runs inline here. The scheduler is already refusing new tasks by
+     * the time onDisable is called, so anything deferred would simply never run.
+     */
     public void shutdown() {
+        for (ActiveDuel duel : new HashSet<ActiveDuel>(this.playerDuels.values())) {
+            if (duel == null || duel.getArena() == null) {
+                continue;
+            }
+            try {
+                this.regenNow(duel);
+            }
+            catch (Throwable t) {
+                this.plugin.getLogger().warning("Failed to regenerate arena '"
+                        + duel.getArena().getName() + "' during shutdown: " + t);
+            }
+        }
         for (UUID id : new HashSet<UUID>(this.snapshots.keySet())) {
             this.restorePlayer(id, true);
             this.plugin.getScoreboardService().detach(id);
@@ -1253,6 +1303,47 @@ public class DuelManager {
         this.playerDuels.clear();
         this.arenasInUse.clear();
         this.requests.clear();
+    }
+
+    /**
+     * Ends any duel whose players are all offline.
+     *
+     * <p>A quit normally tears its own duel down, but only if that path actually
+     * completes - one throw anywhere in endMatch and the duel is left behind with
+     * its arena dirty and reserved. Both players being gone is the unambiguous
+     * signal that nothing is going to finish it, so this does.
+     */
+    private void tickAbandonedDuels() {
+        if (this.playerDuels.isEmpty()) {
+            return;
+        }
+        for (ActiveDuel duel : new HashSet<ActiveDuel>(this.playerDuels.values())) {
+            if (duel == null || duel.isFinished()) {
+                continue;
+            }
+            if (Bukkit.getPlayer((UUID)duel.getPlayer1()) != null
+                    || Bukkit.getPlayer((UUID)duel.getPlayer2()) != null) {
+                continue;
+            }
+            this.plugin.getLogger().info("Ending duel in arena '"
+                    + (duel.getArena() == null ? "?" : duel.getArena().getName())
+                    + "' - both players are offline.");
+            try {
+                this.endMatch(duel, duel.getPlayer1(), EndReason.DISCONNECT);
+            }
+            catch (Throwable t) {
+                // endMatch does a lot of player-facing work that is meaningless
+                // with nobody online. The arena is what matters here.
+                this.plugin.getLogger().warning("Abandoned-duel teardown threw: " + t);
+                duel.setFinished(true);
+                this.playerDuels.remove(duel.getPlayer1());
+                this.playerDuels.remove(duel.getPlayer2());
+                if (duel.getArena() != null) {
+                    this.arenasInUse.remove(duel.getArena().getName().toLowerCase());
+                    this.regenNow(duel);
+                }
+            }
+        }
     }
 
     private void sendTitle(Player player, String title, String subtitle) {

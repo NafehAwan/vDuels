@@ -28,24 +28,75 @@ public final class SpawnItems {
     public static final String KITEDITOR = "spawn-kiteditor";
     public static final String SETTINGS = "spawn-settings";
     public static final String REMATCH = "spawn-rematch";
+    public static final String CREATEPARTY = "spawn-createparty";
+    public static final String PARTYMATCH = "party-match";
+    public static final String PARTYSPECTATE = "party-spectate";
+    public static final String PARTYLEAVE = "party-leave";
+    public static final String PARTYSETTINGS = "party-settings";
     private static final int LEAVE_SLOT = 5;
-    private static final int REMATCH_SLOT = 1;
+    /** Moved off slot 1 to make room for Create Party; the rematch head is
+     *  transient and the party button is always there, so the party button gets
+     *  the slot that never changes meaning. */
+    private static final int REMATCH_SLOT = 2;
 
     private SpawnItems() {
     }
 
+    /**
+     * The spawn hotbar.
+     *
+     * <p>There are two of them. Someone in a party gets the party bar instead of
+     * the normal one, because every button on the normal bar is something a
+     * party member is not allowed to do - handing them a queue sword that always
+     * answers "you're in a party" is worse than not handing it over at all.
+     */
     public static void give(MeowDuels plugin, Player player) {
         if (player == null) {
             return;
         }
         player.getInventory().clear();
+        if (plugin.getPartyManager() != null && plugin.getPartyManager().inParty(player.getUniqueId())) {
+            SpawnItems.giveParty(plugin, player);
+            return;
+        }
         player.getInventory().setItem(0, Items.of(Material.DIAMOND_SWORD).miniName("<gradient:#FF6B6B:#A01028>\u2694 \u0280\u1d00\u0274\u1d0b\u1d07\u1d05 \u01eb\u1d1c\u1d07\u1d1c\u1d07</gradient>").hideTooltip().tag(plugin.keyButton(), QUEUE).build());
+        player.getInventory().setItem(1, Items.of(Material.NETHER_STAR).miniName("<gradient:#B98CFF:#6B4BD6>\u271a \u1d04\u0280\u1d07\u1d00\u1d1b\u1d07 \u1d18\u1d00\u0280\u1d1b\u028f</gradient>").rawLore("", "<#8E959D>\u0280\u026a\u0262\u029c\u1d1b-\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \ua731\u1d1b\u1d00\u0280\u1d1b \u1d00 \u1d18\u1d00\u0280\u1d1b\u028f").hideTooltip().tag(plugin.keyButton(), CREATEPARTY).build());
         player.getInventory().setItem(4, Items.of(Material.CHEST).miniName("<gradient:#FFDE8A:#E0872B>\u26a1 \u01eb\u1d1c\u026a\u1d04\u1d0b \u01eb\u1d1c\u1d07\u1d1c\u1d07</gradient>").hideTooltip().tag(plugin.keyButton(), QUICK).build());
         player.getInventory().setItem(7, Items.of(Material.BOOK).miniName("<gradient:#8AD9FF:#3F6BE0>\ud83d\udcd6 \u1d0b\u026a\u1d1b \u1d07\u1d05\u026a\u1d1b\u1d0f\u0280</gradient>").hideTooltip().tag(plugin.keyButton(), KITEDITOR).build());
         player.getInventory().setItem(8, Items.of(Material.GRINDSTONE).miniName("<gradient:#C8C8C8:#707070>\u2699 \u0455\u1d07\u1d1b\u1d1b\u026a\u0274\u0262\u0455</gradient>").hideTooltip().tag(plugin.keyButton(), SETTINGS).build());
         if (plugin.getQueueManager().isQueued(player.getUniqueId())) {
             player.getInventory().setItem(5, SpawnItems.leaveQueueItem(plugin));
         }
+        player.updateInventory();
+    }
+
+    /** The party hotbar: match, spectate, leave, settings. */
+    private static void giveParty(MeowDuels plugin, Player player) {
+        boolean leader = plugin.getPartyManager().partyOf(player.getUniqueId()) != null
+                && plugin.getPartyManager().partyOf(player.getUniqueId()).isLeader(player.getUniqueId());
+        player.getInventory().setItem(0, Items.of(Material.DIAMOND_SWORD)
+                .miniName("<gradient:#FF8AD0:#B04BD6>\u2694 \u1d18\u1d00\u0280\u1d1b\u028f \u1d0d\u1d00\u1d1b\u1d04\u029c</gradient>")
+                .rawLore("", leader
+                        ? "<#8E959D>\u0280\u026a\u0262\u029c\u1d1b-\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \ua731\u1d07\u1d1b \u1d1c\u1d18 \u1d1b\u029c\u1d07 \u1d0d\u1d00\u1d1b\u1d04\u029c"
+                        : "<#6B7079>\u1d0f\u0274\u029f\u028f \u1d1b\u029c\u1d07 \u029f\u1d07\u1d00\u1d05\u1d07\u0280 \u1d04\u1d00\u0274 \ua731\u1d1b\u1d00\u0280\u1d1b")
+                .hideTooltip().tag(plugin.keyButton(), PARTYMATCH).build());
+        player.getInventory().setItem(1, Items.of(Material.ENDER_PEARL)
+                .miniName("<gradient:#8AD9FF:#3F6BE0>\u25c9 \u1d18\u1d00\u0280\u1d1b\u028f \ua731\u1d18\u1d07\u1d04\u1d1b\u1d00\u1d1b\u1d07</gradient>")
+                .rawLore("", "<#8E959D>\u1d21\u1d00\u1d1b\u1d04\u029c \u028f\u1d0f\u1d1c\u0280 \u1d18\u1d00\u0280\u1d1b\u028f'\ua731 \u1d0d\u1d00\u1d1b\u1d04\u029c",
+                          "<dark_gray>\u25b8 <#8E959D>/leave \u1d1b\u1d0f \ua731\u1d1b\u1d0f\u1d18")
+                .hideTooltip().tag(plugin.keyButton(), PARTYSPECTATE).build());
+        player.getInventory().setItem(7, Items.of(Material.RED_DYE)
+                .miniName(leader
+                        ? "<gradient:#FF6B6B:#A01028>\u2716 \u1d05\u026a\ua731\u0299\u1d00\u0274\u1d05 \u1d18\u1d00\u0280\u1d1b\u028f</gradient>"
+                        : "<gradient:#FF6B6B:#A01028>\u2716 \u029f\u1d07\u1d00\u1d20\u1d07 \u1d18\u1d00\u0280\u1d1b\u028f</gradient>")
+                .rawLore("", leader
+                        ? "<#8E959D>\u1d1b\u029c\u026a\ua731 \u1d07\u0274\u1d05\ua731 \u1d1b\u029c\u1d07 \u1d18\u1d00\u0280\u1d1b\u028f \ua730\u1d0f\u0280 \u1d07\u1d20\u1d07\u0280\u028f\u1d0f\u0274\u1d07"
+                        : "<#8E959D>\u028f\u1d0f\u1d1c \u1d0b\u1d07\u1d07\u1d18 \u1d18\u029f\u1d00\u028f\u026a\u0274\u0262 \u1d00\u029f\u1d0f\u0274\u1d07",
+                        "", "<dark_gray>\u25b8 <#8E959D>\u0280\u026a\u0262\u029c\u1d1b-\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \u1d04\u1d0f\u0274\ua730\u026a\u0280\u1d0d")
+                .hideTooltip().tag(plugin.keyButton(), PARTYLEAVE).build());
+        player.getInventory().setItem(8, Items.of(Material.GRINDSTONE)
+                .miniName("<gradient:#C8C8C8:#707070>\u2699 \u1d18\u1d00\u0280\u1d1b\u028f \ua731\u1d07\u1d1b\u1d1b\u026a\u0274\u0262\ua731</gradient>")
+                .hideTooltip().tag(plugin.keyButton(), PARTYSETTINGS).build());
         player.updateInventory();
     }
 
@@ -64,7 +115,7 @@ public final class SpawnItems {
                 // empty catch block
             }
         }
-        player.getInventory().setItem(1, head);
+        player.getInventory().setItem(REMATCH_SLOT, head);
         player.updateInventory();
     }
 

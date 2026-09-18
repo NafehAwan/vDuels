@@ -15,6 +15,9 @@ package com.meowduels.listeners;
 
 import com.meowduels.MeowDuels;
 import com.meowduels.gui.KitEditorMenu;
+import com.meowduels.gui.PartyConfirmMenu;
+import com.meowduels.gui.PartyMenu;
+import com.meowduels.gui.PartySettingsMenu;
 import com.meowduels.gui.QueuePickMenu;
 import com.meowduels.gui.SettingsMenu;
 import com.meowduels.util.Items;
@@ -39,7 +42,11 @@ implements Listener {
 
     private boolean isSpawnItem(ItemStack stack) {
         String btn = Items.readTag(stack, this.plugin.keyButton());
-        return "spawn-queue".equals(btn) || "spawn-quick".equals(btn) || "spawn-leavequeue".equals(btn) || "spawn-kiteditor".equals(btn) || "spawn-settings".equals(btn) || "spawn-rematch".equals(btn);
+        return "spawn-queue".equals(btn) || "spawn-quick".equals(btn) || "spawn-leavequeue".equals(btn)
+                || "spawn-kiteditor".equals(btn) || "spawn-settings".equals(btn) || "spawn-rematch".equals(btn)
+                || "spawn-createparty".equals(btn) || "party-match".equals(btn)
+                || "party-spectate".equals(btn) || "party-leave".equals(btn)
+                || "party-settings".equals(btn);
     }
 
     @EventHandler(ignoreCancelled=true)
@@ -81,6 +88,31 @@ implements Listener {
         if (!right) {
             return;
         }
+        if ("spawn-createparty".equals(btn)) {
+            event.setCancelled(true);
+            this.plugin.getPartyManager().create(player);
+            return;
+        }
+        if ("party-match".equals(btn)) {
+            event.setCancelled(true);
+            new PartyMenu(this.plugin).openFor(player);
+            return;
+        }
+        if ("party-spectate".equals(btn)) {
+            event.setCancelled(true);
+            this.plugin.getPartyManager().spectate(player);
+            return;
+        }
+        if ("party-leave".equals(btn)) {
+            event.setCancelled(true);
+            new PartyConfirmMenu(this.plugin, player).open(player);
+            return;
+        }
+        if ("party-settings".equals(btn)) {
+            event.setCancelled(true);
+            new PartySettingsMenu(this.plugin).open(player);
+            return;
+        }
         if ("spawn-queue".equals(btn)) {
             event.setCancelled(true);
             if (this.busy(player)) {
@@ -115,6 +147,9 @@ implements Listener {
 
     private boolean busy(Player p) {
         UUID id = p.getUniqueId();
+        if (this.plugin.getPartyManager().busy(p)) {
+            return true;
+        }
         if (this.plugin.getDuelManager().isInDuel(id)) {
             p.sendMessage(Text.prefixed("&cYou're already in a duel."));
             return true;

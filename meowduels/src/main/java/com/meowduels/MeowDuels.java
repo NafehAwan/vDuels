@@ -37,6 +37,7 @@ import com.meowduels.managers.GuiLayoutManager;
 import com.meowduels.managers.KitManager;
 import com.meowduels.managers.MessageManager;
 import com.meowduels.managers.PlayerSettingsManager;
+import com.meowduels.managers.PartyManager;
 import com.meowduels.managers.QueueManager;
 import com.meowduels.managers.ScoreboardService;
 import com.meowduels.managers.SetupManager;
@@ -87,6 +88,7 @@ extends JavaPlugin {
     private KitLayoutManager kitLayoutManager;
     private PlayerSettingsManager playerSettingsManager;
     private TabHook tabHook;
+    private PartyManager partyManager;
     private NamespacedKey keyKit;
     private NamespacedKey keyButton;
     private NamespacedKey keyArena;
@@ -114,6 +116,9 @@ extends JavaPlugin {
         this.loadDuelSpawn();
         this.messageManager = new MessageManager(this);
         this.arenaManager = new ArenaManager(this);
+        // Restores any arena the last shutdown left mid-fight. Has to happen
+        // before anything can claim one for a new match.
+        this.arenaManager.recoverDirtyArenas();
         this.kitManager = new KitManager(this);
         this.categoryManager = new CategoryManager(this);
         this.queueCategoryManager = new CategoryManager(this, "queuecategories.yml");
@@ -122,6 +127,7 @@ extends JavaPlugin {
         this.scoreboardService = new ScoreboardService(this);
         this.duelManager = new DuelManager(this);
         this.queueManager = new QueueManager(this);
+        this.partyManager = new PartyManager(this);
         this.tabService = new TabService(this);
         this.tabEditManager = new TabEditManager(this);
         this.spectateManager = new SpectateManager(this);
@@ -148,6 +154,7 @@ extends JavaPlugin {
             this.duelManager.tickCounts();
             this.duelManager.tickArenaReservations();
             this.queueManager.tickMatch();
+            this.partyManager.tick();
             if (this.eventManager.isRunning() && this.eventManager.getArena() != null) {
                 DuelManager.applyWorldLocks(this.eventManager.getArena());
                 this.eventManager.tickBorderDamage();
@@ -162,6 +169,9 @@ extends JavaPlugin {
     public void onDisable() {
         if (this.eventManager != null) {
             this.eventManager.shutdown();
+        }
+        if (this.partyManager != null) {
+            this.partyManager.shutdown();
         }
         if (this.duelManager != null) {
             this.duelManager.shutdown();
@@ -185,7 +195,7 @@ extends JavaPlugin {
         } else {
             this.getLogger().warning("Command 'leaderboard' is missing from plugin.yml.");
         }
-        for (String name : new String[]{"meowduels", "createarena", "arena", "deletearena", "kitcreate", "deletekit", "kiticon", "kitdisplayname", "editgui", "category", "categoryqueue", "scoreboardip", "duel", "leave", "queue", "meowduelstab", "editkit", "spectate", "meowduelssetspawn", "kiteditor", "givegoldenhead", "resetconfig", "meowduelsserver", "meowduelstrims", "ff", "event", "eventspec", "eventleave", "meowduelsspawnitems"}) {
+        for (String name : new String[]{"meowduels", "createarena", "arena", "deletearena", "kitcreate", "deletekit", "kiticon", "kitdisplayname", "editgui", "category", "categoryqueue", "scoreboardip", "duel", "leave", "queue", "meowduelstab", "editkit", "spectate", "meowduelssetspawn", "kiteditor", "party", "givegoldenhead", "resetconfig", "meowduelsserver", "meowduelstrims", "ff", "event", "eventspec", "eventleave", "meowduelsspawnitems"}) {
             PluginCommand command = this.getCommand(name);
             if (command != null) {
                 command.setExecutor((CommandExecutor)handler);
@@ -378,6 +388,10 @@ extends JavaPlugin {
         this.tabStore = value;
         this.getConfig().set("tab.store", (Object)value);
         this.saveConfig();
+    }
+
+    public PartyManager getPartyManager() {
+        return this.partyManager;
     }
 
     public NamespacedKey keyKit() {

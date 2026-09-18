@@ -117,6 +117,23 @@ scoreboard:
     - "<#D90707>⌚ ᴘʟᴀʏᴛɪᴍᴇ <dark_gray>: <red>{playtime}"
     - "<gray><strikethrough>                    </strikethrough>"
     - "{ip_color}{server_ip}"
+  # Shown to everyone in an FFA event - fighters and knocked-out spectators
+  # alike. {alive}/{ffa_players} is who is left out of who started; {ffa_kills}
+  # is YOUR kills this event, reset when a new one starts.
+  ffa:
+    enabled: true
+    title: "<bold><gradient:#FFD65C:#FF8A2E>ғғᴀ</gradient></bold>"
+    lines:
+    - "<yellow>⚡ <white>{player}"
+    - ""
+    - "<#FFC53D>☠ <gray>ᴋɪʟʟꜱ <dark_gray>» <white>{ffa_kills}"
+    - "<#FFC53D>♦ <gray>ᴀʟɪᴠᴇ <dark_gray>» <white>{alive}<dark_gray>/<gray>{ffa_players}"
+    - "<#FFC53D>◉ <gray>ᴏᴜᴛ <dark_gray>» <white>{ffa_spectators}"
+    - ""
+    - "<#FFC53D>✦ <gray>ᴋɪᴛ <dark_gray>» <white>{ffa_kit}"
+    - "<#FFC53D>⌚ <gray>ᴛɪᴍᴇ <dark_gray>» <white>{ffa_time}"
+    - ""
+    - "{ip_color}{server_ip}"
   # Shown while fighting or spectating a fight. Compact - no divider bars.
   duel:
     enabled: true

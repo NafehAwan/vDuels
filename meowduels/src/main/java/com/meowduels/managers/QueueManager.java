@@ -46,6 +46,10 @@ public class QueueManager {
     }
 
     public void quickJoin(Player player) {
+        // A party is exclusive - see PartyManager.busy.
+        if (this.plugin.getPartyManager().busy(player)) {
+            return;
+        }
         UUID id = player.getUniqueId();
         ArrayList<Kit> candidates = new ArrayList<Kit>();
         for (Kit k : this.plugin.getKitManager().all()) {
@@ -103,6 +107,10 @@ public class QueueManager {
     }
 
     public void join(Player player, String kit) {
+        // A party is exclusive - see PartyManager.busy.
+        if (this.plugin.getPartyManager().busy(player)) {
+            return;
+        }
         UUID id = player.getUniqueId();
         if (this.plugin.getDuelManager().isInDuel(id)) {
             player.sendMessage(this.msg("queue.in-duel", new String[0]));

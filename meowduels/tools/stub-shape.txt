@@ -11,3 +11,5 @@ me/clip/placeholderapi/expansion/Relational interface
 # the generator has nothing else to go on. Getting this wrong compiles cleanly
 # and then throws IncompatibleClassChangeError on the first scoreboard tick.
 io/papermc/paper/scoreboard/numbers/NumberFormat interface
+# Real Bukkit enum; the party confirm window is a hopper, not a chest.
+org/bukkit/event/inventory/InventoryType enum

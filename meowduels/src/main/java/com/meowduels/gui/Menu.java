@@ -16,6 +16,7 @@ import com.meowduels.util.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -35,6 +36,15 @@ implements InventoryHolder {
      */
     protected Inventory createRaw(int rows, String title) {
         this.inventory = Bukkit.createInventory((InventoryHolder)this, (int)(rows * 9), (String)Colors.toSection(title));
+        return this.inventory;
+    }
+
+    /**
+     * A 5-slot hopper window. Used for one-question confirmations, where a chest
+     * would be mostly filler panes around two buttons.
+     */
+    protected Inventory createHopper(String title) {
+        this.inventory = Bukkit.createInventory((InventoryHolder)this, (InventoryType)InventoryType.HOPPER, (String)Colors.toSection(title));
         return this.inventory;
     }
 

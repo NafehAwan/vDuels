@@ -22,6 +22,7 @@
 package com.meowduels.managers;
 
 import com.meowduels.MeowDuels;
+import com.meowduels.managers.EventManager;
 import com.meowduels.managers.QueueManager;
 import com.meowduels.model.ActiveDuel;
 import com.meowduels.model.Kit;
@@ -69,6 +70,7 @@ public class ScoreboardService {
     private boolean masterEnabled = true;
     private Layout global = new Layout();
     private Layout duel = new Layout();
+    private Layout ffa = new Layout();
     private final Map<UUID, Integer> rankTeamIndex = new HashMap<UUID, Integer>();
     private int rankTeamCounter = 0;
     private boolean rankNametags = false;
@@ -90,6 +92,7 @@ public class ScoreboardService {
             this.masterEnabled = false;
             this.global = new Layout();
             this.duel = new Layout();
+            this.ffa = new Layout();
             return;
         }
         this.masterEnabled = sb.getBoolean("enabled", true);
@@ -98,6 +101,7 @@ public class ScoreboardService {
         this.rankBelowName = sb.getBoolean("rank-below-name", true);
         this.global = this.loadLayout(sb.getConfigurationSection("global"));
         this.duel = this.loadLayout(sb.getConfigurationSection("duel"));
+        this.ffa = this.loadLayout(sb.getConfigurationSection("ffa"));
     }
 
     private Layout loadLayout(ConfigurationSection section) {
@@ -241,22 +245,30 @@ public class ScoreboardService {
         boolean active = inFight && context.isArenaEntered();
         Layout sidebar = null;
         boolean boardOn = this.plugin.getPlayerSettings().isScoreboard(id);
+        boolean inEvent = this.plugin.getEventManager().isInvolved(id);
         if (this.masterEnabled && boardOn) {
             if (active && this.duel.enabled) {
                 sidebar = this.duel;
+            } else if (inEvent && this.ffa.enabled) {
+                sidebar = this.ffa;
             } else if (!inFight && this.global.enabled) {
                 sidebar = this.global;
             }
         }
         int lineCount = sidebar == null ? 0 : sidebar.lines.size();
         boolean bl = nametags = active && !this.externalNametags;
-        if (sidebar == null && !nametags) {
+        // FFA is one team, not two sides: everyone in the event shares a yellow
+        // nametag. Only when they are NOT also in a duel - a duel's own two-team
+        // colouring is more specific and wins.
+        boolean ffaTags = !active && inEvent && !this.externalNametags;
+        if (sidebar == null && !nametags && !ffaTags) {
             this.removeBoard(id, player);
             return;
         }
         Board board = this.boards.get(id);
-        if (board == null || board.sidebarLines != lineCount || board.hasNametags != nametags) {
-            board = new Board(lineCount, nametags);
+        if (board == null || board.sidebarLines != lineCount || board.hasNametags != nametags
+                || board.hasFfaTeam != ffaTags) {
+            board = new Board(lineCount, nametags, ffaTags);
             this.boards.put(id, board);
             player.setScoreboard(board.scoreboard);
             this.lastRank.clear();
@@ -271,6 +283,9 @@ public class ScoreboardService {
         if (nametags) {
             UUID enemy = context.getOpponent(self);
             board.setNametags(self, enemy, context.isAqua(self));
+        }
+        if (ffaTags) {
+            board.setFfaMembers(this.plugin.getEventManager().involved());
         }
         if (active && context.getState() == ActiveDuel.State.FIGHTING && context.sinceFightStart() < 10000L) {
             this.sendActionBar(player, context, self);
@@ -400,6 +415,11 @@ public class ScoreboardService {
         return s;
     }
 
+    /** mm:ss, the same shape the duel board's {time} uses. */
+    private static String clock(long seconds) {
+        return String.format("%02d:%02d", seconds / 60L, seconds % 60L);
+    }
+
     private Map<String, String> tokens(Player player, ActiveDuel ctx, UUID self, boolean spectator) {
         HashMap<String, String> t = new HashMap<String, String>();
         UUID id = player.getUniqueId();
@@ -422,6 +442,16 @@ public class ScoreboardService {
         t.put("server_name", this.plugin.getServerName());
         t.put("date", this.date());
         t.put("server_ip_sc", ScoreboardService.smallCaps(this.plugin.getScoreboardIp()));
+        // FFA/event tokens. Always present, so the ffa board never renders a
+        // literal "{alive}" at the moment an event is winding down and the
+        // manager has already cleared its state.
+        EventManager ev = this.plugin.getEventManager();
+        t.put("alive", String.valueOf(ev.aliveCount()));
+        t.put("ffa_players", String.valueOf(ev.playerCount()));
+        t.put("ffa_spectators", String.valueOf(ev.spectatorCount()));
+        t.put("ffa_kills", String.valueOf(ev.killsOf(recordId)));
+        t.put("ffa_kit", this.kitLabel(ev.getKit()));
+        t.put("ffa_time", ScoreboardService.clock(ev.runningSeconds()));
         String[] duelKeys = new String[]{"score", "opponent_score", "opponent", "kit", "arena", "round", "rounds_to_win", "time", "team", "team_color", "opponent_color", "game", "spectators"};
         if (ctx == null) {
             for (String k : duelKeys) {
@@ -552,8 +582,12 @@ public class ScoreboardService {
         private String enemyHp;
         private String allyEntry;
         private String enemyEntry;
+        private final boolean hasFfaTeam;
+        private Team ffaTeam;
+        private final Set<String> ffaEntries = new HashSet<String>();
 
-        private Board(int sidebarLines, boolean nametags) {
+        private Board(int sidebarLines, boolean nametags, boolean ffaTeam) {
+            this.hasFfaTeam = ffaTeam;
             this.sidebarLines = sidebarLines;
             this.hasNametags = nametags;
             this.scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
@@ -592,6 +626,13 @@ public class ScoreboardService {
                 this.allyTeam = null;
                 this.enemyTeam = null;
             }
+            if (ffaTeam) {
+                this.ffaTeam = this.scoreboard.registerNewTeam("md_ffa");
+                this.ffaTeam.setColor(ChatColor.YELLOW);
+                this.ffaTeam.prefix(ScoreboardService.this.deserialize("<yellow>\u26a1 "));
+            } else {
+                this.ffaTeam = null;
+            }
             ScoreboardService.this.setupRankBelowName(this.scoreboard);
         }
 
@@ -604,6 +645,44 @@ public class ScoreboardService {
         private void setLine(int i, Component c) {
             if (i >= 0 && i < this.teams.length && this.teams[i] != null) {
                 this.teams[i].prefix(c);
+            }
+        }
+
+        /**
+         * Puts everyone in the event on one yellow team, shown as "\u26a1 Name".
+         *
+         * <p>Only the difference is applied. Re-adding an entry every tick
+         * resends the team packet to everyone on the board for no reason, and
+         * with a full FFA lobby that is a lot of packets a second.
+         */
+        private void setFfaMembers(Set<UUID> members) {
+            if (this.ffaTeam == null) {
+                return;
+            }
+            HashSet<String> want = new HashSet<String>();
+            for (UUID id : members) {
+                String name = ScoreboardService.this.nameOf(id);
+                if (!name.isEmpty()) {
+                    want.add(name);
+                }
+            }
+            for (String name : want) {
+                if (this.ffaEntries.add(name)) {
+                    this.ffaTeam.addEntry(name);
+                }
+            }
+            java.util.Iterator<String> it = this.ffaEntries.iterator();
+            while (it.hasNext()) {
+                String name = it.next();
+                if (!want.contains(name)) {
+                    try {
+                        this.ffaTeam.removeEntry(name);
+                    }
+                    catch (Throwable throwable) {
+                        // entry already gone with the player
+                    }
+                    it.remove();
+                }
             }
         }
 
