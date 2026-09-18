@@ -28,6 +28,8 @@ public interface Player extends org.bukkit.OfflinePlayer {
     java.util.UUID getUniqueId();
     boolean hasPermission(java.lang.String a0);
     void hidePlayer(org.bukkit.plugin.Plugin a0, org.bukkit.entity.Player a1);
+    void listPlayer(org.bukkit.entity.Player a0);
+    void unlistPlayer(org.bukkit.entity.Player a0);
     boolean isFlying();
     boolean isGliding();
     boolean isOnline();

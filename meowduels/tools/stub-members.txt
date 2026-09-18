@@ -97,3 +97,8 @@ org/bukkit/event/entity/EntityDamageByEntityEvent | public void setCancelled(boo
 # objective off a board when the setting is turned off. Objective is an
 # interface, so this is an InterfaceMethodref.
 org/bukkit/scoreboard/Objective | void unregister();
+
+# Paper's tab-list-only visibility, as opposed to hidePlayer which takes the
+# player out of the WORLD as well. Player is an interface, so InterfaceMethodref.
+org/bukkit/entity/Player | void listPlayer(org.bukkit.entity.Player a0);
+org/bukkit/entity/Player | void unlistPlayer(org.bukkit.entity.Player a0);

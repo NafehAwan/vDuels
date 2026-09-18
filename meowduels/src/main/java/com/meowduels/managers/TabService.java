@@ -151,17 +151,24 @@ public class TabService {
      *  Split out of {@link #leave} so a rebuild can release several players
      *  before reconciling once, instead of reconciling per player. */
     private void release(UUID id) {
-        if (this.memberGroup.remove(id) == null) {
+        Object group = this.memberGroup.remove(id);
+        if (group == null) {
             return;
         }
         Player viewer = Bukkit.getPlayer((UUID)id);
         if (viewer == null) {
             return;
         }
+        // Undo whichever kind of hiding this group applied. Calling the wrong
+        // one leaves them released from a bubble they are still missing people
+        // from - unlistPlayer is not undone by showPlayer.
+        boolean tabOnly = group instanceof Party;
         for (Player online : Bukkit.getOnlinePlayers()) {
             if (online.getUniqueId().equals(id)) continue;
-            viewer.showPlayer((Plugin)this.plugin, online);
-            online.showPlayer((Plugin)this.plugin, viewer);
+            this.setVisible(viewer, online, true, tabOnly);
+            if (!tabOnly) {
+                this.setVisible(online, viewer, true, false);
+            }
         }
     }
 
@@ -183,23 +190,56 @@ public class TabService {
             if (e.getValue() != group) continue;
             bubble.add(e.getKey());
         }
-        // Each fighter/spectator sees only the others in their own match.
+        boolean tabOnly = group instanceof Party;
         for (UUID mid : bubble) {
             Player member = Bukkit.getPlayer((UUID)mid);
             if (member == null) continue;
             for (Player online : Bukkit.getOnlinePlayers()) {
                 if (online.getUniqueId().equals(mid)) continue;
-                if (bubble.contains(online.getUniqueId())) {
-                    member.showPlayer((Plugin)this.plugin, online);
-                    continue;
-                }
-                member.hidePlayer((Plugin)this.plugin, online);
+                this.setVisible(member, online, bubble.contains(online.getUniqueId()), tabOnly);
             }
         }
         // Deliberately one-directional. Fighters don't see anyone outside their
         // match, so their tab list is just the fight - but the rest of the server
         // still sees THEM, because they are online and should look it. Hiding
         // both ways made duellists vanish from everyone's tab list mid-match.
+    }
+
+    /**
+     * Whether {@code member} can see {@code other}, and in what sense.
+     *
+     * <p>Two different kinds of hiding, because the two bubbles want different
+     * things. hidePlayer takes the player out of the WORLD as well as the tab
+     * list - right for a duel, where the fighters are alone in an arena and
+     * anyone else rendering there would be a distraction that isn't really
+     * there. Wrong for a party, which stands in the same lobby as everybody
+     * else: it made the lobby look empty.
+     *
+     * <p>unlistPlayer is Paper's tab-list-only version, which is what a party
+     * actually asked for. It throws if the player is not visible to begin with,
+     * hence the guard - the two systems can disagree for a tick when a duel and
+     * a party release the same player in the same moment.
+     */
+    private void setVisible(Player member, Player other, boolean visible, boolean tabOnly) {
+        try {
+            if (tabOnly) {
+                if (visible) {
+                    member.listPlayer(other);
+                } else {
+                    member.unlistPlayer(other);
+                }
+                return;
+            }
+            if (visible) {
+                member.showPlayer((Plugin)this.plugin, other);
+            } else {
+                member.hidePlayer((Plugin)this.plugin, other);
+            }
+        }
+        catch (Throwable t) {
+            // listPlayer refuses a player this one cannot see. Nothing to do
+            // about it here, and it corrects itself on the next reconcile.
+        }
     }
 
     private void applyTeams(Player viewer, ActiveDuel duel) {
