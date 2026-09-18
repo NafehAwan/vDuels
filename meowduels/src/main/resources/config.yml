@@ -185,8 +185,9 @@ scoreboard:
   # Action bar shown while fighting/spectating. {score} is always YOUR side
   # (or the spectated player's), {opponent_score} the enemy.
   action-bar: "{score} <gray>-</gray> {opponent_score}"
-  # The ordinary sidebar. Duellists see this one too now - there is no separate
-  # duel board - and a party sees no sidebar at all.
+  # The one sidebar. Duellists see it too - there is no separate duel board -
+  # and a party sees none at all. Its own `enabled` is no longer read; the
+  # master switch above is the only switch. Empty `lines` also means no board.
   global:
     enabled: true
     title: "<bold><red>ʙʟᴏᴏᴅᴛʜɪʀꜱᴛ"

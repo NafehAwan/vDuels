@@ -274,7 +274,13 @@ public class ScoreboardService {
             // server that already has it true where this needed to take effect.
             if (inEvent && this.ffa.enabled) {
                 sidebar = this.ffa;
-            } else if (this.global.enabled) {
+            } else if (!this.global.lines.isEmpty()) {
+                // global.enabled is deliberately not read. It existed to switch
+                // the out-of-duel board off while a separate duel board was on;
+                // there is only one board now, so the master switch above is the
+                // only switch, and a stale "enabled: false" left over from that
+                // era would otherwise mean no scoreboard anywhere - including in
+                // duels, which is exactly how it was reported.
                 sidebar = this.global;
             }
         }

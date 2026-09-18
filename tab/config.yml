@@ -9,50 +9,28 @@ scoreboard:
   enabled: false
 header-footer:
   enabled: true
-  # ORDER MATTERS. TAB takes the first design whose condition matches, and
-  # "default" matches almost everything, so it stays last. fight comes before
-  # party because a party member who is somehow also in a duel should see the
-  # duel - that is the more specific thing to be doing.
-  designs:
-    fight:
-      display-condition: '%meowduels_in_fight%=true'
-      header:
-      - ''
-      - <b><gradient:#CD052D:#D90707>ʙʟᴏᴏᴅᴛʜɪʀѕ</gradient><gradient:#D90707:#D90707>ᴛ</gradient></b>
-      - '&cⓘ &7You are in a fight'
-      - ''
-      footer:
-      - ''
-      - '%meowduels_team_color%⚡ &7Team &f%meowduels_team% &8• &7vs &f%meowduels_opponent%'
-      - '&7Score: &f%meowduels_score% &7- &f%meowduels_opponent_score% &8• &7Round: &f%meowduels_round%&7/&f%meowduels_rounds_to_win%'
-      - '&7Kit: &f%meowduels_kit% &8• &7Map: &f%meowduels_arena% &8• &7Time: &f%meowduels_time%'
-      - ''
-    # In a party, in or out of a match. The tab list is only the party, so the
-    # footer is the party: who runs it, how many, and what it is doing.
-    party:
-      display-condition: '%meowduels_in_party%=true'
-      header:
-      - ''
-      - <b><gradient:#CD052D:#D90707>ʙʟᴏᴏᴅᴛʜɪʀѕ</gradient><gradient:#D90707:#D90707>ᴛ</gradient></b>
-      - '&dⓘ &7You are in a party'
-      - ''
-      footer:
-      - ''
-      - '&d★ &7Leader: &f%meowduels_party_leader% &8• &7Members: &f%meowduels_party_size%'
-      - '&7Kit: &f%meowduels_party_kit% &8• &7Status: &f%meowduels_party_status%'
-      - '&7You: &f%meowduels_party_role% &8• &7Alive: &f%meowduels_party_alive%'
-      - ''
-    default:
-      display-condition: '%world%!=disabledworld'
-      header:
-      - ''
-      - <b><gradient:#CD052D:#D90707>ʙʟᴏᴏᴅᴛʜɪʀѕ</gradient><gradient:#D90707:#D90707>ᴛ</gradient></b>
-      - ''
-      footer:
-      - ''
-      - '&7Online: &#D90707%online% &8• &7In Duels: &#D90707%meowduels_players_in_duels%'
-      - <gradient:#CD052D:#D90707>ʙʟᴏᴏᴅᴛʜɪʀѕᴛ.ꜰᴜ</gradient><gradient:#D90707:#D90707>ɴ</gradient>
-      - ''
+  # ONE design, for everybody.
+  #
+  # There were three - fight, party and default - each with a display-condition.
+  # They are gone on purpose: a duel and a party are meant to look like the rest
+  # of the server now, and the only thing that marks them out is WHO is in the
+  # list. MeowDuels hides the players you are not fighting or partied with from
+  # your tab list, and nothing else changes: same header, same footer, same
+  # ranks, same colours.
+  #
+  # The hiding is tab-list only. Those players are still in the world, still
+  # visible, still hittable - see Player.unlistPlayer in TabService. And it is
+  # one-directional: the rest of the server keeps seeing the duellists and the
+  # party, with their real ranks.
+  header:
+  - ''
+  - <b><gradient:#CD052D:#D90707>ʙʟᴏᴏᴅᴛʜɪʀѕ</gradient><gradient:#D90707:#D90707>ᴛ</gradient></b>
+  - ''
+  footer:
+  - ''
+  - '&7Online: &#D90707%online% &8• &7In Duels: &#D90707%meowduels_players_in_duels%'
+  - <gradient:#CD052D:#D90707>ʙʟᴏᴏᴅᴛʜɪʀѕᴛ.ꜰᴜ</gradient><gradient:#D90707:#D90707>ɴ</gradient>
+  - ''
 # Turns tab-list formatting ON. The actual prefix/suffix values are per-group
 # properties and live in groups.yml - TAB ignores them if they are put here.
 tablist-name-formatting:
@@ -77,20 +55,11 @@ belowname-objective:
 placeholders:
   register-tab-expansion: false
   locale: en-US
-# Optional - delete the whole block and TAB falls back to its own default, which
-# already refreshes PlaceholderAPI placeholders often enough. It is spelled out
-# because the fight footer now carries a clock: at a slower interval %..._time%
-# would visibly lag the fight it is timing.
+# Only the two relational placeholders need pinning down. Everything the header
+# and footer use is either static or already refreshed often enough by TAB's own
+# default; the per-match placeholders that needed a tight interval went with the
+# fight and party designs.
 placeholder-refresh-intervals:
-  '%meowduels_time%': 1000
-  '%meowduels_score%': 1000
-  '%meowduels_opponent_score%': 1000
-  '%meowduels_round%': 1000
-  '%meowduels_party_size%': 1000
-  '%meowduels_party_alive%': 1000
-  '%meowduels_party_status%': 1000
-  '%meowduels_in_fight%': 500
-  '%meowduels_in_party%': 500
   '%rel_meowduels_tabprefix%': 500
   '%rel_meowduels_tabsuffix%': 500
 global-playerlist:
