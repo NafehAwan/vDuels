@@ -6,7 +6,7 @@ MeowDuels placeholders it depends on.
 | file | goes to | what it does |
 |---|---|---|
 | `groups.yml` | `plugins/TAB/groups.yml` | the name rows: rank prefix, tag/marker suffix, nametag |
-| `header-footer.yml` | the `header-footer` block of `plugins/TAB/config.yml` | the header and footer lines, plus their refresh intervals |
+| `config.yml` | `plugins/TAB/config.yml` | everything else, including the three header/footer designs |
 
 `/tab reload` after either.
 
@@ -15,10 +15,18 @@ MeowDuels placeholders it depends on.
 TAB draws the tab list. MeowDuels cannot replace it per-player, so it answers
 placeholders instead and TAB asks them once per refresh:
 
-- **Header and footer** come from `%meowduels_tab_header_N%` /
-  `%meowduels_tab_footer_N%`. MeowDuels decides per viewer which of three
-  layouts answers - `global`, `duel` or `party` - and all three are in
-  MeowDuels' own `config.yml` under `tab:`. Edit the wording there, not here.
+- **Header and footer** are three TAB *designs* - `fight`, `party`, `default` -
+  each with a `display-condition`, filled in from ordinary MeowDuels
+  placeholders. **Order matters**: TAB takes the first design whose condition
+  matches, and `default` matches nearly everything, so it stays last.
+
+  There is a second way to do the same thing, if you would rather keep the
+  wording out of TAB's config: `%meowduels_tab_header_N%` /
+  `%meowduels_tab_footer_N%` answer one line each and MeowDuels picks the
+  layout - `global`, `duel` or `party` - from its own `config.yml` under `tab:`.
+  Those layouts also drive the built-in header/footer when `external-tab` is
+  off, so they are worth keeping correct either way. Use one approach or the
+  other, not both.
 - **Name rows** come from `%rel_meowduels_tabprefix%` / `...tabsuffix%`. The
   `rel_` matters: it hands MeowDuels the viewer as well as the target, which is
   what lets the duel bolt and the party star show only to the people in that

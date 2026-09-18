@@ -157,6 +157,39 @@ implements Relational {
             case "in_fight": {
                 return this.plugin.getDuelManager().isInDuel(id) ? "true" : "false";
             }
+            // Party placeholders sit above the duel block on purpose: everything
+            // below it returns "" for anyone not in a duel, and a party member
+            // usually isn't in one.
+            case "in_party": {
+                return this.plugin.getPartyManager().inParty(id) ? "true" : "false";
+            }
+            case "in_party_match": {
+                return this.plugin.getPartyManager().inPartyMatch(id) ? "true" : "false";
+            }
+            case "party_leader": {
+                Party p = this.plugin.getPartyManager().partyOf(id);
+                return p == null ? "" : this.nameOf(p.getLeader());
+            }
+            case "party_size": {
+                Party p = this.plugin.getPartyManager().partyOf(id);
+                return p == null ? "0" : String.valueOf(p.size());
+            }
+            case "party_kit": {
+                Party p = this.plugin.getPartyManager().partyOf(id);
+                return p == null || p.getKit() == null ? "" : this.kitLabel(p.getKit());
+            }
+            case "party_status": {
+                Party p = this.plugin.getPartyManager().partyOf(id);
+                return p == null ? "" : (p.isFighting() ? "Fighting" : "Waiting");
+            }
+            case "party_alive": {
+                Party p = this.plugin.getPartyManager().partyOf(id);
+                return p == null ? "0" : String.valueOf(p.getAlive().size());
+            }
+            case "party_role": {
+                Party p = this.plugin.getPartyManager().partyOf(id);
+                return p == null ? "" : (p.isLeader(id) ? "Leader" : "Member");
+            }
             case "role": {
                 if (spectating) {
                     return "SPECTATOR";
@@ -227,15 +260,12 @@ implements Relational {
     /**
      * One line of the tab header or footer, chosen for who is looking.
      *
-     * <p>TAB draws the tab list, so the only way to give a fighter a different
-     * header from everyone else is to hand TAB a placeholder per line and decide
-     * here which of the three layouts - global, duel, party - the line comes
-     * from. TAB's own header-footer config then holds nothing but the
-     * placeholders, and all three layouts live together in MeowDuels' config.yml
-     * next to the scoreboards they mirror.
-     *
-     * <p>An out-of-range line is empty rather than missing, so shortening a
-     * layout doesn't leave the placeholder text itself showing in the tab list.
+     * <p>The layouts and their tokens live in TabService, which owns the tab
+     * list and uses the same three layouts for the built-in header/footer. This
+     * is only the doorway PlaceholderAPI comes in through, so it is where the
+     * conversion to section codes belongs: a value handed through PlaceholderAPI
+     * is not parsed again by whatever receives it, so MiniMessage would reach
+     * TAB as literal text.
      */
     private String tabLine(OfflinePlayer player, String part, String indexText) {
         int index;
@@ -246,101 +276,7 @@ implements Relational {
             return "";
         }
         UUID id = player == null ? null : player.getUniqueId();
-        String context = this.tabContext(id);
-        List<String> lines = this.plugin.getConfig().getStringList("tab." + context + "." + part);
-        if (lines == null || index < 1 || index > lines.size()) {
-            return "";
-        }
-        return Colors.toSection(this.fillTokens(lines.get(index - 1), id));
-    }
-
-    /** Which of the three tab layouts applies to this viewer. */
-    private String tabContext(UUID id) {
-        if (id == null) {
-            return "global";
-        }
-        if (this.plugin.getDuelManager().isInDuel(id)
-                || this.plugin.getSpectateManager().isSpectating(id)) {
-            return "duel";
-        }
-        if (this.plugin.getPartyManager().inParty(id)) {
-            return "party";
-        }
-        return "global";
-    }
-
-    /**
-     * Substitutes the {tokens} a tab layout may use.
-     *
-     * <p>Every token is filled for every context, so a line moved between
-     * layouts keeps working. Tokens with nothing behind them come out empty
-     * rather than as their own name.
-     */
-    private String fillTokens(String raw, UUID id) {
-        if (raw == null || raw.indexOf(123) < 0) {
-            return raw == null ? "" : raw;
-        }
-        String out = raw;
-        out = out.replace("{online}", String.valueOf(Bukkit.getOnlinePlayers().size()));
-        out = out.replace("{in_duels}", String.valueOf(this.plugin.getDuelManager().duelsInProgress()));
-        out = out.replace("{server_ip}", this.plugin.getScoreboardIp());
-        out = out.replace("{server_name}", this.plugin.getServerName());
-        out = out.replace("{discord}", this.plugin.getTabDiscord());
-        out = out.replace("{store}", this.plugin.getTabStore());
-        if (id == null) {
-            return out;
-        }
-        Player self = Bukkit.getPlayer((UUID)id);
-        out = out.replace("{player}", self == null ? "" : self.getName());
-        out = out.replace("{ping}", self == null ? "0" : String.valueOf(self.getPing()));
-        out = out.replace("{rank}", Ranks.tab(this.plugin.getStatsManager(), id));
-        out = out.replace("{elo}", String.valueOf(this.plugin.getStatsManager().getElo(id)));
-        out = this.fillDuelTokens(out, id);
-        out = this.fillPartyTokens(out, id);
-        return out;
-    }
-
-    private String fillDuelTokens(String out, UUID id) {
-        UUID subject = id;
-        if (this.plugin.getSpectateManager().isSpectating(id)) {
-            UUID watched = this.plugin.getSpectateManager().getWatchedTarget(id);
-            if (watched != null) {
-                subject = watched;
-            }
-        }
-        ActiveDuel duel = this.plugin.getDuelManager().getDuel(subject);
-        if (duel == null) {
-            return out.replace("{opponent}", "").replace("{score}", "")
-                      .replace("{opponent_score}", "").replace("{kit}", "")
-                      .replace("{arena}", "").replace("{round}", "")
-                      .replace("{rounds_to_win}", "").replace("{time}", "")
-                      .replace("{team_color}", "<gray>");
-        }
-        long seconds = Math.max(0L, (System.currentTimeMillis() - duel.getStartedAt()) / 1000L);
-        return out.replace("{opponent}", this.nameOf(duel.getOpponent(subject)))
-                  .replace("{score}", String.valueOf(duel.getScoreFor(subject)))
-                  .replace("{opponent_score}", String.valueOf(duel.getScoreAgainst(subject)))
-                  .replace("{kit}", this.kitLabel(duel.getKit()))
-                  .replace("{arena}", duel.getArena() == null ? "" : duel.getArena().getName())
-                  .replace("{round}", String.valueOf(duel.getCurrentRound()))
-                  .replace("{rounds_to_win}", String.valueOf(duel.getRoundsToWin()))
-                  .replace("{time}", String.format("%02d:%02d", seconds / 60L, seconds % 60L))
-                  .replace("{team_color}", duel.isAqua(subject) ? "<aqua>" : "<red>");
-    }
-
-    private String fillPartyTokens(String out, UUID id) {
-        Party party = this.plugin.getPartyManager().partyOf(id);
-        if (party == null) {
-            return out.replace("{party_leader}", "").replace("{party_size}", "0")
-                      .replace("{party_kit}", "").replace("{party_status}", "")
-                      .replace("{party_alive}", "0").replace("{party_role}", "");
-        }
-        return out.replace("{party_leader}", this.nameOf(party.getLeader()))
-                  .replace("{party_size}", String.valueOf(party.size()))
-                  .replace("{party_kit}", party.getKit() == null ? "" : this.kitLabel(party.getKit()))
-                  .replace("{party_status}", party.isFighting() ? "Fighting" : "Waiting")
-                  .replace("{party_alive}", String.valueOf(party.getAlive().size()))
-                  .replace("{party_role}", party.isLeader(id) ? "Leader" : "Member");
+        return Colors.toSection(this.plugin.getTabService().layoutLine(id, part, index));
     }
 
     /**

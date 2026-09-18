@@ -1,0 +1,134 @@
+# MeowDuels draws the sidebar scoreboard (see the plugin's scoreboard.yml).
+# TAB only handles the tab list + nametags, so its scoreboard stays OFF.
+#
+# There is deliberately NO "conditions:" section any more. A single malformed
+# entry there makes TAB drop the whole section, every %condition:...% then
+# resolves to nothing, and prefixes disappear server-wide. MeowDuels decides the
+# prefix itself in %meowduels_tabprefix%.
+scoreboard:
+  enabled: false
+header-footer:
+  enabled: true
+  # ORDER MATTERS. TAB takes the first design whose condition matches, and
+  # "default" matches almost everything, so it stays last. fight comes before
+  # party because a party member who is somehow also in a duel should see the
+  # duel - that is the more specific thing to be doing.
+  designs:
+    fight:
+      display-condition: '%meowduels_in_fight%=true'
+      header:
+      - ''
+      - <b><gradient:#CD052D:#D90707>ʙʟᴏᴏᴅᴛʜɪʀѕ</gradient><gradient:#D90707:#D90707>ᴛ</gradient></b>
+      - '&cⓘ &7You are in a fight'
+      - ''
+      footer:
+      - ''
+      - '%meowduels_team_color%⚡ &7Team &f%meowduels_team% &8• &7vs &f%meowduels_opponent%'
+      - '&7Score: &f%meowduels_score% &7- &f%meowduels_opponent_score% &8• &7Round: &f%meowduels_round%&7/&f%meowduels_rounds_to_win%'
+      - '&7Kit: &f%meowduels_kit% &8• &7Map: &f%meowduels_arena% &8• &7Time: &f%meowduels_time%'
+      - ''
+    # In a party, in or out of a match. The tab list is only the party, so the
+    # footer is the party: who runs it, how many, and what it is doing.
+    party:
+      display-condition: '%meowduels_in_party%=true'
+      header:
+      - ''
+      - <b><gradient:#CD052D:#D90707>ʙʟᴏᴏᴅᴛʜɪʀѕ</gradient><gradient:#D90707:#D90707>ᴛ</gradient></b>
+      - '&dⓘ &7You are in a party'
+      - ''
+      footer:
+      - ''
+      - '&d★ &7Leader: &f%meowduels_party_leader% &8• &7Members: &f%meowduels_party_size%'
+      - '&7Kit: &f%meowduels_party_kit% &8• &7Status: &f%meowduels_party_status%'
+      - '&7You: &f%meowduels_party_role% &8• &7Alive: &f%meowduels_party_alive%'
+      - ''
+    default:
+      display-condition: '%world%!=disabledworld'
+      header:
+      - ''
+      - <b><gradient:#CD052D:#D90707>ʙʟᴏᴏᴅᴛʜɪʀѕ</gradient><gradient:#D90707:#D90707>ᴛ</gradient></b>
+      - ''
+      footer:
+      - ''
+      - '&7Online: &#D90707%online% &8• &7In Duels: &#D90707%meowduels_players_in_duels%'
+      - <gradient:#CD052D:#D90707>ʙʟᴏᴏᴅᴛʜɪʀѕᴛ.ꜰᴜ</gradient><gradient:#D90707:#D90707>ɴ</gradient>
+      - ''
+# Turns tab-list formatting ON. The actual prefix/suffix values are per-group
+# properties and live in groups.yml - TAB ignores them if they are put here.
+tablist-name-formatting:
+  enabled: true
+prevent-spectator-effect:
+  enabled: false
+debug: false
+use-online-uuid-in-tablist: true
+permission-refresh-interval: 1000
+compensate-for-packetevents-bug: false
+assign-groups-by-permissions: false
+primary-group-finding-list:
+- Owner
+- Admin
+- Helper
+- default
+belowname-objective:
+  fancy-value-default: NPC
+  fancy-value: '&c%health%'
+  view-distance: 10
+  enabled: false
+placeholders:
+  register-tab-expansion: false
+  locale: en-US
+# Optional - delete the whole block and TAB falls back to its own default, which
+# already refreshes PlaceholderAPI placeholders often enough. It is spelled out
+# because the fight footer now carries a clock: at a slower interval %..._time%
+# would visibly lag the fight it is timing.
+placeholder-refresh-intervals:
+  '%meowduels_time%': 1000
+  '%meowduels_score%': 1000
+  '%meowduels_opponent_score%': 1000
+  '%meowduels_round%': 1000
+  '%meowduels_party_size%': 1000
+  '%meowduels_party_alive%': 1000
+  '%meowduels_party_status%': 1000
+  '%meowduels_in_fight%': 500
+  '%meowduels_in_party%': 500
+  '%rel_meowduels_tabprefix%': 500
+  '%rel_meowduels_tabsuffix%': 500
+global-playerlist:
+  update-latency: false
+  enabled: false
+playerlist-objective:
+  title: TAB
+  value: ''
+  render-type: INTEGER
+  enabled: true
+config-version: 7
+components:
+  minimessage-support: true
+  disable-shadow-for-heads: true
+proxy-support:
+  channel-name-suffix: custom
+  enabled: true
+bossbar:
+  enabled: false
+layout:
+  enabled: false
+mysql:
+  enabled: false
+per-world-playerlist:
+  enabled: false
+ping-spoof:
+  enabled: false
+scoreboard-teams:
+  enabled: true
+  enable-collision: false
+  invisible-nametags: false
+  case-sensitive-sorting: true
+  can-see-friendly-invisibles: false
+  sorting-types:
+  - GROUPS:wraith,founder,owner,developer,co-owner,manager,sr-admin,admin,dev,goat,builder,good-boy,miwi,sr-mod,staff,mod,jr-mod,helper,media,famous,ht3,vip,popular1,popular,active,default
+  - PLACEHOLDER_A_TO_Z:%player%
+  # Release nametags while a player is in a duel so MeowDuels can draw the
+  # ⚡ name + red health below it. Outside duels TAB shows the normal rank.
+  # NOT extended to parties: MeowDuels doesn't draw party nametags, so releasing
+  # them there would take the rank off a party member's head for nothing.
+  disable-condition: '%meowduels_in_fight%=true'

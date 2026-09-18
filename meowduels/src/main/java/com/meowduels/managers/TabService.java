@@ -15,6 +15,10 @@ package com.meowduels.managers;
 
 import com.meowduels.MeowDuels;
 import com.meowduels.model.ActiveDuel;
+import org.bukkit.OfflinePlayer;
+import java.util.List;
+import com.meowduels.util.Ranks;
+import com.meowduels.model.Kit;
 import com.meowduels.model.Party;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -217,15 +221,180 @@ public class TabService {
         return t;
     }
 
+    /**
+     * One line of the tab header or footer, chosen for who is looking.
+     *
+     * <p>Returned as raw MiniMessage with its tokens filled. The two callers
+     * need different final forms - PlaceholderAPI wants section codes, the
+     * built-in header/footer wants a Component - so neither conversion is done
+     * here.
+     *
+     * <p>Three layouts in one place, config.yml under `tab:`. Whether TAB draws
+     * the tab list or MeowDuels does, the wording comes from the same lines, so
+     * the two cannot drift apart.
+     *
+     * <p>An out-of-range line is empty rather than missing, so shortening a
+     * layout doesn't leave the placeholder text itself showing in the tab list.
+     */
+    public String layoutLine(UUID id, String part, int index) {
+        String context = this.layoutContext(id);
+        List<String> lines = this.plugin.getConfig().getStringList("tab." + context + "." + part);
+        if (lines == null || index < 1 || index > lines.size()) {
+            return "";
+        }
+        return this.fillTokens(lines.get(index - 1), id);
+    }
+
+    /** Which of the three tab layouts applies to this viewer. */
+    private String layoutContext(UUID id) {
+        if (id == null) {
+            return "global";
+        }
+        if (this.plugin.getDuelManager().isInDuel(id)
+                || this.plugin.getSpectateManager().isSpectating(id)) {
+            return "duel";
+        }
+        if (this.plugin.getPartyManager().inParty(id)) {
+            return "party";
+        }
+        return "global";
+    }
+
+    /**
+     * Substitutes the {tokens} a tab layout may use.
+     *
+     * <p>Every token is filled for every context, so a line moved between
+     * layouts keeps working. Tokens with nothing behind them come out empty
+     * rather than as their own name.
+     */
+    private String fillTokens(String raw, UUID id) {
+        if (raw == null || raw.indexOf(123) < 0) {
+            return raw == null ? "" : raw;
+        }
+        String out = raw;
+        out = out.replace("{online}", String.valueOf(Bukkit.getOnlinePlayers().size()));
+        out = out.replace("{in_duels}", String.valueOf(this.plugin.getDuelManager().duelsInProgress()));
+        out = out.replace("{server_ip}", this.plugin.getScoreboardIp());
+        out = out.replace("{server_name}", this.plugin.getServerName());
+        out = out.replace("{discord}", this.plugin.getTabDiscord());
+        out = out.replace("{store}", this.plugin.getTabStore());
+        if (id == null) {
+            return out;
+        }
+        Player self = Bukkit.getPlayer((UUID)id);
+        out = out.replace("{player}", self == null ? "" : self.getName());
+        out = out.replace("{ping}", self == null ? "0" : String.valueOf(self.getPing()));
+        out = out.replace("{rank}", Ranks.tab(this.plugin.getStatsManager(), id));
+        out = out.replace("{elo}", String.valueOf(this.plugin.getStatsManager().getElo(id)));
+        out = this.fillDuelTokens(out, id);
+        out = this.fillPartyTokens(out, id);
+        return out;
+    }
+
+    private String fillDuelTokens(String out, UUID id) {
+        UUID subject = id;
+        if (this.plugin.getSpectateManager().isSpectating(id)) {
+            UUID watched = this.plugin.getSpectateManager().getWatchedTarget(id);
+            if (watched != null) {
+                subject = watched;
+            }
+        }
+        ActiveDuel duel = this.plugin.getDuelManager().getDuel(subject);
+        if (duel == null) {
+            return out.replace("{opponent}", "").replace("{score}", "")
+                      .replace("{opponent_score}", "").replace("{kit}", "")
+                      .replace("{arena}", "").replace("{round}", "")
+                      .replace("{rounds_to_win}", "").replace("{time}", "")
+                      .replace("{team_color}", "<gray>");
+        }
+        long seconds = Math.max(0L, (System.currentTimeMillis() - duel.getStartedAt()) / 1000L);
+        return out.replace("{opponent}", this.nameOf(duel.getOpponent(subject)))
+                  .replace("{score}", String.valueOf(duel.getScoreFor(subject)))
+                  .replace("{opponent_score}", String.valueOf(duel.getScoreAgainst(subject)))
+                  .replace("{kit}", this.kitLabel(duel.getKit()))
+                  .replace("{arena}", duel.getArena() == null ? "" : duel.getArena().getName())
+                  .replace("{round}", String.valueOf(duel.getCurrentRound()))
+                  .replace("{rounds_to_win}", String.valueOf(duel.getRoundsToWin()))
+                  .replace("{time}", String.format("%02d:%02d", seconds / 60L, seconds % 60L))
+                  .replace("{team_color}", duel.isAqua(subject) ? "<aqua>" : "<red>");
+    }
+
+    private String fillPartyTokens(String out, UUID id) {
+        Party party = this.plugin.getPartyManager().partyOf(id);
+        if (party == null) {
+            return out.replace("{party_leader}", "").replace("{party_size}", "0")
+                      .replace("{party_kit}", "").replace("{party_status}", "")
+                      .replace("{party_alive}", "0").replace("{party_role}", "");
+        }
+        return out.replace("{party_leader}", this.nameOf(party.getLeader()))
+                  .replace("{party_size}", String.valueOf(party.size()))
+                  .replace("{party_kit}", party.getKit() == null ? "" : this.kitLabel(party.getKit()))
+                  .replace("{party_status}", party.isFighting() ? "Fighting" : "Waiting")
+                  .replace("{party_alive}", String.valueOf(party.getAlive().size()))
+                  .replace("{party_role}", party.isLeader(id) ? "Leader" : "Member");
+    }
+
+
+    private String nameOf(UUID id) {
+        if (id == null) {
+            return "";
+        }
+        Player online = Bukkit.getPlayer((UUID)id);
+        if (online != null) {
+            return online.getName();
+        }
+        String name = Bukkit.getOfflinePlayer((UUID)id).getName();
+        return name == null ? "" : name;
+    }
+
+    /** A kit's display name with its formatting tags stripped: the tab layout
+     *  supplies the colour, and a kit called "<red>Sumo" would fight it. */
+    private String kitLabel(String kitId) {
+        if (kitId == null || kitId.isEmpty()) {
+            return "";
+        }
+        Kit kit = this.plugin.getKitManager().get(kitId);
+        if (kit != null && kit.getDisplayName() != null && !kit.getDisplayName().isEmpty()) {
+            return kit.getDisplayName().replaceAll("<[^>]*>", "");
+        }
+        return kitId;
+    }
+
+    /**
+     * The built-in header/footer, for a server not running TAB.
+     *
+     * <p>Reads the same three layouts TAB's placeholders read, so turning
+     * external-tab off changes who draws the tab list and nothing about what it
+     * says. This used to be a hardcoded string, which is exactly how the two
+     * ended up able to disagree.
+     */
     private void sendHeaderFooter(Player viewer) {
         if (this.external) {
             return;
         }
-        int online = Bukkit.getOnlinePlayers().size();
-        int fighting = this.plugin.getDuelManager().playersInDuels();
-        String header = this.plugin.getTabTitle() + "\n<gray>Global Players: <white>" + online + "\n \n<gray>Online: <green>" + online + " <dark_gray>\u2022 <gray>Fighting: <red>" + fighting;
-        String footer = " \n" + this.plugin.getTabDiscord() + "\n" + this.plugin.getTabStore();
-        viewer.sendPlayerListHeaderAndFooter(TabService.mm(header), TabService.mm(footer));
+        UUID id = viewer.getUniqueId();
+        viewer.sendPlayerListHeaderAndFooter(
+                TabService.mm(this.joinLayout(id, "header")),
+                TabService.mm(this.joinLayout(id, "footer")));
+    }
+
+    private String joinLayout(UUID id, String part) {
+        List<String> lines = this.plugin.getConfig().getStringList(
+                "tab." + this.layoutContext(id) + "." + part);
+        if (lines == null || lines.isEmpty()) {
+            return "";
+        }
+        StringBuilder out = new StringBuilder();
+        for (int i = 0; i < lines.size(); ++i) {
+            if (i > 0) {
+                out.append('\n');
+            }
+            // An empty config line is a spacer. Minecraft collapses a truly
+            // empty line away, so it has to carry a space to survive.
+            String line = this.fillTokens(lines.get(i), id);
+            out.append(line.isEmpty() ? " " : line);
+        }
+        return out.toString();
     }
 
     public void tick() {
