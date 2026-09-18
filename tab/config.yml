@@ -11,26 +11,33 @@ header-footer:
   enabled: true
   # ONE design, for everybody.
   #
-  # There were three - fight, party and default - each with a display-condition.
-  # They are gone on purpose: a duel and a party are meant to look like the rest
-  # of the server now, and the only thing that marks them out is WHO is in the
-  # list. MeowDuels hides the players you are not fighting or partied with from
-  # your tab list, and nothing else changes: same header, same footer, same
-  # ranks, same colours.
+  # Kept as a "designs:" block with a single entry rather than a bare
+  # header:/footer: pair. Both are valid YAML and both are documented TAB
+  # formats, but this config had already been written in the designs form, and
+  # swapping it for the flat one took the whole tab list down to vanilla. Not
+  # worth finding out why - the structure that was working stays.
   #
-  # The hiding is tab-list only. Those players are still in the world, still
-  # visible, still hittable - see Player.unlistPlayer in TabService. And it is
-  # one-directional: the rest of the server keeps seeing the duellists and the
-  # party, with their real ranks.
-  header:
-  - ''
-  - <b><gradient:#CD052D:#D90707>ʙʟᴏᴏᴅᴛʜɪʀѕ</gradient><gradient:#D90707:#D90707>ᴛ</gradient></b>
-  - ''
-  footer:
-  - ''
-  - '&7Online: &#D90707%online% &8• &7In Duels: &#D90707%meowduels_players_in_duels%'
-  - <gradient:#CD052D:#D90707>ʙʟᴏᴏᴅᴛʜɪʀѕᴛ.ꜰᴜ</gradient><gradient:#D90707:#D90707>ɴ</gradient>
-  - ''
+  # There used to be three designs - fight, party, default - each with a
+  # display-condition. They are gone on purpose: a duel and a party are meant to
+  # look like the rest of the server, and the one thing that marks them out is
+  # WHO is in the list, not what is written above it.
+  #
+  # MeowDuels hides the players you are not fighting, partied with, or being
+  # spectated by. Tab list ONLY - they are still in the world, visible and
+  # hittable - and one-directional, so the rest of the server still sees you
+  # with your real rank.
+  designs:
+    default:
+      display-condition: '%world%!=disabledworld'
+      header:
+      - ''
+      - <b><gradient:#CD052D:#D90707>ʙʟᴏᴏᴅᴛʜɪʀѕ</gradient><gradient:#D90707:#D90707>ᴛ</gradient></b>
+      - ''
+      footer:
+      - ''
+      - '&7Online: &#D90707%online% &8• &7In Duels: &#D90707%meowduels_players_in_duels%'
+      - <gradient:#CD052D:#D90707>ʙʟᴏᴏᴅᴛʜɪʀѕᴛ.ꜰᴜ</gradient><gradient:#D90707:#D90707>ɴ</gradient>
+      - ''
 # Turns tab-list formatting ON. The actual prefix/suffix values are per-group
 # properties and live in groups.yml - TAB ignores them if they are put here.
 tablist-name-formatting:
