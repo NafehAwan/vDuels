@@ -82,11 +82,72 @@ scoreboard-ip-color: "<#FF78C1>"
 # Set in-game with: /meowduelsserver <name...>
 server-name: "server"
 
-# Tab branding (only used when external-tab is false).
+# ============================================================================
+#  TAB LIST
+# ----------------------------------------------------------------------------
+#  TAB draws the tab list; these are the header and footer lines it asks for,
+#  one placeholder per line:  %meowduels_tab_header_1% .. %meowduels_tab_footer_4%
+#  See tab/config.yml in the plugin folder for the TAB side.
+#
+#  Three layouts, chosen per viewer:
+#    global - not fighting, not in a party
+#    duel   - fighting a duel, or spectating one
+#    party  - in a party (whether or not it is mid-match)
+#
+#  MiniMessage. "" is a blank line; delete a line to shorten a layout.
+#  Tokens: {player} {ping} {rank} {elo} {online} {in_duels}
+#          {server_ip} {server_name} {discord} {store}
+#    duel:  {opponent} {score} {opponent_score} {kit} {arena} {round}
+#           {rounds_to_win} {time} {team_color}
+#    party: {party_leader} {party_size} {party_kit} {party_status}
+#           {party_alive} {party_role}
+# ============================================================================
 tab:
+  # Branding, used by the duel/party layouts below and by the built-in tab when
+  # external-tab is false.
   title: "<gold><bold>ServerName</bold></gold>"
   discord: "<aqua>discord.example.net</aqua>"
   store: "<yellow>store.example.net</yellow>"
+
+  global:
+    header:
+    - ""
+    - "<bold><gradient:#FF2D95:#FF8AD0>{server_name}</gradient></bold>"
+    - "<#8E959D>\u1d0f\u0274\u029f\u026a\u0274\u1d07 <dark_gray>\u00bb <white>{online}  <dark_gray>\u2022  <#8E959D>\u026a\u0274 \u1d05\u1d1c\u1d07\u029f\ua731 <dark_gray>\u00bb <white>{in_duels}"
+    - ""
+    footer:
+    - ""
+    - "<#8E959D>{discord}"
+    - "<#FF5FB0>{server_ip}"
+
+  # Fighters and the people watching them. Their tab list is only the match, so
+  # the header carries the match: who, what, where and the score.
+  duel:
+    header:
+    - ""
+    - "<bold><gradient:#FF2D95:#FF8AD0>\u1d05\u1d1c\u1d07\u029f</gradient></bold>"
+    - "{team_color}{player} <dark_gray>\u00bb <white>{score} <dark_gray>-</dark_gray> <white>{opponent_score} <dark_gray>\u00ab <red>{opponent}"
+    - ""
+    - "<#8E959D>\u1d0b\u026a\u1d1b <dark_gray>\u00bb <white>{kit}  <dark_gray>\u2022  <#8E959D>\u0280\u1d0f\u1d1c\u0274\u1d05 <dark_gray>\u00bb <white>{round}<dark_gray>/<gray>{rounds_to_win}"
+    - ""
+    footer:
+    - ""
+    - "<#8E959D>\u1d00\u0280\u1d07\u0274\u1d00 <dark_gray>\u00bb <white>{arena}  <dark_gray>\u2022  <#8E959D>\u1d1b\u026a\u1d0d\u1d07 <dark_gray>\u00bb <white>{time}"
+    - "<#FF5FB0>{server_ip}"
+
+  # A party sees only the party. Idle it shows who runs it; mid-match the header
+  # switches to how many are left, because that is what anyone is looking at.
+  party:
+    header:
+    - ""
+    - "<bold><gradient:#FF8AD0:#B04BD6>\u1d18\u1d00\u0280\u1d1b\u028f</gradient></bold>"
+    - "<#8E959D>\u029f\u1d07\u1d00\u1d05\u1d07\u0280 <dark_gray>\u00bb <white>{party_leader}  <dark_gray>\u2022  <#8E959D>\u1d0d\u1d07\u1d0d\u0299\u1d07\u0280\ua731 <dark_gray>\u00bb <white>{party_size}"
+    - "<#8E959D>\u1d0b\u026a\u1d1b <dark_gray>\u00bb <white>{party_kit}  <dark_gray>\u2022  <#8E959D>\ua731\u1d1b\u1d00\u1d1b\u1d1c\ua731 <dark_gray>\u00bb <white>{party_status}"
+    - ""
+    footer:
+    - ""
+    - "<#8E959D>\u028f\u1d0f\u1d1c <dark_gray>\u00bb <white>{party_role}  <dark_gray>\u2022  <#8E959D>\u1d00\u029f\u026a\u1d20\u1d07 <dark_gray>\u00bb <white>{party_alive}"
+    - "<#FF5FB0>{server_ip}"
 
 # ============================================================================
 #  SIDEBAR SCOREBOARD

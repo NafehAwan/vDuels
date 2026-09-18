@@ -1,0 +1,38 @@
+# TAB groups.yml
+#
+# Prefixes/suffixes are per-group properties and are ONLY read from this file
+# (or users.yml) - putting them in config.yml does nothing. _DEFAULT_ applies to
+# every group without an entry of its own, so this one block covers every rank.
+#
+#   tabprefix = tab list, before the name  -> their real LuckPerms rank; the "⚡"
+#                                             team bolt only inside a match
+#   tabsuffix = tab list, after the name   -> 🗡 while duelling, else their tag
+#   tagprefix = above the head, before the name -> LuckPerms rank
+#   tagsuffix = above the head, after the name  -> live health
+#
+# tabsuffix is ONE field deciding between the duel marker and the tag, so the two
+# can never overlap - a fighter shows the dagger and nothing else. It always
+# begins with a space and a colour reset, so it can't run into the name or pick
+# up the rank's colour.
+#
+# %rel_...% is RELATIONAL: PlaceholderAPI gives MeowDuels both the player looking
+# and the player being looked at, so the marker shows only to people OUTSIDE the
+# match. The two fighters see each other without it - their tab list is nothing
+# but the fight, so a dagger on both rows tells them nothing.
+#
+# If your TAB build doesn't resolve relational placeholders here, both fields
+# come out blank. Fall back by dropping the "rel_" prefix from each:
+#   tabprefix: '%meowduels_tabprefix%'
+#   tabsuffix: '%meowduels_tabsuffix%'
+# Those always render - you just lose the per-viewer part: everyone keeps their
+# normal rank everywhere, and the marker shows to fighters too.
+#
+# These are MeowDuels placeholders rather than %luckperms_prefix% directly
+# because a value handed over through PlaceholderAPI is NOT parsed by the
+# receiver: a rank stored as <gradient:...> arrives as that literal text.
+# MeowDuels flattens it to section codes first, which always render.
+_DEFAULT_:
+  tabprefix: '%rel_meowduels_tabprefix%'
+  tabsuffix: '%rel_meowduels_tabsuffix%'
+  tagprefix: '%meowduels_lpprefix%'
+  tagsuffix: ' %meowduels_health%'
