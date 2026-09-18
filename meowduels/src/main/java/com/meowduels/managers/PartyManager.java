@@ -8,6 +8,11 @@ import com.meowduels.model.PlayerSnapshot;
 import com.meowduels.util.AntiCheatBypass;
 import com.meowduels.util.GameModeGuard;
 import com.meowduels.util.Sounds;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import com.meowduels.util.SpawnItems;
 import com.meowduels.util.Text;
 import java.util.ArrayList;
@@ -88,6 +93,42 @@ public class PartyManager {
         return out;
     }
 
+    /**
+     * The leaders whose parties have an outstanding invite for this player.
+     *
+     * <p>Only used for tab-completing /party accept and /party decline. The
+     * invite lives on the party, not on the invitee, so answering "who invited
+     * me" means asking every party - which is fine at the scale a party list
+     * ever reaches, and beats keeping a second index in sync with the first.
+     */
+    public List<String> invitersOf(UUID id) {
+        ArrayList<String> out = new ArrayList<String>();
+        if (id == null) {
+            return out;
+        }
+        for (Party party : new HashSet<Party>(this.byPlayer.values())) {
+            if (party.isInvited(id)) {
+                Player leader = Bukkit.getPlayer((UUID)party.getLeader());
+                if (leader != null) {
+                    out.add(leader.getName());
+                }
+            }
+        }
+        return out;
+    }
+
+    /** Turns an invite down: it stops being outstanding, and the leader is told
+     *  rather than left waiting on a yes that is never coming. */
+    public void decline(Player player, Player leader) {
+        Party party = this.partyOf(leader.getUniqueId());
+        if (party == null || !party.getInvited().remove(player.getUniqueId())) {
+            player.sendMessage(Text.prefixed("&cYou have no invite from " + leader.getName() + "."));
+            return;
+        }
+        player.sendMessage(Text.prefixed(this.msg("party.invite-declined", "leader", leader.getName())));
+        leader.sendMessage(Text.prefixed(this.msg("party.invite-declined-by", "player", player.getName())));
+    }
+
     public int partyCount() {
         HashSet<Party> seen = new HashSet<Party>(this.byPlayer.values());
         return seen.size();
@@ -135,9 +176,8 @@ public class PartyManager {
             return;
         }
         party.invite(targetId);
-        leader.sendMessage(Text.prefixed("&aInvited &f" + target.getName() + "&a."));
-        target.sendMessage(Text.prefixed("&f" + leader.getName() + "&7 invited you to their party - &f/party accept "
-                + leader.getName() + "&7."));
+        leader.sendMessage(Text.prefixed(this.msg("party.invite-sent", "player", target.getName())));
+        this.sendInviteCard(target, leader, party);
     }
 
     public void accept(Player player, Player leader) {
@@ -170,6 +210,40 @@ public class PartyManager {
         this.plugin.getTabService().attachParty(party);
         player.sendMessage(Text.prefixed("&7The party is run by &f" + leader.getName()
                 + "&7 - they pick the kit and start the match."));
+    }
+
+    /**
+     * The invite, as a card you can click rather than a command to retype.
+     *
+     * <p>The line it replaced told you the command and left you to type it,
+     * which is the one part of accepting an invite a player can get wrong - and
+     * the one part that has no reason to exist. Both buttons run the command for
+     * you, and hover to say what they will do.
+     *
+     * <p>Decline is on the card for the same reason: without it the only way to
+     * answer no is to ignore the message, which leaves the leader waiting on a
+     * yes that is never coming.
+     */
+    private void sendInviteCard(Player target, Player leader, Party party) {
+        String kit = party.getKit() == null ? "" : party.getKit();
+        target.sendMessage("");
+        target.sendMessage(this.msg("party.invite-header"));
+        target.sendMessage(this.msg("party.invite-from", "leader", leader.getName()));
+        target.sendMessage(this.msg("party.invite-info", "members", String.valueOf(party.size()),
+                "kit", kit.isEmpty() ? "-" : kit));
+        target.sendMessage("");
+        TextComponent accept = new TextComponent(this.msg("party.invite-accept"));
+        accept.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/party accept " + leader.getName()));
+        accept.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                new ComponentBuilder(this.msg("party.invite-accept-hover", "leader", leader.getName())).create()));
+        TextComponent gap = new TextComponent(this.msg("party.invite-gap"));
+        TextComponent decline = new TextComponent(this.msg("party.invite-decline"));
+        decline.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/party decline " + leader.getName()));
+        decline.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                new ComponentBuilder(this.msg("party.invite-decline-hover", "leader", leader.getName())).create()));
+        target.spigot().sendMessage(new BaseComponent[]{accept, gap, decline});
+        target.sendMessage("");
+        Sounds.request(target);
     }
 
     /**

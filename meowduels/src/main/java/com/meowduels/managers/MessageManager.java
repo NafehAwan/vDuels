@@ -151,6 +151,17 @@ public class MessageManager {
         DEFAULTS.put("event.spectate-start", "&7You are now spectating the event. &f/eventleave &7to stop.");
         DEFAULTS.put("event.spectate-playing", "&cYou're playing in the event - you can't spectate it.");
         DEFAULTS.put("event.already-spectating", "&cYou're already spectating the event.");
+        DEFAULTS.put("party.invite-header", "  &d\u2605 &f&lPARTY INVITE");
+        DEFAULTS.put("party.invite-from", "  &7{leader} &7wants you in their party.");
+        DEFAULTS.put("party.invite-info", "  &8Members: &f{members} &8\u2022 Kit: &f{kit}");
+        DEFAULTS.put("party.invite-accept", "  &a&l[ ACCEPT ]");
+        DEFAULTS.put("party.invite-gap", "   ");
+        DEFAULTS.put("party.invite-decline", "&c&l[ DECLINE ]");
+        DEFAULTS.put("party.invite-accept-hover", "&aJoin {leader}'s party");
+        DEFAULTS.put("party.invite-decline-hover", "&cTurn down {leader}'s invite");
+        DEFAULTS.put("party.invite-sent", "&aInvited &f{player}&a - waiting for them to accept.");
+        DEFAULTS.put("party.invite-declined", "&7You turned down &f{leader}&7's invite.");
+        DEFAULTS.put("party.invite-declined-by", "&7{player} &7turned down your party invite.");
         DEFAULTS.put("party.match-started", "&aParty match started &8\u2022 &f{count} &7fighting on &f{arena}");
         DEFAULTS.put("party.countdown-title", "&d{seconds}");
         DEFAULTS.put("party.countdown-subtitle", "&7Free-for-all \u2022 last one standing");

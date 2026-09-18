@@ -109,15 +109,12 @@ public class TabService {
                 this.release(e.getKey());
             }
         }
-        // A party of one has nobody to share a tab list with. Bubbling it would
-        // EMPTY the list rather than filter it - which is what "everyone
-        // disappeared when I made a party" was: a solo party hiding the server
-        // from its only member.
-        if (party.size() >= 2) {
-            for (UUID id : party.getMembers()) {
-                if (Bukkit.getPlayer((UUID)id) != null) {
-                    this.memberGroup.put(id, party);
-                }
+        // From the first member, not the second: the party list is meant to be
+        // the party from the moment it exists, so a leader on their own sees a
+        // list of one rather than the whole server until somebody joins.
+        for (UUID id : party.getMembers()) {
+            if (Bukkit.getPlayer((UUID)id) != null) {
+                this.memberGroup.put(id, party);
             }
         }
         this.reconcileAll();

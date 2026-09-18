@@ -74,7 +74,7 @@ commands:
     usage: /duel <player> [kit] [rounds]
   party:
     description: Create or manage a party, and start a private party match.
-    usage: /party | create | invite <player> | accept <player> | spectate | leave
+    usage: /party | create | invite <player> | accept <player> | decline <player> | spectate | leave
     aliases: [p]
   leave:
     description: Leave your current duel, spectate session, or queues.

@@ -730,6 +730,53 @@ TabCompleter {
      * <p>Invite and accept only exist here: they need a player name, and a menu
      * that lists every online player would be a worse way to type one.
      */
+    /**
+     * Completions for /party.
+     *
+     * <p>The lists are filtered to what would actually work: invite offers only
+     * people who can be invited, and accept/decline only the leaders who have
+     * actually invited you. A completion that suggests something the command
+     * then refuses is worse than no completion, because it looks like the
+     * command is broken rather than the choice.
+     *
+     * @return null when this is not /party, so the caller falls through
+     */
+    private List<String> partyComplete(CommandSender sender, Command command, String[] args) {
+        if (!command.getName().equalsIgnoreCase("party")) {
+            return null;
+        }
+        ArrayList<String> out = new ArrayList<String>();
+        if (args.length <= 1) {
+            String prefix = args.length == 0 ? "" : args[0];
+            for (String sub : new String[]{"create", "invite", "accept", "decline", "spectate", "leave", "disband"}) {
+                if (this.startsWith(sub, prefix)) {
+                    out.add(sub);
+                }
+            }
+            return out;
+        }
+        if (args.length != 2 || !(sender instanceof Player)) {
+            return out;
+        }
+        Player player = (Player)sender;
+        String sub = args[0].toLowerCase(Locale.ROOT);
+        if (sub.equals("invite")) {
+            for (Player online : this.plugin.getServer().getOnlinePlayers()) {
+                if (online.getUniqueId().equals(player.getUniqueId())) continue;
+                if (this.plugin.getPartyManager().inParty(online.getUniqueId())) continue;
+                if (!this.startsWith(online.getName(), args[1])) continue;
+                out.add(online.getName());
+            }
+        } else if (sub.equals("accept") || sub.equals("decline")) {
+            for (String leader : this.plugin.getPartyManager().invitersOf(player.getUniqueId())) {
+                if (this.startsWith(leader, args[1])) {
+                    out.add(leader);
+                }
+            }
+        }
+        return out;
+    }
+
     private void party(CommandSender sender, String[] args) {
         if (!this.requirePlayer(sender)) {
             return;
@@ -744,7 +791,7 @@ TabCompleter {
             this.plugin.getPartyManager().leave(player);
             return;
         }
-        if (sub.equals("invite") || sub.equals("accept")) {
+        if (sub.equals("invite") || sub.equals("accept") || sub.equals("decline")) {
             if (args.length < 2) {
                 player.sendMessage(Text.prefixed("&cUsage: &f/party " + sub + " <player>"));
                 return;
@@ -756,6 +803,8 @@ TabCompleter {
             }
             if (sub.equals("invite")) {
                 this.plugin.getPartyManager().invite(player, target);
+            } else if (sub.equals("decline")) {
+                this.plugin.getPartyManager().decline(player, target);
             } else {
                 this.plugin.getPartyManager().accept(player, target);
             }
@@ -1097,6 +1146,12 @@ TabCompleter {
     }
 
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        // Handled before the block below, which is one long decompiled chain
+        // this has no business being threaded into.
+        List<String> party = this.partyComplete(sender, command, args);
+        if (party != null) {
+            return party;
+        }
         ArrayList<String> out;
         block39: {
             String name;
