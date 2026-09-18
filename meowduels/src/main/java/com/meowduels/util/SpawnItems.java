@@ -12,6 +12,7 @@
 package com.meowduels.util;
 
 import com.meowduels.MeowDuels;
+import com.meowduels.model.Party;
 import com.meowduels.util.Items;
 import java.util.UUID;
 import org.bukkit.Bukkit;
@@ -33,6 +34,7 @@ public final class SpawnItems {
     public static final String PARTYSPECTATE = "party-spectate";
     public static final String PARTYLEAVE = "party-leave";
     public static final String PARTYSETTINGS = "party-settings";
+    public static final String PARTYINFO = "party-info";
     private static final int LEAVE_SLOT = 5;
     /** Moved off slot 1 to make room for Create Party; the rematch head is
      *  transient and the party button is always there, so the party button gets
@@ -70,16 +72,40 @@ public final class SpawnItems {
         player.updateInventory();
     }
 
-    /** The party hotbar: match, spectate, leave, settings. */
+    /**
+     * The party hotbar.
+     *
+     * <p>Two versions, because a party has one person who runs it and everyone
+     * else. The leader gets the buttons that change things - start the match,
+     * pick the kit, open settings. Members get a read-only roster in their
+     * place, since handing them a start button that always answers "only the
+     * leader can do that" is a worse answer than not handing it over.
+     *
+     * <p>Leaving and spectating are on both bars: those are always yours.
+     */
     private static void giveParty(MeowDuels plugin, Player player) {
-        boolean leader = plugin.getPartyManager().partyOf(player.getUniqueId()) != null
-                && plugin.getPartyManager().partyOf(player.getUniqueId()).isLeader(player.getUniqueId());
-        player.getInventory().setItem(0, Items.of(Material.DIAMOND_SWORD)
-                .miniName("<gradient:#FF8AD0:#B04BD6>\u2694 \u1d18\u1d00\u0280\u1d1b\u028f \u1d0d\u1d00\u1d1b\u1d04\u029c</gradient>")
-                .rawLore("", leader
-                        ? "<#8E959D>\u0280\u026a\u0262\u029c\u1d1b-\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \ua731\u1d07\u1d1b \u1d1c\u1d18 \u1d1b\u029c\u1d07 \u1d0d\u1d00\u1d1b\u1d04\u029c"
-                        : "<#6B7079>\u1d0f\u0274\u029f\u028f \u1d1b\u029c\u1d07 \u029f\u1d07\u1d00\u1d05\u1d07\u0280 \u1d04\u1d00\u0274 \ua731\u1d1b\u1d00\u0280\u1d1b")
-                .hideTooltip().tag(plugin.keyButton(), PARTYMATCH).build());
+        Party party = plugin.getPartyManager().partyOf(player.getUniqueId());
+        if (party == null) {
+            return;
+        }
+        boolean leader = party.isLeader(player.getUniqueId());
+        if (leader) {
+            player.getInventory().setItem(0, Items.of(Material.DIAMOND_SWORD)
+                    .miniName("<gradient:#FF8AD0:#B04BD6>\u2694 \u1d18\u1d00\u0280\u1d1b\u028f \u1d0d\u1d00\u1d1b\u1d04\u029c</gradient>")
+                    .rawLore("", "<#8E959D>\u0280\u026a\u0262\u029c\u1d1b-\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \ua731\u1d07\u1d1b \u1d1c\u1d18 \u1d1b\u029c\u1d07 \u1d0d\u1d00\u1d1b\u1d04\u029c",
+                             "<dark_gray>\u25b8 <#8E959D>\ua730\u0280\u1d07\u1d07-\ua730\u1d0f\u0280-\u1d00\u029f\u029f, \u029f\u1d00\ua731\u1d1b \u1d0f\u0274\u1d07 \ua731\u1d1b\u1d00\u0274\u1d05\u026a\u0274\u0262 \u1d21\u026a\u0274\ua731")
+                    .hideTooltip().tag(plugin.keyButton(), PARTYMATCH).build());
+            player.getInventory().setItem(8, Items.of(Material.GRINDSTONE)
+                    .miniName("<gradient:#C8C8C8:#707070>\u2699 \u1d18\u1d00\u0280\u1d1b\u028f \ua731\u1d07\u1d1b\u1d1b\u026a\u0274\u0262\ua731</gradient>")
+                    .hideTooltip().tag(plugin.keyButton(), PARTYSETTINGS).build());
+        } else {
+            player.getInventory().setItem(0, Items.of(Material.PAPER)
+                    .miniName("<gradient:#FF8AD0:#B04BD6>\u25c8 \u1d18\u1d00\u0280\u1d1b\u028f \u026a\u0274\ua730\u1d0f</gradient>")
+                    .rawLore("", "<#8E959D>\u0280\u026a\u0262\u029c\u1d1b-\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \ua731\u1d07\u1d07 \u1d21\u029c\u1d0f'\ua731 \u026a\u0274",
+                             "", "<#6B7079>\u0280\u1d1c\u0274 \u0299\u028f <#E6E8EB>" + nameOf(party.getLeader()))
+                    .hideTooltip().tag(plugin.keyButton(), PARTYINFO).build());
+            // Slot 9 stays empty for members: settings is a management screen.
+        }
         player.getInventory().setItem(1, Items.of(Material.ENDER_PEARL)
                 .miniName("<gradient:#8AD9FF:#3F6BE0>\u25c9 \u1d18\u1d00\u0280\u1d1b\u028f \ua731\u1d18\u1d07\u1d04\u1d1b\u1d00\u1d1b\u1d07</gradient>")
                 .rawLore("", "<#8E959D>\u1d21\u1d00\u1d1b\u1d04\u029c \u028f\u1d0f\u1d1c\u0280 \u1d18\u1d00\u0280\u1d1b\u028f'\ua731 \u1d0d\u1d00\u1d1b\u1d04\u029c",
@@ -89,15 +115,19 @@ public final class SpawnItems {
                 .miniName(leader
                         ? "<gradient:#FF6B6B:#A01028>\u2716 \u1d05\u026a\ua731\u0299\u1d00\u0274\u1d05 \u1d18\u1d00\u0280\u1d1b\u028f</gradient>"
                         : "<gradient:#FF6B6B:#A01028>\u2716 \u029f\u1d07\u1d00\u1d20\u1d07 \u1d18\u1d00\u0280\u1d1b\u028f</gradient>")
-                .rawLore("", leader
-                        ? "<#8E959D>\u1d1b\u029c\u026a\ua731 \u1d07\u0274\u1d05\ua731 \u1d1b\u029c\u1d07 \u1d18\u1d00\u0280\u1d1b\u028f \ua730\u1d0f\u0280 \u1d07\u1d20\u1d07\u0280\u028f\u1d0f\u0274\u1d07"
-                        : "<#8E959D>\u028f\u1d0f\u1d1c \u1d0b\u1d07\u1d07\u1d18 \u1d18\u029f\u1d00\u028f\u026a\u0274\u0262 \u1d00\u029f\u1d0f\u0274\u1d07",
+                .rawLore("", leader ? "<#8E959D>\u1d1b\u029c\u026a\ua731 \u1d07\u0274\u1d05\ua731 \u1d1b\u029c\u1d07 \u1d18\u1d00\u0280\u1d1b\u028f \ua730\u1d0f\u0280 \u1d07\u1d20\u1d07\u0280\u028f\u1d0f\u0274\u1d07" : "<#8E959D>\u028f\u1d0f\u1d1c \u1d0b\u1d07\u1d07\u1d18 \u1d18\u029f\u1d00\u028f\u026a\u0274\u0262 \u1d00\u029f\u1d0f\u0274\u1d07",
                         "", "<dark_gray>\u25b8 <#8E959D>\u0280\u026a\u0262\u029c\u1d1b-\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \u1d04\u1d0f\u0274\ua730\u026a\u0280\u1d0d")
                 .hideTooltip().tag(plugin.keyButton(), PARTYLEAVE).build());
-        player.getInventory().setItem(8, Items.of(Material.GRINDSTONE)
-                .miniName("<gradient:#C8C8C8:#707070>\u2699 \u1d18\u1d00\u0280\u1d1b\u028f \ua731\u1d07\u1d1b\u1d1b\u026a\u0274\u0262\ua731</gradient>")
-                .hideTooltip().tag(plugin.keyButton(), PARTYSETTINGS).build());
         player.updateInventory();
+    }
+
+    private static String nameOf(java.util.UUID id) {
+        Player online = Bukkit.getPlayer((java.util.UUID)id);
+        if (online != null) {
+            return online.getName();
+        }
+        String name = Bukkit.getOfflinePlayer((java.util.UUID)id).getName();
+        return name == null ? "?" : name;
     }
 
     public static void addRematch(MeowDuels plugin, Player player, UUID opponentId, String opponentName) {

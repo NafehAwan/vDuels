@@ -16,6 +16,7 @@ package com.meowduels.listeners;
 import com.meowduels.MeowDuels;
 import com.meowduels.gui.KitEditorMenu;
 import com.meowduels.gui.PartyConfirmMenu;
+import com.meowduels.model.Party;
 import com.meowduels.gui.PartyMenu;
 import com.meowduels.gui.PartySettingsMenu;
 import com.meowduels.gui.QueuePickMenu;
@@ -46,7 +47,7 @@ implements Listener {
                 || "spawn-kiteditor".equals(btn) || "spawn-settings".equals(btn) || "spawn-rematch".equals(btn)
                 || "spawn-createparty".equals(btn) || "party-match".equals(btn)
                 || "party-spectate".equals(btn) || "party-leave".equals(btn)
-                || "party-settings".equals(btn);
+                || "party-settings".equals(btn) || "party-info".equals(btn);
     }
 
     @EventHandler(ignoreCancelled=true)
@@ -93,8 +94,11 @@ implements Listener {
             this.plugin.getPartyManager().create(player);
             return;
         }
-        if ("party-match".equals(btn)) {
+        if ("party-match".equals(btn) || "party-info".equals(btn)) {
             event.setCancelled(true);
+            // Members get the same window read-only; the button that opens it
+            // is a different item, so nobody is clicking a start button that
+            // isn't theirs in the first place.
             new PartyMenu(this.plugin).openFor(player);
             return;
         }
@@ -110,6 +114,9 @@ implements Listener {
         }
         if ("party-settings".equals(btn)) {
             event.setCancelled(true);
+            if (!this.partyLeader(player)) {
+                return;
+            }
             new PartySettingsMenu(this.plugin).open(player);
             return;
         }
@@ -143,6 +150,21 @@ implements Listener {
             }
             this.plugin.getDuelManager().requestRematch(player);
         }
+    }
+
+    /** Party management is the leader's, and says so out loud rather than
+     *  silently doing nothing. */
+    private boolean partyLeader(Player player) {
+        Party party = this.plugin.getPartyManager().partyOf(player.getUniqueId());
+        if (party == null) {
+            player.sendMessage(Text.prefixed("&cYou're not in a party."));
+            return false;
+        }
+        if (!party.isLeader(player.getUniqueId())) {
+            player.sendMessage(Text.prefixed("&cOnly the party leader can do that."));
+            return false;
+        }
+        return true;
     }
 
     private boolean busy(Player p) {

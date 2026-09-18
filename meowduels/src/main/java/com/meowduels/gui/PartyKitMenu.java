@@ -27,6 +27,16 @@ extends Menu {
     }
 
     @Override
+    public void open(Player player) {
+        Party party = this.plugin.getPartyManager().partyOf(player.getUniqueId());
+        if (party == null || !party.isLeader(player.getUniqueId())) {
+            player.sendMessage(com.meowduels.util.Text.prefixed("&cOnly the party leader can pick the kit."));
+            return;
+        }
+        super.open(player);
+    }
+
+    @Override
     public void build() {
         java.util.List<Kit> kits = new java.util.ArrayList<Kit>();
         for (Kit kit : this.plugin.getKitManager().all()) {

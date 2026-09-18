@@ -50,6 +50,12 @@ extends Menu {
         if (party == null) {
             return;
         }
+        // Not just a click guard: the window itself is the leader's. Opening it
+        // read-only would show a member two toggles that look like theirs.
+        if (!party.isLeader(player.getUniqueId())) {
+            player.sendMessage(com.meowduels.util.Text.prefixed("&cOnly the party leader can change party settings."));
+            return;
+        }
         this.inventory.setItem(SLOT_OPEN, this.toggle(party.isOpenToAll(),
                 Material.ENDER_EYE, "\u1d0f\u1d18\u1d07\u0274 \u1d1b\u1d0f \u1d00\u029f\u029f", "\u1d00\u0274\u028f\u1d0f\u0274\u1d07 \u1d04\u1d00\u0274 \u1d0a\u1d0f\u026a\u0274 \u1d21\u026a\u1d1b\u029c\u1d0f\u1d1c\u1d1b \u1d00\u0274 \u026a\u0274\u1d20\u026a\u1d1b\u1d07", "party-set-open"));
         this.inventory.setItem(SLOT_FF, this.toggle(party.isFriendlyFire(),

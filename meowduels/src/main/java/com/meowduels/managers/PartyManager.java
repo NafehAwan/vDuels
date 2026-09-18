@@ -106,7 +106,7 @@ public class PartyManager {
         Party party = new Party(id);
         this.byPlayer.put(id, party);
         player.sendMessage(Text.prefixed("&aParty created. &7Invite someone with &f/party invite <player>&7."));
-        SpawnItems.give(this.plugin, player);
+        this.refreshItems(player);
     }
 
     public void invite(Player leader, Player target) {
@@ -163,7 +163,10 @@ public class PartyManager {
         party.add(id);
         this.byPlayer.put(id, party);
         this.broadcast(party, "&f" + player.getName() + "&a joined the party.");
-        SpawnItems.give(this.plugin, player);
+        // Old spawn items out, party items in - see refreshItems.
+        this.refreshItems(player);
+        player.sendMessage(Text.prefixed("&7The party is run by &f" + leader.getName()
+                + "&7 - they pick the kit and start the match."));
     }
 
     /**
@@ -188,7 +191,7 @@ public class PartyManager {
         this.byPlayer.remove(id);
         this.broadcast(party, "&f" + player.getName() + "&7 left the party.");
         player.sendMessage(Text.prefixed("&7You left the party."));
-        this.restoreSpawn(player);
+        this.refreshItems(player);
         this.checkWin(party);
     }
 
@@ -204,7 +207,7 @@ public class PartyManager {
             Player p = Bukkit.getPlayer((UUID)id);
             if (p != null) {
                 p.sendMessage(Text.prefixed("&c" + reason));
-                this.restoreSpawn(p);
+                this.refreshItems(p);
             }
         }
         party.getMembers().clear();
@@ -399,7 +402,7 @@ public class PartyManager {
         if (dest != null) {
             p.teleport(dest);
         }
-        this.restoreSpawn(p);
+        this.refreshItems(p);
     }
 
     private void checkWin(Party party) {
@@ -539,7 +542,20 @@ public class PartyManager {
         return false;
     }
 
-    private void restoreSpawn(Player player) {
+    /**
+     * Rebuilds a player's hotbar for whatever they are now.
+     *
+     * <p>Called on every membership change, both directions. SpawnItems.give
+     * clears the inventory before it hands anything out, so joining a party
+     * takes the old spawn items away in the same breath as giving the party
+     * ones - there is never a moment where someone holds a queue sword they are
+     * no longer allowed to use, or a party button after leaving.
+     *
+     * <p>Which bar they get is decided inside SpawnItems from the party state,
+     * so this is correct for a leader, a member and someone with no party at
+     * all, and callers do not have to know which.
+     */
+    private void refreshItems(Player player) {
         if (player != null) {
             SpawnItems.give(this.plugin, player);
         }
