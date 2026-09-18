@@ -36,6 +36,10 @@ public class Party {
     private String kit;
     private Arena arena;
     private long startedAt;
+    /** Wall-clock moment the fighting actually opens. Between the teleport and
+     *  this, everyone is in the arena and nobody can hurt anyone - a countdown
+     *  is a fight that has not started yet, not a fight with a delay on it. */
+    private long fightStartsAt;
     private boolean friendlyFire = true;
     private boolean openToAll = false;
     private boolean finished = false;
@@ -134,6 +138,19 @@ public class Party {
         return this.startedAt;
     }
 
+    public long getFightStartsAt() {
+        return this.fightStartsAt;
+    }
+
+    public void setFightStartsAt(long at) {
+        this.fightStartsAt = at;
+    }
+
+    /** True while the countdown is still running. */
+    public boolean isCountingDown() {
+        return this.state == State.FIGHTING && System.currentTimeMillis() < this.fightStartsAt;
+    }
+
     public void setStartedAt(long startedAt) {
         this.startedAt = startedAt;
     }
@@ -195,5 +212,6 @@ public class Party {
         this.kills.clear();
         this.arena = null;
         this.startedAt = 0L;
+        this.fightStartsAt = 0L;
     }
 }

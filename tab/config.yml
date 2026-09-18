@@ -40,7 +40,7 @@ header-footer:
       - ''
       - '&d★ &7Leader: &f%meowduels_party_leader% &8• &7Members: &f%meowduels_party_size%'
       - '&7Kit: &f%meowduels_party_kit% &8• &7Status: &f%meowduels_party_status%'
-      - '%meowduels_party_members%'
+      - '&7You: &f%meowduels_party_role% &8• &7Alive: &f%meowduels_party_alive%'
       - ''
     default:
       display-condition: '%world%!=disabledworld'
@@ -91,7 +91,6 @@ placeholder-refresh-intervals:
   '%meowduels_party_status%': 1000
   '%meowduels_in_fight%': 500
   '%meowduels_in_party%': 500
-  '%meowduels_party_members%': 1000
   '%rel_meowduels_tabprefix%': 500
   '%rel_meowduels_tabsuffix%': 500
 global-playerlist:

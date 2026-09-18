@@ -1,6 +1,7 @@
 package org.bukkit.scoreboard;
 
 public interface Objective {
+    void unregister();
     void displayName(net.kyori.adventure.text.Component a0);
     org.bukkit.scoreboard.Score getScore(java.lang.String a0);
     void numberFormat(io.papermc.paper.scoreboard.numbers.NumberFormat a0);

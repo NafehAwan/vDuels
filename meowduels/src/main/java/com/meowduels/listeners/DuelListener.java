@@ -431,10 +431,16 @@ implements Listener {
             return;
         }
         Party party = this.plugin.getPartyManager().partyOf(victim.getUniqueId());
-        if (party == null || party.isFighting() || party.isFriendlyFire()) {
+        if (party == null || !party.has(attacker.getUniqueId())) {
             return;
         }
-        if (party.has(attacker.getUniqueId())) {
+        // Nobody lands a hit before the countdown reaches zero. A countdown you
+        // can be killed during is not a countdown.
+        if (party.isCountingDown()) {
+            event.setCancelled(true);
+            return;
+        }
+        if (!party.isFighting() && !party.isFriendlyFire()) {
             event.setCancelled(true);
         }
     }

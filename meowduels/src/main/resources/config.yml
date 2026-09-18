@@ -30,6 +30,19 @@ rounds:
   # is teleported to spawn when the match ends.
   win-teleport-seconds: 2.0
 
+# ---- Party ----
+party:
+  # Seconds between everyone landing in the arena and the fighting opening.
+  # Nobody can be hurt until it reaches zero.
+  countdown-seconds: 5
+  # true  - a party gets its own tab list, the way a duel does. The party sees
+  #         the party; the rest of the server still sees them, with their real
+  #         rank, because the hiding is one-directional.
+  # false - no separate list. Everyone stays in the shared tab list and the
+  #         party is just a group of people in it.
+  # Takes effect on the next membership change, or /meowduels reload.
+  separate-tab: true
+
 # ---- Golden Head (modern-UHC healing head) ----
 golden-head:
   # Seconds a player must wait between eating Golden Heads. 0 = no cooldown.
@@ -193,24 +206,6 @@ scoreboard:
     - ""
     - "<#FFC53D>✦ <gray>ᴋɪᴛ <dark_gray>» <white>{ffa_kit}"
     - "<#FFC53D>⌚ <gray>ᴛɪᴍᴇ <dark_gray>» <white>{ffa_time}"
-    - ""
-    - "{ip_color}{server_ip}"
-  # Shown from the moment you are in a party, not just once it is fighting -
-  # the board is how you see who is in it and what it is waiting for.
-  # {party_status} says Waiting or Fighting; {party_alive} is only meaningful
-  # mid-match, and reads 0 before it starts.
-  party:
-    enabled: true
-    title: "<bold><gradient:#FF8AD0:#B04BD6>\u1d18\u1d00\u0280\u1d1b\u028f</gradient></bold>"
-    lines:
-    - "<gray>\u2605 <white>{player}"
-    - ""
-    - "<#C79BFF>\u25c6 <gray>\u029f\u1d07\u1d00\u1d05\u1d07\u0280 <dark_gray>\u00bb <white>{party_leader}"
-    - "<#C79BFF>\u25c8 <gray>\u1d0d\u1d07\u1d0d\u0299\u1d07\u0280\ua731 <dark_gray>\u00bb <white>{party_size}"
-    - "<#C79BFF>\u2726 <gray>\u1d0b\u026a\u1d1b <dark_gray>\u00bb <white>{party_kit}"
-    - ""
-    - "<#C79BFF>\u26a1 <gray>\ua731\u1d1b\u1d00\u1d1b\u1d1c\ua731 <dark_gray>\u00bb <white>{party_status}"
-    - "<#C79BFF>\u2620 <gray>\u1d00\u029f\u026a\u1d20\u1d07 <dark_gray>\u00bb <white>{party_alive}<dark_gray>/<gray>{party_size}"
     - ""
     - "{ip_color}{server_ip}"
   # Shown while fighting or spectating a fight. Compact - no divider bars.

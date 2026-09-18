@@ -72,12 +72,11 @@ public class ScoreboardService {
     private Layout global = new Layout();
     private Layout duel = new Layout();
     private Layout ffa = new Layout();
-    private Layout party = new Layout();
     private final Map<UUID, Integer> rankTeamIndex = new HashMap<UUID, Integer>();
     private int rankTeamCounter = 0;
     private boolean rankNametags = false;
     private boolean externalNametags = false;
-    private boolean rankBelowName = true;
+    private boolean rankBelowName = false;
     private static final char[] SMALL = new char[]{'\u1d00', '\u0299', '\u1d04', '\u1d05', '\u1d07', '\ua730', '\u0262', '\u029c', '\u026a', '\u1d0a', '\u1d0b', '\u029f', '\u1d0d', '\u0274', '\u1d0f', '\u1d18', '\ua7af', '\u0280', '\ua731', '\u1d1b', '\u1d1c', '\u1d20', '\u1d21', 'x', '\u028f', '\u1d22'};
 
     public ScoreboardService(MeowDuels plugin) {
@@ -95,17 +94,27 @@ public class ScoreboardService {
             this.global = new Layout();
             this.duel = new Layout();
             this.ffa = new Layout();
-            this.party = new Layout();
             return;
         }
         this.masterEnabled = sb.getBoolean("enabled", true);
         this.rankNametags = sb.getBoolean("rank-above-head", false);
         this.externalNametags = sb.getBoolean("external-nametags", false);
-        this.rankBelowName = sb.getBoolean("rank-below-name", true);
+        // Deliberately NOT read from config any more. The ELO rank under the
+        // nametag is gone, and a server that already has rank-below-name: true
+        // in its config would otherwise keep it - existing values are never
+        // overwritten, so flipping the default would have changed nothing where
+        // it mattered. The objective is still actively torn off any board that
+        // carries one, so removing it takes effect the moment this loads.
+        this.rankBelowName = false;
+        // Re-run against the main scoreboard: it is never rebuilt, so turning
+        // rank-below-name off in config and reloading would otherwise leave the
+        // objective drawing there forever.
+        if (Bukkit.getScoreboardManager() != null) {
+            this.setupRankBelowName(Bukkit.getScoreboardManager().getMainScoreboard());
+        }
         this.global = this.loadLayout(sb.getConfigurationSection("global"));
         this.duel = this.loadLayout(sb.getConfigurationSection("duel"));
         this.ffa = this.loadLayout(sb.getConfigurationSection("ffa"));
-        this.party = this.loadLayout(sb.getConfigurationSection("party"));
     }
 
     private Layout loadLayout(ConfigurationSection section) {
@@ -250,18 +259,14 @@ public class ScoreboardService {
         Layout sidebar = null;
         boolean boardOn = this.plugin.getPlayerSettings().isScoreboard(id);
         boolean inEvent = this.plugin.getEventManager().isInvolved(id);
-        boolean inParty = this.plugin.getPartyManager().inParty(id);
         if (this.masterEnabled && boardOn) {
-            // Most specific first. A duel is the narrowest thing you can be
-            // doing, then an event, then a party - which shows from the moment
-            // the party exists, not just once it is fighting, because the board
-            // is how you see who is in it and what it is waiting for.
+            // Most specific first: a duel is the narrowest thing you can be
+            // doing, then an event. A party has no sidebar of its own - the
+            // party tab list already says everything a board would have.
             if (active && this.duel.enabled) {
                 sidebar = this.duel;
             } else if (inEvent && this.ffa.enabled) {
                 sidebar = this.ffa;
-            } else if (inParty && this.party.enabled) {
-                sidebar = this.party;
             } else if (!inFight && this.global.enabled) {
                 sidebar = this.global;
             }
@@ -307,6 +312,11 @@ public class ScoreboardService {
 
     private void setupRankBelowName(Scoreboard board) {
         if (this.externalNametags || !this.rankBelowName) {
+            // Not enough to skip creating it. A board that already carries the
+            // objective keeps drawing it until something takes it away, so
+            // turning the setting off would do nothing until a restart - and on
+            // the MAIN scoreboard, which is never rebuilt, nothing at all.
+            ScoreboardService.removeRankBelowName(board);
             return;
         }
         try {
@@ -320,6 +330,18 @@ public class ScoreboardService {
         }
         catch (Throwable throwable) {
             // empty catch block
+        }
+    }
+
+    private static void removeRankBelowName(Scoreboard board) {
+        try {
+            Objective existing = board.getObjective("mdrank");
+            if (existing != null) {
+                existing.unregister();
+            }
+        }
+        catch (Throwable throwable) {
+            // already gone, or a board that never had one
         }
     }
 

@@ -7,6 +7,7 @@ import com.meowduels.model.Party;
 import com.meowduels.model.PlayerSnapshot;
 import com.meowduels.util.AntiCheatBypass;
 import com.meowduels.util.GameModeGuard;
+import com.meowduels.util.Sounds;
 import com.meowduels.util.SpawnItems;
 import com.meowduels.util.Text;
 import java.util.ArrayList;
@@ -277,7 +278,11 @@ public class PartyManager {
         for (Player p : online) {
             this.sendIn(party, p, kit, arena);
         }
-        this.broadcast(party, "&aParty match started &7- &f" + online.size() + "&7 fighting on &f" + arena.getName() + "&7.");
+        int seconds = Math.max(1, this.plugin.getConfig().getInt("party.countdown-seconds", 5));
+        party.setFightStartsAt(System.currentTimeMillis() + (long)seconds * 1000L);
+        this.broadcast(party, this.msg("party.match-started", "count", String.valueOf(online.size()),
+                "arena", arena.getName()));
+        this.countdownTick(party, seconds);
     }
 
     private void sendIn(Party party, Player player, Kit kit, Arena arena) {
@@ -315,6 +320,44 @@ public class PartyManager {
     }
 
     /**
+     * The pre-fight countdown.
+     *
+     * <p>Guarded on identity, not just state: a party can finish a match and
+     * start another one inside the countdown of the first if people are quick,
+     * and a stray tick from the old one would then shout FIGHT over the new
+     * one's countdown. Comparing fightStartsAt catches exactly that.
+     */
+    private void countdownTick(Party party, int secondsLeft) {
+        if (!party.isFighting() || party.isFinished()) {
+            return;
+        }
+        long deadline = party.getFightStartsAt();
+        if (secondsLeft <= 0) {
+            for (UUID id : party.getAlive()) {
+                Player p = Bukkit.getPlayer((UUID)id);
+                if (p != null) {
+                    p.sendTitle(this.msg("party.countdown-go"), "", 0, 20, 10);
+                    Sounds.fight(p);
+                }
+            }
+            return;
+        }
+        for (UUID id : party.getAlive()) {
+            Player p = Bukkit.getPlayer((UUID)id);
+            if (p != null) {
+                p.sendTitle(this.msg("party.countdown-title", "seconds", String.valueOf(secondsLeft)),
+                        this.msg("party.countdown-subtitle"), 0, 25, 0);
+                Sounds.countdown(p);
+            }
+        }
+        Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
+            if (party.getFightStartsAt() == deadline) {
+                this.countdownTick(party, secondsLeft - 1);
+            }
+        }, 20L);
+    }
+
+    /**
      * A party member died mid-match.
      *
      * <p>They stay in the match as a spectator rather than being sent home. The
@@ -335,7 +378,14 @@ public class PartyManager {
             this.watchFrom(party, p);
             p.sendMessage(Text.prefixed("&7You're out - watching the rest. &f/leave&7 to stop."));
         }
-        this.broadcast(party, "&f" + this.nameOf(id) + "&7 was eliminated &8(&f" + party.getAlive().size() + "&8 left)");
+        String left = String.valueOf(party.getAlive().size());
+        if (killerId != null && !killerId.equals(id) && party.has(killerId)) {
+            this.broadcast(party, this.msg("party.kill-pvp", "victim", this.nameOf(id),
+                    "killer", this.nameOf(killerId), "alive", left));
+        } else {
+            this.broadcast(party, this.msg("party.kill-generic", "victim", this.nameOf(id),
+                    "alive", left));
+        }
         this.checkWin(party);
     }
 
@@ -431,9 +481,14 @@ public class PartyManager {
             this.pullOut(party, id);
         }
         if (winnerId != null) {
-            this.broadcast(party, "&6" + this.nameOf(winnerId) + "&e won the party match!");
+            this.broadcast(party, this.msg("party.winner", "winner", this.nameOf(winnerId)));
+            Player champ = Bukkit.getPlayer((UUID)winnerId);
+            if (champ != null) {
+                champ.sendTitle(this.msg("party.win-title"), this.msg("party.win-subtitle"), 5, 40, 10);
+                Sounds.victory(champ);
+            }
         } else {
-            this.broadcast(party, "&7The party match ended with no winner.");
+            this.broadcast(party, this.msg("party.no-winner"));
         }
         if (arena != null) {
             this.plugin.getDuelManager().freeArena(arena.getName());
@@ -583,6 +638,10 @@ public class PartyManager {
                 p.sendMessage(Text.prefixed(message));
             }
         }
+    }
+
+    private String msg(String key, String ... placeholders) {
+        return this.plugin.messages().get(key, placeholders);
     }
 
     private String nameOf(UUID id) {

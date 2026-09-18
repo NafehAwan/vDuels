@@ -96,6 +96,14 @@ public class TabService {
         if (party == null) {
             return;
         }
+        // One switch for the whole question of whether a party gets its own tab
+        // list or just sits in the shared one. Turning it off releases anyone
+        // already bubbled rather than leaving them stuck in a list nothing
+        // maintains any more.
+        if (!this.plugin.getConfig().getBoolean("party.separate-tab", true)) {
+            this.detachParty(party);
+            return;
+        }
         for (Map.Entry<UUID, Object> e : new HashMap<UUID, Object>(this.memberGroup).entrySet()) {
             if (e.getValue() == party) {
                 this.release(e.getKey());

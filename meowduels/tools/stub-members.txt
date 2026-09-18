@@ -92,3 +92,8 @@ org/bukkit/Bukkit | public static org.bukkit.inventory.Inventory createInventory
 # EntityDamageByEntityEvent-typed variable, so that is the recorded owner. It is
 # a class in real Bukkit, so this stays a Methodref.
 org/bukkit/event/entity/EntityDamageByEntityEvent | public void setCancelled(boolean a0) {}
+
+# Objective.unregister - real Paper API, used to tear the below-name rank
+# objective off a board when the setting is turned off. Objective is an
+# interface, so this is an InterfaceMethodref.
+org/bukkit/scoreboard/Objective | void unregister();
