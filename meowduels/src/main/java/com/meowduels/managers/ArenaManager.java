@@ -41,6 +41,11 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.entity.TNTPrimed;
+import org.bukkit.entity.Projectile;
+import org.bukkit.entity.Item;
+import org.bukkit.entity.ExperienceOrb;
+import org.bukkit.entity.Entity;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.configuration.ConfigurationSection;
@@ -79,6 +84,39 @@ public class ArenaManager {
      * <p>Cheap - the file only holds arena names, and only changes when a match
      * starts or an arena is restored.
      */
+    /**
+     * Removes the loose entities a fight leaves behind - dropped items, arrows,
+     * primed TNT, xp orbs.
+     *
+     * <p>Block regeneration does not touch entities, so without this the next
+     * match in an arena starts on a floor covered in the last one's gear. Lives
+     * here rather than in one manager because duels, events and party matches
+     * all need exactly the same sweep.
+     */
+    public void clearLooseEntities(Arena arena) {
+        if (arena == null) {
+            return;
+        }
+        World world = arena.getWorld();
+        Location min = arena.getMin();
+        Location max = arena.getMax();
+        if (world == null || min == null || max == null) {
+            return;
+        }
+        Location center = new Location(world,
+                (double)(min.getBlockX() + max.getBlockX()) / 2.0 + 0.5,
+                (double)(min.getBlockY() + max.getBlockY()) / 2.0 + 0.5,
+                (double)(min.getBlockZ() + max.getBlockZ()) / 2.0 + 0.5);
+        double dx = (double)Math.abs(max.getBlockX() - min.getBlockX()) / 2.0 + 2.0;
+        double dy = (double)Math.abs(max.getBlockY() - min.getBlockY()) / 2.0 + 2.0;
+        double dz = (double)Math.abs(max.getBlockZ() - min.getBlockZ()) / 2.0 + 2.0;
+        for (Entity entity : world.getNearbyEntities(center, dx, dy, dz)) {
+            if (!(entity instanceof Projectile) && !(entity instanceof Item)
+                    && !(entity instanceof TNTPrimed) && !(entity instanceof ExperienceOrb)) continue;
+            entity.remove();
+        }
+    }
+
     public void markDirty(String arenaName) {
         if (arenaName != null && this.dirty.add(arenaName.toLowerCase(Locale.ROOT))) {
             this.saveDirty();

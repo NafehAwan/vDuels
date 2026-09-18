@@ -38,12 +38,12 @@ extends Menu {
 
     @Override
     public void build() {
-        java.util.List<Kit> kits = new java.util.ArrayList<Kit>();
-        for (Kit kit : this.plugin.getKitManager().all()) {
-            if (this.hostable(kit)) {
-                kits.add(kit);
-            }
-        }
+        // Every kit, unfiltered. This used to hide any kit no "event-ready"
+        // arena supported, which on a server where few arenas have an FFA spawn
+        // set meant most kits simply were not in the menu - with nothing to say
+        // why. A party match can use any arena now, so the filter was hiding
+        // kits that would have worked.
+        java.util.List<Kit> kits = new java.util.ArrayList<Kit>(this.plugin.getKitManager().all());
         int rows = Math.max(1, Math.min(6, (kits.size() + 8) / 9));
         this.createRaw(rows, "<dark_gray>\u258f <gradient:#FF8AD0:#B04BD6>\u1d18\u1d00\u0280\u1d1b\u028f \u1d0b\u026a\u1d1b</gradient>");
         int slot = 0;
@@ -63,16 +63,6 @@ extends Menu {
                     .rawLore("", "<#8E959D>\u0274\u1d0f \u1d00\u0280\u1d07\u0274\u1d00 \u1d21\u026a\u1d1b\u029c \u1d00\u0274 \u1d07\u1d20\u1d07\u0274\u1d1b \ua731\u1d18\u1d00\u1d21\u0274 \ua731\u1d1c\u1d18\u1d18\u1d0f\u0280\u1d1b\ua731 \u1d00 \u1d0b\u026a\u1d1b")
                     .hideTooltip().build());
         }
-    }
-
-    /** True if some enabled arena with an event spawn allows this kit. */
-    private boolean hostable(Kit kit) {
-        for (com.meowduels.model.Arena arena : this.plugin.getArenaManager().all()) {
-            if (arena.isEnabled() && arena.isEventReady() && arena.supportsKit(kit.getName())) {
-                return true;
-            }
-        }
-        return false;
     }
 
     @Override

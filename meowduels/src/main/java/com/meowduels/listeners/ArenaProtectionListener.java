@@ -153,13 +153,18 @@ implements Listener {
             return;
         }
         ActiveDuel duel = this.activeDuelFor(arena);
-        if (duel == null || !arena.isAllowExplosions()) {
+        Party party = duel == null ? this.partyFor(arena) : null;
+        if (duel == null && party == null || !arena.isAllowExplosions()) {
             event.blockList().clear();
             event.setCancelled(true);
             return;
         }
         for (Block b : event.blockList()) {
-            duel.recordChange(b.getLocation(), b.getBlockData());
+            if (duel != null) {
+                duel.recordChange(b.getLocation(), b.getBlockData());
+            } else {
+                party.recordChange(b.getLocation(), b.getBlockData());
+            }
         }
     }
 
@@ -173,11 +178,16 @@ implements Listener {
             return;
         }
         ActiveDuel duel = this.activeDuelFor(arena);
-        if (duel == null || !arena.isAllowFireSpread()) {
+        Party party = duel == null ? this.partyFor(arena) : null;
+        if (duel == null && party == null || !arena.isAllowFireSpread()) {
             event.setCancelled(true);
             return;
         }
-        duel.recordChange(event.getBlock().getLocation(), event.getBlock().getBlockData());
+        if (duel != null) {
+            duel.recordChange(event.getBlock().getLocation(), event.getBlock().getBlockData());
+        } else {
+            party.recordChange(event.getBlock().getLocation(), event.getBlock().getBlockData());
+        }
     }
 
     @EventHandler(ignoreCancelled=true)
@@ -189,8 +199,11 @@ implements Listener {
         if (arena == null) {
             return;
         }
-        ActiveDuel duel = this.activeDuelFor(arena);
-        if (duel == null || !arena.isAllowFireSpread()) {
+        if (!arena.isAllowFireSpread()) {
+            event.setCancelled(true);
+            return;
+        }
+        if (this.activeDuelFor(arena) == null && this.partyFor(arena) == null) {
             event.setCancelled(true);
         }
     }
@@ -208,8 +221,11 @@ implements Listener {
         if (this.eventArenaAllow(toLoc, event.getToBlock().getBlockData())) {
             return;
         }
-        ActiveDuel duel = this.activeDuelFor(arena);
-        if (duel == null || !arena.isAllowLiquidFlow()) {
+        if (!arena.isAllowLiquidFlow()) {
+            event.setCancelled(true);
+            return;
+        }
+        if (this.activeDuelFor(arena) == null && this.partyFor(arena) == null) {
             event.setCancelled(true);
         }
     }
@@ -247,6 +263,12 @@ implements Listener {
         Player player = event.getPlayer();
         ActiveDuel duel = this.plugin.getDuelManager().getDuel(player.getUniqueId());
         if (duel == null) {
+            Party party = this.partyMatchOf(player);
+            if (party != null) {
+                this.partyBlock(party, block.getBlockData(), loc,
+                        arg_0 -> event.setCancelled(arg_0.booleanValue()), false);
+                return;
+            }
             this.protectIdleArena(player, loc, arg_0 -> event.setCancelled(arg_0.booleanValue()));
             return;
         }
@@ -279,6 +301,19 @@ implements Listener {
         if (this.plugin.getArenaManager().findArenaAt(loc) != null) {
             event.setCancelled(true);
         }
+    }
+
+    /**
+     * The party match running in this arena, if any.
+     *
+     * <p>Everything below used to ask only activeDuelFor, so an arena hosting a
+     * party match looked idle: water would not flow, fire would not spread,
+     * explosions were cancelled and buckets were refused - in an arena
+     * configured to allow all of it. That is the "sometimes we can't place
+     * blocks and water doesn't flow" - it was every time, in every party match.
+     */
+    private Party partyFor(Arena arena) {
+        return this.plugin.getPartyManager().matchInArena(arena);
     }
 
     private ActiveDuel activeDuelFor(Arena arena) {

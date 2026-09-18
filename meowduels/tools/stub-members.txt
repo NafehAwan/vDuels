@@ -102,3 +102,7 @@ org/bukkit/scoreboard/Objective | void unregister();
 # player out of the WORLD as well. Player is an interface, so InterfaceMethodref.
 org/bukkit/entity/Player | void listPlayer(org.bukkit.entity.Player a0);
 org/bukkit/entity/Player | void unlistPlayer(org.bukkit.entity.Player a0);
+
+# Block.getType - used to find the floor under an arena's centre when no FFA
+# spawn has been set. Block is an interface, so InterfaceMethodref.
+org/bukkit/block/Block | org.bukkit.Material getType();

@@ -26,6 +26,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
@@ -128,6 +130,25 @@ public class PartyManager {
         }
         player.sendMessage(this.msg("party.invite-declined", "leader", leader.getName()));
         leader.sendMessage(this.msg("party.invite-declined-by", "player", player.getName()));
+    }
+
+    /**
+     * The party match running in this arena, if any.
+     *
+     * <p>Looks through the parties rather than the online players. Liquid flow
+     * asks this on every water tick in an arena, and there are always far fewer
+     * parties than players.
+     */
+    public Party matchInArena(Arena arena) {
+        if (arena == null || this.byPlayer.isEmpty()) {
+            return null;
+        }
+        for (Party party : this.byPlayer.values()) {
+            if (party.isFighting() && !party.isFinished() && party.getArena() == arena) {
+                return party;
+            }
+        }
+        return null;
     }
 
     public int partyCount() {
@@ -334,13 +355,16 @@ public class PartyManager {
             leader.sendMessage(Text.prefixed("&cNot enough party members are online."));
             return;
         }
+        // isEventReady is NOT required any more. It meant "has an FFA spawn set",
+        // and most arenas do not - which quietly made most kits unplayable in a
+        // party, since the kit menu only offered kits some event-ready arena
+        // supported. partySpawn falls back to the middle of the arena instead.
         Arena arena = this.plugin.getArenaManager().findFreeArena(
                 a -> this.plugin.getDuelManager().isArenaInUse(a.getName())
-                     || !a.isEventReady()
                      || !a.supportsKit(kit.getName()));
         if (arena == null) {
-            leader.sendMessage(Text.prefixed("&cNo free arena with an event spawn supports that kit."));
-            leader.sendMessage(Text.prefixed("&8Set one with the &fEvent Spawn&8 button in &f/arena&8."));
+            leader.sendMessage(Text.prefixed("&cNo free arena supports that kit."));
+            leader.sendMessage(Text.prefixed("&8" + this.plugin.getDuelManager().arenaAvailability(kit.getName())));
             return;
         }
         party.setArena(arena);
@@ -351,6 +375,10 @@ public class PartyManager {
         party.getWatching().clear();
         party.getSnapshots().clear();
         this.plugin.getDuelManager().markArenaInUse(arena.getName());
+        // Anything the last fight left lying in this arena goes before this one
+        // starts - dropped kits especially, which is how a second match begins
+        // with the floor covered in the first match's gear.
+        this.plugin.getArenaManager().clearLooseEntities(arena);
         for (Player p : online) {
             this.sendIn(party, p, kit, arena);
         }
@@ -361,11 +389,45 @@ public class PartyManager {
         this.countdownTick(party, seconds);
     }
 
+    /**
+     * Where party fighters land.
+     *
+     * <p>The arena's FFA spawn if one is set, and otherwise the middle of the
+     * arena, dropped onto the first solid block under the ceiling. Requiring the
+     * spawn was making most arenas - and through the kit menu, most kits -
+     * unusable for a party, for a setting that has a perfectly good default.
+     *
+     * <p>Searching downwards rather than taking the box's centre Y matters: the
+     * geometric centre of an arena is usually inside the floor or halfway up the
+     * air above it, and neither is somewhere to stand.
+     */
+    private Location partySpawn(Arena arena) {
+        Location set = arena.getEventSpawn();
+        if (set != null) {
+            return set;
+        }
+        World world = arena.getWorld();
+        Location min = arena.getMin();
+        Location max = arena.getMax();
+        if (world == null || min == null || max == null) {
+            return null;
+        }
+        int x = (min.getBlockX() + max.getBlockX()) / 2;
+        int z = (min.getBlockZ() + max.getBlockZ()) / 2;
+        int bottom = Math.min(min.getBlockY(), max.getBlockY());
+        for (int y = Math.max(min.getBlockY(), max.getBlockY()); y >= bottom; --y) {
+            if (world.getBlockAt(x, y, z).getType() != Material.AIR) {
+                return new Location(world, (double)x + 0.5, (double)(y + 1), (double)z + 0.5);
+            }
+        }
+        return new Location(world, (double)x + 0.5, (double)(bottom + 1), (double)z + 0.5);
+    }
+
     private void sendIn(Party party, Player player, Kit kit, Arena arena) {
         UUID id = player.getUniqueId();
         party.getAlive().add(id);
         party.getSnapshots().put(id, PlayerSnapshot.capture(player));
-        Location spawn = arena.getEventSpawn();
+        Location spawn = this.partySpawn(arena);
         String world = spawn != null && spawn.getWorld() != null ? spawn.getWorld().getName() : null;
         AntiCheatBypass.grant(this.plugin, player, AntiCheatBypass.worldNodes(this.plugin, world));
         if (spawn != null) {
@@ -468,7 +530,7 @@ public class PartyManager {
     /** Puts a knocked-out member into spectator mode over the arena. */
     private void watchFrom(Party party, Player player) {
         GameModeGuard.release(player.getUniqueId());
-        Location where = party.getArena() != null ? party.getArena().getEventSpawn() : null;
+        Location where = party.getArena() == null ? null : this.partySpawn(party.getArena());
         if (where != null) {
             player.teleport(where);
         }
@@ -582,6 +644,9 @@ public class PartyManager {
                 }
                 this.plugin.getArenaManager().clearDirty(arena.getName());
             }
+            // Always, regenerate or not: the drops are entities, and no block
+            // regen touches them.
+            this.plugin.getArenaManager().clearLooseEntities(arena);
         }
         party.resetMatch();
     }
