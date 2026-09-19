@@ -106,3 +106,6 @@ org/bukkit/entity/Player | void unlistPlayer(org.bukkit.entity.Player a0);
 # Block.getType - used to find the floor under an arena's centre when no FFA
 # spawn has been set. Block is an interface, so InterfaceMethodref.
 org/bukkit/block/Block | org.bukkit.Material getType();
+
+# Material.SHIELD - icon for the Party Split mode in the party match picker.
+org/bukkit/Material | public static org.bukkit.Material SHIELD;

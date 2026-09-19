@@ -4,6 +4,7 @@ import com.meowduels.MeowDuels;
 import com.meowduels.gui.Menu;
 import com.meowduels.model.Kit;
 import com.meowduels.model.Party;
+import com.meowduels.model.PartyMode;
 import com.meowduels.util.Items;
 import com.meowduels.util.Text;
 import java.util.ArrayList;
@@ -39,10 +40,12 @@ extends Menu {
     private static final String HINT = "<dark_gray>\u25b8 <#8E959D>";
 
     private final MeowDuels plugin;
+    private final PartyMode mode;
     private int page = 0;
 
-    public PartyKitMenu(MeowDuels plugin) {
+    public PartyKitMenu(MeowDuels plugin, PartyMode mode) {
         this.plugin = plugin;
+        this.mode = mode;
     }
 
     @Override
@@ -78,7 +81,9 @@ extends Menu {
         int from = this.page * capacity;
         int shown = Math.min(capacity, kits.size() - from);
 
-        this.createRaw(rows, "<dark_gray>\u258f <gradient:#FF8AD0:#B04BD6>{TITLE}</gradient>"
+        // The header is the mode, so the window says which match you are setting
+        // up rather than just "party kit".
+        this.createRaw(rows, "<dark_gray>\u258f " + PartyModeMenu.accent(this.mode.getLabel())
                 + (pages > 1 ? " <dark_gray>" + (this.page + 1) + "/" + pages : ""));
         ItemStack filler = Items.of(Material.BLACK_STAINED_GLASS_PANE).rawName(" ").build();
         for (int i = 0; i < rows * WIDE_PER_ROW; ++i) {
@@ -136,7 +141,7 @@ extends Menu {
     public void onClick(Player player, InventoryClickEvent event) {
         String button = Items.readTag(event.getCurrentItem(), this.plugin.keyButton());
         if ("party-back".equals(button)) {
-            new PartyMenu(this.plugin).openFor(player);
+            new PartyModeMenu(this.plugin).open(player);
             return;
         }
         if ("kit-next".equals(button) || "kit-prev".equals(button)) {
@@ -154,7 +159,6 @@ extends Menu {
             return;
         }
         party.setKit(kit);
-        this.plugin.getPartyManager().broadcast(party, "&7Party kit set to &f" + kit + "&7.");
-        new PartyMenu(this.plugin).openFor(player);
+        new PartyStartConfirmMenu(this.plugin, this.mode).open(player);
     }
 }

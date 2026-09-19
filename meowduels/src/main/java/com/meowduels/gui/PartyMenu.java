@@ -129,7 +129,10 @@ extends Menu {
                 .rawName(PartyMenu.accent("\ua731\u1d07\u1d1b\u1d1b\u026a\u0274\u0262\ua731"))
                 .rawLore("", HINT + "\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \u1d0f\u1d18\u1d07\u0274")
                 .hideTooltip().tag(this.plugin.keyButton(), "party-settings-open").build());
-        boolean ready = !party.isFighting() && party.size() >= 2 && kit != null;
+        // No kit requirement here any more: the kit is chosen inside the match
+        // flow now, so demanding one before the button lights up would block the
+        // only route to choosing it.
+        boolean ready = !party.isFighting() && party.size() >= 2;
         this.inventory.setItem(SLOT_START, Items.of(ready ? Material.LIME_DYE : Material.GRAY_DYE)
                 .rawName(ready ? "<gradient:#7CFF6B:#1FA32F>\ua731\u1d1b\u1d00\u0280\u1d1b \u1d0d\u1d00\u1d1b\u1d04\u029c</gradient>" : MUTED + "\ua731\u1d1b\u1d00\u0280\u1d1b \u1d0d\u1d00\u1d1b\u1d04\u029c")
                 .rawLore("", this.startHint(party, kit != null))
@@ -202,9 +205,6 @@ extends Menu {
         if (party.size() < 2) {
             return "<#FF8A93>\u0274\u1d07\u1d07\u1d05\ua731 \u1d00\u1d1b \u029f\u1d07\u1d00\ua731\u1d1b 2 \u1d18\u029f\u1d00\u028f\u1d07\u0280\ua731";
         }
-        if (!hasKit) {
-            return "<#FF8A93>\u1d18\u026a\u1d04\u1d0b \u1d00 \u1d0b\u026a\u1d1b \ua730\u026a\u0280\ua731\u1d1b";
-        }
         return LABEL + "\ua730\u0280\u1d07\u1d07-\ua730\u1d0f\u0280-\u1d00\u029f\u029f, \u029f\u1d00\ua731\u1d1b \u1d0f\u0274\u1d07 \ua731\u1d1b\u1d00\u0274\u1d05\u026a\u0274\u0262 \u1d21\u026a\u0274\ua731";
     }
 
@@ -237,14 +237,13 @@ extends Menu {
             return;
         }
         if ("party-kit".equals(id)) {
-            new PartyKitMenu(this.plugin).open(player);
+            new PartyModeMenu(this.plugin).open(player);
         } else if ("party-invite".equals(id)) {
             new PartyInviteMenu(this.plugin).open(player);
         } else if ("party-settings-open".equals(id)) {
             new PartySettingsMenu(this.plugin).open(player);
         } else if ("party-start".equals(id)) {
-            player.closeInventory();
-            this.plugin.getPartyManager().startMatch(player);
+            new PartyModeMenu(this.plugin).open(player);
         } else if ("party-leave-open".equals(id)) {
             new PartyConfirmMenu(this.plugin, player).open(player);
         }

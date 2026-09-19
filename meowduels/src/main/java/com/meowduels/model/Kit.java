@@ -92,6 +92,29 @@ public class Kit {
         player.updateInventory();
     }
 
+    /**
+     * Gives this kit's start effects - the "auto pots".
+     *
+     * <p>Separate from {@link #applyTo} on purpose, and called when the fight
+     * actually opens rather than when the kit is handed out. Applying them with
+     * the kit meant a 1:30 strength was already down to about 1:25 by the time
+     * the countdown finished - the player paid for the wait out of their own
+     * buff. Every mode that starts a fight calls this at its own go signal.
+     */
+    public void applyStartEffects(Player player) {
+        if (player == null) {
+            return;
+        }
+        for (StartEffect effect : this.startEffects) {
+            try {
+                player.addPotionEffect(effect.toPotionEffect());
+            }
+            catch (Throwable t) {
+                // a effect type this server build does not have
+            }
+        }
+    }
+
     public void applyOffhand(Player player) {
         player.getInventory().setItemInOffHand(this.offhand == null ? null : this.offhand.clone());
         player.updateInventory();

@@ -45,6 +45,7 @@ public class Material {
     public static org.bukkit.Material REDSTONE;
     public static org.bukkit.Material RED_DYE;
     public static org.bukkit.Material RED_STAINED_GLASS_PANE;
+    public static org.bukkit.Material SHIELD;
     public static org.bukkit.Material SUGAR;
     public static org.bukkit.Material TNT;
     public static org.bukkit.Material TOTEM_OF_UNDYING;

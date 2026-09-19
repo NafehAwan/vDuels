@@ -18,6 +18,7 @@ import com.meowduels.gui.KitEditorMenu;
 import com.meowduels.gui.PartyConfirmMenu;
 import com.meowduels.model.Party;
 import com.meowduels.gui.PartyMenu;
+import com.meowduels.gui.PartyModeMenu;
 import com.meowduels.gui.PartySettingsMenu;
 import com.meowduels.gui.QueuePickMenu;
 import com.meowduels.gui.SettingsMenu;
@@ -94,11 +95,15 @@ implements Listener {
             this.plugin.getPartyManager().create(player);
             return;
         }
-        if ("party-match".equals(btn) || "party-info".equals(btn)) {
+        if ("party-match".equals(btn)) {
             event.setCancelled(true);
-            // Members get the same window read-only; the button that opens it
-            // is a different item, so nobody is clicking a start button that
-            // isn't theirs in the first place.
+            // Straight to the mode picker: this item is "play", and /party or
+            // the members' Party Info item is "manage".
+            new PartyModeMenu(this.plugin).open(player);
+            return;
+        }
+        if ("party-info".equals(btn)) {
+            event.setCancelled(true);
             new PartyMenu(this.plugin).openFor(player);
             return;
         }

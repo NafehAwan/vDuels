@@ -471,9 +471,15 @@ public class PartyManager {
         }
         long deadline = party.getFightStartsAt();
         if (secondsLeft <= 0) {
+            Kit kit = party.getKit() == null ? null : this.plugin.getKitManager().get(party.getKit());
             for (UUID id : party.getAlive()) {
                 Player p = Bukkit.getPlayer((UUID)id);
                 if (p != null) {
+                    // Auto pots land with FIGHT, so their duration is the
+                    // fight's rather than the countdown's.
+                    if (kit != null) {
+                        kit.applyStartEffects(p);
+                    }
                     p.sendTitle(this.msg("party.countdown-go"), "", 0, 20, 10);
                     Sounds.fight(p);
                 }

@@ -419,9 +419,9 @@ public class DuelManager {
             // otherwise the server default.
             this.plugin.getKitLayouts().applyTo(player, kit);
             this.applyPlayerTrims(player, kit.getName());
-            for (StartEffect startEffect : kit.getStartEffects()) {
-                player.addPotionEffect(startEffect.toPotionEffect());
-            }
+            // Start effects are NOT applied here - see Kit.applyStartEffects.
+            // They are handed out when the countdown finishes, so the whole
+            // duration belongs to the fight.
             Kit fixed = kit;
             UUID uUID = player.getUniqueId();
             Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
@@ -431,6 +431,17 @@ public class DuelManager {
                 }
             }, 1L);
         }
+    }
+
+    /** The auto pots, at the go signal - including when the countdown is cut
+     *  short by both players readying up, which is the same moment. */
+    private void giveStartEffects(ActiveDuel duel, Player p1, Player p2) {
+        Kit kit = this.plugin.getKitManager().get(duel.getKit());
+        if (kit == null) {
+            return;
+        }
+        kit.applyStartEffects(p1);
+        kit.applyStartEffects(p2);
     }
 
     private void countdownTick(ActiveDuel duel, int remainingTicks) {
@@ -475,6 +486,7 @@ public class DuelManager {
         }
         duel.setState(ActiveDuel.State.FIGHTING);
         duel.markFightStart();
+        this.giveStartEffects(duel, p1, p2);
         Vector zero = new Vector(0.0, 0.0, 0.0);
         if (duel.getArena().getSpawn1() != null) {
             DuelManager.ground(p1);

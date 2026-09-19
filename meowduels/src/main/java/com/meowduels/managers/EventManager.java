@@ -383,6 +383,19 @@ public class EventManager {
         this.state = State.RUNNING;
         this.runningSinceMs = System.currentTimeMillis();
         this.kills.clear();
+        // Auto pots when the event actually starts - players can be sitting in
+        // the lobby for minutes before this, and a 1:30 buff handed out at join
+        // would be long gone by the time anyone could use it. Covers a forced
+        // start too, since that comes through here.
+        Kit started = this.plugin.getKitManager().get(this.kit);
+        if (started != null) {
+            for (UUID id : this.alive) {
+                Player p = Bukkit.getPlayer((UUID)id);
+                if (p != null) {
+                    started.applyStartEffects(p);
+                }
+            }
+        }
         this.broadcast(this.msg("event.started", new String[0]));
         this.startBorder();
         this.beginBorderShrink();
