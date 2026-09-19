@@ -59,28 +59,41 @@ extends Menu {
     /**
      * Every screenful there is, in the order the arrow walks them.
      *
-     * <p>Flattened to a single list on purpose: with categories, pages within a
-     * category, and an all-kits tail, "what does the arrow do next" has one
-     * answer instead of three nested ones.
+     * <p>Categories only. A kit in no category does not appear - being in a
+     * category is how a kit is offered here, and a catch-all page would undo
+     * that by putting every uncategorised kit back on the last screen.
+     *
+     * <p>The one exception is a server with no categories configured at all,
+     * where that rule would leave an empty menu with nothing to fix it from.
+     * The duel picker does the same.
+     *
+     * <p>Flattened to a single list on purpose: with categories and pages within
+     * a category, "what does the arrow do next" has one answer instead of two
+     * nested ones.
      */
     private List<Page> pages() {
         ArrayList<Page> out = new ArrayList<Page>();
-        for (CategoryManager.Category category : this.plugin.getCategoryManager().all()) {
+        List<CategoryManager.Category> categories = this.plugin.getCategoryManager().all();
+        if (categories.isEmpty()) {
+            ArrayList<String> all = new ArrayList<String>();
+            for (Kit kit : this.plugin.getKitManager().all()) {
+                all.add(kit.getName());
+            }
+            this.slice(out, "\u1d0b\u026a\u1d1b\ua731", all);
+            return out;
+        }
+        for (CategoryManager.Category category : categories) {
             this.slice(out, PartyKitMenu.smallCaps(category.getId()),
                     this.plugin.getCategoryManager().kitsFor(category));
         }
-        ArrayList<String> all = new ArrayList<String>();
-        for (Kit kit : this.plugin.getKitManager().all()) {
-            all.add(kit.getName());
-        }
-        this.slice(out, "\u1d00\u029f\u029f \u1d0b\u026a\u1d1b\ua731", all);
         return out;
     }
 
     private void slice(List<Page> out, String title, List<String> kits) {
         ArrayList<String> unique = new ArrayList<String>(new LinkedHashSet<String>(kits));
         if (unique.isEmpty()) {
-            out.add(new Page(title, unique));
+            // Skipped rather than given a blank screen - the arrow should never
+            // land on nothing.
             return;
         }
         for (int i = 0; i < unique.size(); i += KIT_SLOTS.length) {
@@ -105,6 +118,11 @@ extends Menu {
             return;
         }
         List<Page> pages = this.pages();
+        if (pages.isEmpty()) {
+            player.sendMessage(Text.prefixed("&cNo kits are in a category yet."));
+            player.sendMessage(Text.prefixed("&8Kits outside a category aren't offered - add them with &f/category&8."));
+            return;
+        }
         if (this.step >= pages.size() || this.step < 0) {
             this.step = 0;
         }
