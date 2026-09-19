@@ -48,13 +48,28 @@ extends Menu {
                 kitNames.add(kit.getName());
             }
         } else {
-            if (this.categoryIndex >= categories.size()) {
+            // One step past the categories is "all kits".
+            //
+            // categories.yml is hand-maintained and separate from the QUEUE
+            // categories in queuecategories.yml, so a kit that was only ever
+            // added to a queue category - or to neither - appeared in no duel
+            // category and could not be picked for a duel at all. It was not
+            // hidden by a filter, it was simply on no page.
+            if (this.categoryIndex > categories.size()) {
                 this.categoryIndex = 0;
             }
-            CategoryManager.Category category = categories.get(this.categoryIndex);
-            multi = categories.size() > 1;
-            this.create(4, "&7&lDuel Request&r &7" + category.getHeader());
-            kitNames = this.plugin.getCategoryManager().kitsFor(category);
+            multi = true;
+            if (this.categoryIndex == categories.size()) {
+                this.create(4, "&7&lDuel Request&r &7\u1d00\u029f\u029f \u1d0b\u026a\u1d1b\ua731");
+                kitNames = new ArrayList<String>();
+                for (Kit kit : this.plugin.getKitManager().all()) {
+                    kitNames.add(kit.getName());
+                }
+            } else {
+                CategoryManager.Category category = categories.get(this.categoryIndex);
+                this.create(4, "&7&lDuel Request&r &7" + category.getHeader());
+                kitNames = this.plugin.getCategoryManager().kitsFor(category);
+            }
         }
         ItemStack filler = Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build();
         for (i = 0; i < 36; ++i) {
@@ -92,8 +107,9 @@ extends Menu {
     public void onClick(Player player, InventoryClickEvent event) {
         ItemStack clicked = event.getCurrentItem();
         if ("next-cat".equals(Items.readTag(clicked, this.plugin.keyButton()))) {
-            int size = this.plugin.getCategoryManager().all().size();
-            if (size > 0) {
+            // +1 for the all-kits step at the end of the cycle.
+            int size = this.plugin.getCategoryManager().all().size() + 1;
+            if (size > 1) {
                 this.categoryIndex = (this.categoryIndex + 1) % size;
                 this.build();
                 player.openInventory(this.inventory);

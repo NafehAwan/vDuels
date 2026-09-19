@@ -17,72 +17,84 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 
 /**
- * The party's kit picker, built to match the duel one.
+ * The party's kit picker: the duel picker with a different title.
  *
- * <p>Same four rows, same fourteen slots in two inset rows of seven, same
- * black-glass frame, same category arrow in the corner. Only the header differs,
- * and it differs on purpose: it names the mode, so the window says which match
- * is being set up rather than just "kit".
+ * <p>Same four rows, same fourteen slots, same frame, one arrow bottom-right and
+ * nothing else. The title is plain small caps in the default colour - the mode,
+ * an arrow, the category - because that is what the duel picker's title is, and
+ * a coloured gradient here made the two windows look like different features.
  *
- * <p>Two things the duel picker does not do, both there to stop a kit being
- * unreachable - which is the complaint this menu started from:
- *
- * <p>The category cycle ends on a synthetic "all kits" page. Categories are
- * hand-maintained, so a newly added kit belongs to none of them and would
- * otherwise be in no page at all.
- *
- * <p>And a category holding more than fourteen kits pages rather than truncating
- * at fourteen.
+ * <p>The one arrow walks EVERYTHING: the next page of this category if it has
+ * one, otherwise the next category, and finally a page of every kit there is.
+ * That last step exists because categories are hand-maintained - a kit in none
+ * of them would otherwise be on no page at all.
  */
 public class PartyKitMenu
 extends Menu {
     private static final int ROWS = 4;
     private static final int SIZE = ROWS * 9;
     private static final int[] KIT_SLOTS = new int[]{10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25};
-    private static final int SLOT_BACK = 27;
-    private static final int SLOT_PREV = 29;
-    private static final int SLOT_NEXT = 33;
-    private static final int SLOT_CATEGORY = 35;
-
-    private static final String VALUE = "<#E6E8EB>";
-    private static final String LABEL = "<#8E959D>";
-    private static final String HINT = "<dark_gray>\u25b8 <#8E959D>";
+    private static final int SLOT_ARROW = 35;
 
     private final MeowDuels plugin;
     private final PartyMode mode;
-    private int categoryIndex = 0;
-    private int page = 0;
+    private int step = 0;
 
     public PartyKitMenu(MeowDuels plugin, PartyMode mode) {
         this.plugin = plugin;
         this.mode = mode;
     }
 
+    /** One screenful: what to call it, and which kits are on it. */
+    private static final class Page {
+        private final String title;
+        private final List<String> kits;
+
+        private Page(String title, List<String> kits) {
+            this.title = title;
+            this.kits = kits;
+        }
+    }
+
+    /**
+     * Every screenful there is, in the order the arrow walks them.
+     *
+     * <p>Flattened to a single list on purpose: with categories, pages within a
+     * category, and an all-kits tail, "what does the arrow do next" has one
+     * answer instead of three nested ones.
+     */
+    private List<Page> pages() {
+        ArrayList<Page> out = new ArrayList<Page>();
+        for (CategoryManager.Category category : this.plugin.getCategoryManager().all()) {
+            this.slice(out, PartyKitMenu.smallCaps(category.getId()),
+                    this.plugin.getCategoryManager().kitsFor(category));
+        }
+        ArrayList<String> all = new ArrayList<String>();
+        for (Kit kit : this.plugin.getKitManager().all()) {
+            all.add(kit.getName());
+        }
+        this.slice(out, "\u1d00\u029f\u029f \u1d0b\u026a\u1d1b\ua731", all);
+        return out;
+    }
+
+    private void slice(List<Page> out, String title, List<String> kits) {
+        ArrayList<String> unique = new ArrayList<String>(new LinkedHashSet<String>(kits));
+        if (unique.isEmpty()) {
+            out.add(new Page(title, unique));
+            return;
+        }
+        for (int i = 0; i < unique.size(); i += KIT_SLOTS.length) {
+            out.add(new Page(title, unique.subList(i, Math.min(unique.size(), i + KIT_SLOTS.length))));
+        }
+    }
+
+    /** Small-caps, so a category id reads like the rest of the title. */
+    private static String smallCaps(String text) {
+        return Text.smallCaps(text == null ? "" : text.replace('_', ' '));
+    }
+
     @Override
     public void build() {
-    }
-
-    /** The kits on the current page of the current category. */
-    private List<String> currentKits(List<CategoryManager.Category> categories) {
-        if (categories.isEmpty() || this.categoryIndex >= categories.size()) {
-            // The "all kits" page: everything, in kit order.
-            ArrayList<String> all = new ArrayList<String>();
-            for (Kit kit : this.plugin.getKitManager().all()) {
-                all.add(kit.getName());
-            }
-            return all;
-        }
-        return this.plugin.getCategoryManager().kitsFor(categories.get(this.categoryIndex));
-    }
-
-    private String headerFor(List<CategoryManager.Category> categories) {
-        if (categories.isEmpty()) {
-            return "";
-        }
-        if (this.categoryIndex >= categories.size()) {
-            return " <dark_gray>\u1d00\u029f\u029f \u1d0b\u026a\u1d1b\ua731";
-        }
-        return " <dark_gray>" + categories.get(this.categoryIndex).getHeader();
     }
 
     @Override
@@ -92,58 +104,28 @@ extends Menu {
             player.sendMessage(Text.prefixed("&cOnly the party leader can pick the kit."));
             return;
         }
-        List<CategoryManager.Category> categories = this.plugin.getCategoryManager().all();
-        // One extra step in the cycle for "all kits", so every kit is reachable
-        // even when it is in no category.
-        int steps = categories.isEmpty() ? 1 : categories.size() + 1;
-        if (this.categoryIndex >= steps) {
-            this.categoryIndex = 0;
+        List<Page> pages = this.pages();
+        if (this.step >= pages.size() || this.step < 0) {
+            this.step = 0;
         }
-        List<String> kits = new ArrayList<String>(new LinkedHashSet<String>(this.currentKits(categories)));
-        int pages = Math.max(1, (kits.size() + KIT_SLOTS.length - 1) / KIT_SLOTS.length);
-        if (this.page >= pages) {
-            this.page = 0;
-        }
-        int from = this.page * KIT_SLOTS.length;
-
-        this.createRaw(ROWS, "<dark_gray>\u258f " + PartyModeMenu.accent(this.mode.getLabel())
-                + this.headerFor(categories)
-                + (pages > 1 ? " <dark_gray>" + (this.page + 1) + "/" + pages : ""));
+        Page page = pages.get(this.step);
+        this.createRaw(ROWS, this.mode.getLabel() + " \u2192 " + page.title);
         ItemStack filler = Items.of(Material.BLACK_STAINED_GLASS_PANE).rawName(" ").build();
         for (int i = 0; i < SIZE; ++i) {
             this.inventory.setItem(i, filler);
         }
         String chosen = party.getKit();
-        for (int i = 0; i < KIT_SLOTS.length && from + i < kits.size(); ++i) {
-            ItemStack icon = this.kitIcon(kits.get(from + i), chosen);
+        for (int i = 0; i < KIT_SLOTS.length && i < page.kits.size(); ++i) {
+            ItemStack icon = this.kitIcon(page.kits.get(i), chosen);
             if (icon != null) {
                 this.inventory.setItem(KIT_SLOTS[i], icon);
             }
         }
-        if (kits.isEmpty()) {
-            this.inventory.setItem(KIT_SLOTS[3], Items.of(Material.BARRIER)
-                    .rawName("<#FF8A93>\u0274\u1d0f \u1d0b\u026a\u1d1b\ua731 \u029c\u1d07\u0280\u1d07")
-                    .rawLore("", LABEL + "\u1d1b\u029c\u026a\ua731 \u1d04\u1d00\u1d1b\u1d07\u0262\u1d0f\u0280\u028f \u029c\u1d00\ua731 \u0274\u1d0f \u1d0b\u026a\u1d1b\ua731")
-                    .hideTooltip().build());
-        }
-        this.inventory.setItem(SLOT_BACK, Items.of(Material.ARROW)
-                .rawName(VALUE + "\u0299\u1d00\u1d04\u1d0b")
-                .hideTooltip().tag(this.plugin.keyButton(), "kit-back").build());
-        if (steps > 1) {
-            this.inventory.setItem(SLOT_CATEGORY, Items.of(Material.ENDER_EYE)
-                    .rawName(PartyModeMenu.accent("\u0274\u1d07x\u1d1b \u1d04\u1d00\u1d1b\u1d07\u0262\u1d0f\u0280\u028f"))
-                    .rawLore("", LABEL + "\u1d04\u028f\u1d04\u029f\u1d07 \u1d1b\u029c\u0280\u1d0f\u1d1c\u0262\u029c \u1d1b\u029c\u1d07 \u1d0b\u026a\u1d1b \u1d04\u1d00\u1d1b\u1d07\u0262\u1d0f\u0280\u026a\u1d07\ua731")
-                    .hideTooltip().tag(this.plugin.keyButton(), "kit-cat").build());
-        }
-        if (this.page > 0) {
-            this.inventory.setItem(SLOT_PREV, Items.of(Material.ARROW)
-                    .rawName(VALUE + "\u1d18\u0280\u1d07\u1d20\u026a\u1d0f\u1d1c\ua731 \u1d18\u1d00\u0262\u1d07")
-                    .hideTooltip().tag(this.plugin.keyButton(), "kit-prev").build());
-        }
-        if (this.page < pages - 1) {
-            this.inventory.setItem(SLOT_NEXT, Items.of(Material.ARROW)
-                    .rawName(VALUE + "\u0274\u1d07x\u1d1b \u1d18\u1d00\u0262\u1d07")
-                    .hideTooltip().tag(this.plugin.keyButton(), "kit-next").build());
+        if (pages.size() > 1) {
+            this.inventory.setItem(SLOT_ARROW, Items.of(Material.ARROW)
+                    .name("&eNext Category")
+                    .lore("&f\u2192 another category")
+                    .tag(this.plugin.keyButton(), "next-cat").build());
         }
         player.openInventory(this.inventory);
     }
@@ -153,44 +135,30 @@ extends Menu {
         if (kit == null) {
             return null;
         }
-        boolean picked = kit.getName().equalsIgnoreCase(chosen);
         Items item = Items.of(kit.getIcon())
-                .rawLore("", picked ? "<#7CFF6B>\u25cf \u1d04\u029c\u1d0f\ua731\u1d07\u0274" : HINT + "\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \u1d18\u026a\u1d04\u1d0b")
-                .glow(picked)
+                .glow(kit.getName().equalsIgnoreCase(chosen))
                 .hideTooltip()
                 .tag(this.plugin.keyKit(), kit.getName());
         if (kit.getDisplayName() != null && !kit.getDisplayName().isEmpty()) {
             item.miniName(kit.getDisplayName());
         } else {
-            item.rawName(VALUE + kit.getName());
+            item.name("&e" + kit.getName());
         }
         return item.build();
     }
 
     @Override
     public void onClick(Player player, InventoryClickEvent event) {
-        String button = Items.readTag(event.getCurrentItem(), this.plugin.keyButton());
-        if ("kit-back".equals(button)) {
-            new PartyModeMenu(this.plugin).open(player);
-            return;
-        }
-        if ("kit-cat".equals(button)) {
-            List<CategoryManager.Category> categories = this.plugin.getCategoryManager().all();
-            int steps = categories.isEmpty() ? 1 : categories.size() + 1;
-            this.categoryIndex = (this.categoryIndex + 1) % steps;
-            this.page = 0;
-            this.open(player);
-            return;
-        }
-        if ("kit-next".equals(button) || "kit-prev".equals(button)) {
-            this.page += "kit-next".equals(button) ? 1 : -1;
-            if (this.page < 0) {
-                this.page = 0;
+        ItemStack clicked = event.getCurrentItem();
+        if ("next-cat".equals(Items.readTag(clicked, this.plugin.keyButton()))) {
+            int size = this.pages().size();
+            if (size > 0) {
+                this.step = (this.step + 1) % size;
+                this.open(player);
             }
-            this.open(player);
             return;
         }
-        String kit = Items.readTag(event.getCurrentItem(), this.plugin.keyKit());
+        String kit = Items.readTag(clicked, this.plugin.keyKit());
         if (kit == null || !this.plugin.getKitManager().exists(kit)) {
             return;
         }
@@ -201,8 +169,6 @@ extends Menu {
         }
         party.setKit(kit);
         if (this.mode == PartyMode.SPLIT) {
-            // Split's team picker already shows the mode, the kit and every
-            // player, which is everything a confirm would have said.
             party.getTeams().clear();
             new PartyTeamMenu(this.plugin).open(player);
             return;
