@@ -66,6 +66,16 @@ event:
     step: 20
     # How long each shrink animation takes (the border glows red while moving).
     shrink-seconds: 8
+    # Damage for standing outside the border, applied once a second.
+    # It ramps: the first second costs `base`, and every further second you stay
+    # out adds `per-second`, up to `max`. Stepping back inside resets it, so the
+    # penalty is for being out rather than for having been out. 2.0 = one heart.
+    # `base` matches what a single second outside used to cost, so nothing got
+    # gentler - it just no longer stays that cheap. Armour still reduces it.
+    damage:
+      base: 2.0
+      per-second: 1.0
+      max: 20.0
 
 # Shown in dark grey after a fighter's name in the tab list.
 # NOTE: the default is an emoji, which Minecraft's built-in font does not have -
@@ -229,3 +239,16 @@ scoreboard:
   # a party sees no sidebar at all. The old duel layout is in git if you want it
   # back; it is not read from here, so leaving a copy would be a switch that
   # does nothing.
+
+# PvP inside a match.
+#
+# A duel, a party match or an FFA round can run inside a region belonging to
+# another plugin. If that region denies PvP - including the common case of a
+# region drawn with a low Y ceiling, which silently stops the fight working once
+# anyone climbs above it - MeowDuels takes the hit back: it re-checks its own
+# rules (countdown, Split friendly fire, whether the event is running) and
+# allows the hit if the match allows it. Height is never part of that decision.
+#
+# Turn this off only if you want region flags to win inside arenas too.
+pvp:
+  force-in-match: true

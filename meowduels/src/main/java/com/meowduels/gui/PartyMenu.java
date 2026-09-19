@@ -106,6 +106,9 @@ extends Menu {
                          LABEL + "\u029f\u1d07\u1d00\u1d05\u1d07\u0280 " + SEP + VALUE + this.nameOf(party.getLeader()),
                          LABEL + "\u1d0d\u1d07\u1d0d\u0299\u1d07\u0280\ua731 " + SEP + VALUE + party.size(),
                          LABEL + "\u1d0b\u026a\u1d1b " + SEP + this.kitLabel(party),
+                         LABEL + "\u1d0d\u1d0f\u1d05\u1d07 " + SEP + (fighting
+                                 ? VALUE + party.getMode().getLabel()
+                                 : MUTED + "\u0274\u1d0f\u1d1b \u1d18\u026a\u1d04\u1d0b\u1d07\u1d05 \u028f\u1d07\u1d1b"),
                          "",
                          LABEL + "\ua731\u1d1b\u1d00\u1d1b\u1d1c\ua731 " + SEP + (fighting
                                  ? "<#7CFF6B>\ua730\u026a\u0262\u029c\u1d1b\u026a\u0274\u0262 <dark_gray>\u00b7 <#E6E8EB>" + party.getAlive().size() + " \ua731\u1d1b\u026a\u029f\u029f \u026a\u0274"
@@ -205,7 +208,8 @@ extends Menu {
         if (party.size() < 2) {
             return "<#FF8A93>\u0274\u1d07\u1d07\u1d05\ua731 \u1d00\u1d1b \u029f\u1d07\u1d00\ua731\u1d1b 2 \u1d18\u029f\u1d00\u028f\u1d07\u0280\ua731";
         }
-        return LABEL + "\ua730\u0280\u1d07\u1d07-\ua730\u1d0f\u0280-\u1d00\u029f\u029f, \u029f\u1d00\ua731\u1d1b \u1d0f\u0274\u1d07 \ua731\u1d1b\u1d00\u0274\u1d05\u026a\u0274\u0262 \u1d21\u026a\u0274\ua731";
+        // Not "free-for-all" any more - the mode is chosen on the next screen.
+        return LABEL + "\ua730\ua730\u1d00, \ua731\u1d18\u029f\u026a\u1d1b \u1d0f\u0280 \u1d05\u1d1c\u1d07\u029f\ua731";
     }
 
     private String nameOf(UUID id) {

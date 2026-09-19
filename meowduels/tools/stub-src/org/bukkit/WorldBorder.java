@@ -7,4 +7,6 @@ public interface WorldBorder {
     void setSize(double a0, long a1);
     void setWarningDistance(int a0);
     void setWarningTime(int a0);
+    void setDamageAmount(double a0);
+    void setDamageBuffer(double a0);
 }

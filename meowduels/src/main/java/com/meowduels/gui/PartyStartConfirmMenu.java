@@ -91,7 +91,9 @@ extends Menu {
             new PartyKitMenu(this.plugin, this.mode).open(player);
         } else if ("start-go".equals(id)) {
             player.closeInventory();
-            this.plugin.getPartyManager().startMatch(player);
+            // The mode this window was opened for, not the default. Dropping it
+            // here is how a Split start used to run as a free-for-all.
+            this.plugin.getPartyManager().startMatch(player, this.mode);
         }
     }
 }

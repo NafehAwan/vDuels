@@ -33,6 +33,7 @@ public class MessageManager {
             this.writeDefaults();
         }
         this.config = YamlConfiguration.loadConfiguration((File)this.file);
+        this.fillMissing();
         this.prefix = this.raw("prefix");
     }
 
@@ -46,6 +47,35 @@ public class MessageManager {
         }
         catch (IOException e) {
             this.plugin.getLogger().severe("Failed to write messages.yml: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Adds keys this build introduced to an existing messages.yml.
+     *
+     * <p>writeDefaults only runs when the file is absent, so on an updated
+     * server every new message would live in DEFAULTS and never be editable.
+     * Existing values are never touched - only genuinely missing keys are
+     * written, and the file is only saved when something was added.
+     */
+    private void fillMissing() {
+        if (this.config == null) {
+            return;
+        }
+        boolean added = false;
+        for (Map.Entry<String, String> entry : DEFAULTS.entrySet()) {
+            if (this.config.contains(entry.getKey())) continue;
+            this.config.set(entry.getKey(), (Object)entry.getValue());
+            added = true;
+        }
+        if (!added) {
+            return;
+        }
+        try {
+            this.config.save(this.file);
+        }
+        catch (IOException e) {
+            this.plugin.getLogger().warning("Failed to update messages.yml: " + e.getMessage());
         }
     }
 
@@ -175,6 +205,8 @@ public class MessageManager {
         DEFAULTS.put("party.countdown-title", "&d{seconds}");
         DEFAULTS.put("party.countdown-subtitle", "&7Free-for-all \u2022 last one standing");
         DEFAULTS.put("party.countdown-go", "&a&lFIGHT!");
+        DEFAULTS.put("party.countdown-subtitle-split", "<#8E959D>\u1d1b\u1d07\u1d00\u1d0d \u1d20\ua731 \u1d1b\u1d07\u1d00\u1d0d <dark_gray>\u2022 <#8E959D>\u028f\u1d0f\u1d1c'\u0280\u1d07 \u1d0f\u0274 {team}");
+        DEFAULTS.put("party.countdown-subtitle-split-noteam", "<#8E959D>\u1d1b\u1d07\u1d00\u1d0d \u1d20\ua731 \u1d1b\u1d07\u1d00\u1d0d <dark_gray>\u2022 <#8E959D>\u1d21\u026a\u1d18\u1d07 \u1d1b\u029c\u1d07 \u1d0f\u1d1b\u029c\u1d07\u0280 \ua731\u026a\u1d05\u1d07");
         DEFAULTS.put("party.kill-pvp", "<#FF3B57>\u2620 <#FF8A93>{victim} <#6B7079>was killed by <#7CFF6B>{killer} <dark_gray>\u2022 <#E6E8EB>{alive} <#6B7079>left");
         DEFAULTS.put("party.kill-generic", "<#FF3B57>\u2620 <#FF8A93>{victim} <#6B7079>died <dark_gray>\u2022 <#E6E8EB>{alive} <#6B7079>left");
         DEFAULTS.put("party.team-aqua", "<#7DE2FF>\u1d1b\u1d07\u1d00\u1d0d \u1d00\ua7af\u1d1c\u1d00");
@@ -185,6 +217,7 @@ public class MessageManager {
         DEFAULTS.put("party.no-winner", "&7The party match ended with no winner.");
         DEFAULTS.put("party.win-title", "&6&lVICTORY");
         DEFAULTS.put("party.win-subtitle", "&7Last one standing");
+        DEFAULTS.put("party.win-subtitle-split", "<#8E959D>\u028f\u1d0f\u1d1c\u0280 \u1d1b\u1d07\u1d00\u1d0d \u1d21\u026a\u1d18\u1d07\u1d05 \u1d1b\u029c\u1d07\u1d0d \u1d0f\u1d1c\u1d1b");
         DEFAULTS.put("event.kill.pvp", "<#FF3B57>\u2620 <#FF8A93>{victim} <#6B7079>was eliminated by <#7CFF6B>{killer} <dark_gray>\u2022 <#E6E8EB>{alive} <#6B7079>left");
         DEFAULTS.put("event.kill.generic", "<#FF3B57>\u2620 <#FF8A93>{victim} <#6B7079>was eliminated <dark_gray>\u2022 <#E6E8EB>{alive} <#6B7079>left");
         DEFAULTS.put("event.win", "&a&l{winner} has won the event! &4\u2620");

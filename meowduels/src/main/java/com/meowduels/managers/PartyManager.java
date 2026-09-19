@@ -524,7 +524,7 @@ public class PartyManager {
             Player p = Bukkit.getPlayer((UUID)id);
             if (p != null) {
                 p.sendTitle(this.msg("party.countdown-title", "seconds", String.valueOf(secondsLeft)),
-                        this.msg("party.countdown-subtitle"), 0, 25, 0);
+                        this.countdownSubtitle(party, id), 0, 25, 0);
                 Sounds.countdown(p);
             }
         }
@@ -533,6 +533,24 @@ public class PartyManager {
                 this.countdownTick(party, secondsLeft - 1);
             }
         }, 20L);
+    }
+
+    /**
+     * The line under the countdown number.
+     *
+     * <p>Mode-specific, because "free-for-all, last one standing" under a Split
+     * countdown is not a cosmetic slip - it tells the player the wrong rules for
+     * the fight they are about to be in.
+     */
+    private String countdownSubtitle(Party party, UUID id) {
+        if (!party.isSplit()) {
+            return this.msg("party.countdown-subtitle");
+        }
+        Party.Team team = party.teamOf(id);
+        if (team == null) {
+            return this.msg("party.countdown-subtitle-split-noteam");
+        }
+        return this.msg("party.countdown-subtitle-split", "team", this.teamName(team));
     }
 
     /**
@@ -668,7 +686,7 @@ public class PartyManager {
             for (UUID id : party.teamMembers(winner)) {
                 Player p = Bukkit.getPlayer((UUID)id);
                 if (p != null) {
-                    p.sendTitle(this.msg("party.win-title"), this.msg("party.win-subtitle"), 5, 40, 10);
+                    p.sendTitle(this.msg("party.win-title"), this.msg("party.win-subtitle-split"), 5, 40, 10);
                     Sounds.victory(p);
                 }
             }

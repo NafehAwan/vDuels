@@ -30,6 +30,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -62,6 +64,9 @@ public class EventManager {
     private final Map<UUID, Integer> kills = new HashMap<UUID, Integer>();
     private long runningSinceMs = 0L;
     private int borderGen = 0;
+    /** How many consecutive seconds a fighter has been outside the border. */
+    private final Map<UUID, Integer> borderSeconds = new HashMap<UUID, Integer>();
+    private final MiniMessage borderMm = MiniMessage.miniMessage();
     private WorldBorder eventBorder;
     private double borderCenterX;
     private double borderCenterZ;
@@ -425,6 +430,10 @@ public class EventManager {
             this.eventBorder.setWarningDistance(0);
             this.eventBorder.setWarningTime(0);
             this.eventBorder.setSize(start);
+            // Vanilla border damage is flat and distance-based. tickBorderDamage
+            // does the ramp instead, so the client border stays purely visual.
+            this.eventBorder.setDamageAmount(0.0);
+            this.eventBorder.setDamageBuffer(0.0);
         }
         catch (Throwable t) {
             this.eventBorder = null;
@@ -495,20 +504,61 @@ public class EventManager {
         }, intervalTicks);
     }
 
+    /**
+     * Border damage, once a second, ramping the longer you stay out.
+     *
+     * <p>A flat tick outside the border is survivable indefinitely with enough
+     * healing, which makes the shrink a suggestion rather than a deadline. The
+     * damage starts small and climbs for every second you stay out, so leaving
+     * early is cheap and camping outside is not a strategy. Stepping back in
+     * resets the climb - the penalty is for being out, not for having been out.
+     */
     public void tickBorderDamage() {
         if (this.state != State.RUNNING || this.eventBorder == null || this.alive.isEmpty()) {
+            this.borderSeconds.clear();
             return;
         }
         double half = this.eventBorder.getSize() / 2.0;
+        double base = this.plugin.getConfig().getDouble("event.border.damage.base", 2.0);
+        double ramp = this.plugin.getConfig().getDouble("event.border.damage.per-second", 1.0);
+        double cap = this.plugin.getConfig().getDouble("event.border.damage.max", 20.0);
+        this.borderSeconds.keySet().retainAll(this.alive);
         for (UUID id : new HashSet<UUID>(this.alive)) {
             Location loc;
             Player p = Bukkit.getPlayer((UUID)id);
-            if (p == null || !(Math.abs((loc = p.getLocation()).getX() - this.borderCenterX) > half) && !(Math.abs(loc.getZ() - this.borderCenterZ) > half)) continue;
+            if (p == null) {
+                this.borderSeconds.remove(id);
+                continue;
+            }
+            loc = p.getLocation();
+            if (!(Math.abs(loc.getX() - this.borderCenterX) > half) && !(Math.abs(loc.getZ() - this.borderCenterZ) > half)) {
+                this.borderSeconds.remove(id);
+                continue;
+            }
+            Integer had = this.borderSeconds.get(id);
+            int seconds = (had == null ? 0 : had.intValue()) + 1;
+            this.borderSeconds.put(id, Integer.valueOf(seconds));
+            double damage = Math.min(cap, base + ramp * (double)(seconds - 1));
             try {
-                p.damage(2.0);
+                p.damage(damage);
             }
             catch (Throwable throwable) {}
+            this.warnOutside(p, seconds, damage);
         }
+    }
+
+    /** Action bar while outside, so the ramp is visible rather than mysterious. */
+    private void warnOutside(Player p, int seconds, double damage) {
+        try {
+            String hearts = EventManager.oneDecimal(damage / 2.0);
+            p.sendActionBar((Component)this.borderMm.deserialize((Object)("<gradient:#FF2E55:#FF7FC4>\u1d0f\u1d1c\u1d1b\ua731\u026a\u1d05\u1d07 \u1d1b\u029c\u1d07 \u0299\u1d0f\u0280\u1d05\u1d07\u0280</gradient> <#6B7079>\u2503 <#FF8A93>-" + hearts + " \u2764 <#6B7079>\u2503 <#E6E8EB>" + seconds + "s")));
+        }
+        catch (Throwable throwable) {}
+    }
+
+    private static String oneDecimal(double v) {
+        long tenths = Math.round(v * 10.0);
+        return tenths % 10L == 0L ? String.valueOf(tenths / 10L) : tenths / 10L + "." + tenths % 10L;
     }
 
     private void resetBorder() {

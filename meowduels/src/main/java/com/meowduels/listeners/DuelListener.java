@@ -136,7 +136,10 @@ implements Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled=true)
+    // HIGHEST so it lands after PvpOverrideListener has revived a hit some
+    // region denied: the round-loss interception below is the whole reason a
+    // duel ends on a hit rather than on a death, and it has to see that hit.
+    @EventHandler(priority=EventPriority.HIGHEST, ignoreCancelled=true)
     public void onDamage(EntityDamageEvent event) {
         Entity entity = event.getEntity();
         if (!(entity instanceof Player)) {
