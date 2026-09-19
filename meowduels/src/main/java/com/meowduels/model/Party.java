@@ -1,5 +1,6 @@
 package com.meowduels.model;
 
+import com.meowduels.model.PartyMode;
 import com.meowduels.model.PlayerSnapshot;
 import org.bukkit.Location;
 import org.bukkit.block.data.BlockData;
@@ -25,6 +26,10 @@ import java.util.UUID;
 public class Party {
     public enum State { IDLE, FIGHTING }
 
+    /** Which side of a Split match someone is on. Meaningless in FFA, where the
+     *  map is simply left empty. */
+    public enum Team { AQUA, RED }
+
     private final UUID leader;
     /** Insertion-ordered, so the member list in the GUI doesn't reshuffle
      *  itself every time it is opened. */
@@ -38,6 +43,15 @@ public class Party {
      *  restoring an arena that has no saved snapshot. Same contract as
      *  ActiveDuel's. */
     private final Map<Location, BlockData> changedBlocks = new HashMap<Location, BlockData>();
+    /**
+     * Team membership for a Split match.
+     *
+     * <p>Kept separate from {@link #alive}: a member who is knocked out stops
+     * being alive but stays on their team, which is what lets the board and the
+     * nametags keep colouring them correctly while they watch.
+     */
+    private final Map<UUID, Team> teams = new HashMap<UUID, Team>();
+    private PartyMode mode = PartyMode.FFA;
     private State state = State.IDLE;
     private String kit;
     private Arena arena;
@@ -85,6 +99,7 @@ public class Party {
      *  a succession rule nobody asked for. */
     public void remove(UUID id) {
         this.members.remove(id);
+        this.teams.remove(id);
         this.invited.remove(id);
         this.alive.remove(id);
         this.watching.remove(id);
@@ -218,6 +233,84 @@ public class Party {
         return this.changedBlocks;
     }
 
+    public PartyMode getMode() {
+        return this.mode;
+    }
+
+    public void setMode(PartyMode mode) {
+        this.mode = mode == null ? PartyMode.FFA : mode;
+    }
+
+    public boolean isSplit() {
+        return this.mode == PartyMode.SPLIT;
+    }
+
+    public Map<UUID, Team> getTeams() {
+        return this.teams;
+    }
+
+    public Team teamOf(UUID id) {
+        return this.teams.get(id);
+    }
+
+    public void setTeam(UUID id, Team team) {
+        if (this.members.contains(id)) {
+            this.teams.put(id, team);
+        }
+    }
+
+    /** Everyone on a side, in member order so the picker does not reshuffle
+     *  itself every time it is drawn. */
+    public java.util.List<UUID> teamMembers(Team team) {
+        java.util.ArrayList<UUID> out = new java.util.ArrayList<UUID>();
+        for (UUID id : this.members) {
+            if (this.teams.get(id) == team) {
+                out.add(id);
+            }
+        }
+        return out;
+    }
+
+    /**
+     * Splits the party down the middle at random.
+     *
+     * <p>An odd member goes to AQUA rather than to whichever side the loop
+     * happened to reach first - the imbalance is unavoidable, so it may as well
+     * be predictable.
+     */
+    public void shuffleTeams() {
+        java.util.ArrayList<UUID> order = new java.util.ArrayList<UUID>(this.members);
+        java.util.Collections.shuffle(order);
+        this.teams.clear();
+        int half = (order.size() + 1) / 2;
+        for (int i = 0; i < order.size(); ++i) {
+            this.teams.put(order.get(i), i < half ? Team.AQUA : Team.RED);
+        }
+    }
+
+    /** How many of a side are still in the fight. */
+    public int aliveOn(Team team) {
+        int count = 0;
+        for (UUID id : this.alive) {
+            if (this.teams.get(id) == team) {
+                ++count;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * How many this side has in play: the alive count once a match is running,
+     * the membership count before it starts.
+     *
+     * <p>The team picker needs "does each side have someone" before anyone is
+     * alive, and the same question during a match means "is this side still in
+     * it". One method, because they are the same question at different times.
+     */
+    public int aliveOrMembers(Team team) {
+        return this.state == State.FIGHTING ? this.aliveOn(team) : this.teamMembers(team).size();
+    }
+
     public void resetMatch() {
         this.state = State.IDLE;
         this.finished = false;
@@ -229,5 +322,7 @@ public class Party {
         this.startedAt = 0L;
         this.fightStartsAt = 0L;
         this.changedBlocks.clear();
+        this.teams.clear();
+        this.mode = PartyMode.FFA;
     }
 }

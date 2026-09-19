@@ -31,6 +31,7 @@ public class Material {
     public static org.bukkit.Material IRON_SWORD;
     public static org.bukkit.Material LAPIS_LAZULI;
     public static org.bukkit.Material LEATHER_CHESTPLATE;
+    public static org.bukkit.Material LIGHT_BLUE_STAINED_GLASS_PANE;
     public static org.bukkit.Material LIME_DYE;
     public static org.bukkit.Material LIME_STAINED_GLASS_PANE;
     public static org.bukkit.Material MAGENTA_STAINED_GLASS_PANE;

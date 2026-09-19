@@ -4,6 +4,7 @@ import com.meowduels.MeowDuels;
 import com.meowduels.model.Arena;
 import com.meowduels.model.Kit;
 import com.meowduels.model.Party;
+import com.meowduels.model.PartyMode;
 import com.meowduels.model.PlayerSnapshot;
 import com.meowduels.util.AntiCheatBypass;
 import com.meowduels.util.Colors;
@@ -326,6 +327,10 @@ public class PartyManager {
      * party match can fail on any of party size, kit, arena or arena setup.
      */
     public void startMatch(Player leader) {
+        this.startMatch(leader, PartyMode.FFA);
+    }
+
+    public void startMatch(Player leader, PartyMode mode) {
         Party party = this.partyOf(leader.getUniqueId());
         if (party == null || !party.isLeader(leader.getUniqueId())) {
             leader.sendMessage(Text.prefixed("&cOnly the party leader can start a match."));
@@ -367,6 +372,24 @@ public class PartyManager {
             leader.sendMessage(Text.prefixed("&8" + this.plugin.getDuelManager().arenaAvailability(kit.getName())));
             return;
         }
+        if (mode == PartyMode.SPLIT) {
+            // Everyone online must be on a side. A member who joined after the
+            // picker was drawn has no team yet, and a team-less player in a team
+            // match is a player who can never be eliminated.
+            for (Player p : online) {
+                if (party.teamOf(p.getUniqueId()) == null) {
+                    party.setTeam(p.getUniqueId(), party.teamMembers(Party.Team.AQUA).size()
+                            <= party.teamMembers(Party.Team.RED).size()
+                            ? Party.Team.AQUA : Party.Team.RED);
+                }
+            }
+            if (this.onlineOn(party, online, Party.Team.AQUA) == 0
+                    || this.onlineOn(party, online, Party.Team.RED) == 0) {
+                leader.sendMessage(Text.prefixed("&cBoth teams need at least one online player."));
+                return;
+            }
+        }
+        party.setMode(mode);
         party.setArena(arena);
         party.setState(Party.State.FIGHTING);
         party.setFinished(false);
@@ -381,6 +404,9 @@ public class PartyManager {
         this.plugin.getArenaManager().clearLooseEntities(arena);
         for (Player p : online) {
             this.sendIn(party, p, kit, arena);
+        }
+        if (mode == PartyMode.SPLIT) {
+            this.announceTeams(party);
         }
         int seconds = Math.max(1, this.plugin.getConfig().getInt("party.countdown-seconds", 5));
         party.setFightStartsAt(System.currentTimeMillis() + (long)seconds * 1000L);
@@ -427,7 +453,15 @@ public class PartyManager {
         UUID id = player.getUniqueId();
         party.getAlive().add(id);
         party.getSnapshots().put(id, PlayerSnapshot.capture(player));
-        Location spawn = this.partySpawn(arena);
+        // Split sends the sides to the arena's two duel spawns, which every
+        // configured arena already has - that is what lets Split run in an
+        // ordinary duel arena with no FFA spawn set.
+        Party.Team team = party.isSplit() ? party.teamOf(player.getUniqueId()) : null;
+        Location spawn = team == null ? this.partySpawn(arena)
+                : (team == Party.Team.AQUA ? arena.getSpawn1() : arena.getSpawn2());
+        if (spawn == null) {
+            spawn = this.partySpawn(arena);
+        }
         String world = spawn != null && spawn.getWorld() != null ? spawn.getWorld().getName() : null;
         AntiCheatBypass.grant(this.plugin, player, AntiCheatBypass.worldNodes(this.plugin, world));
         if (spawn != null) {
@@ -608,6 +642,18 @@ public class PartyManager {
         if (!party.isFighting() || party.isFinished()) {
             return;
         }
+        if (party.isSplit()) {
+            // A side is out when nobody on it is alive. Last side standing wins,
+            // however many of them are left - counting heads instead would end a
+            // 3v1 the moment it became interesting.
+            int aqua = party.aliveOn(Party.Team.AQUA);
+            int red = party.aliveOn(Party.Team.RED);
+            if (aqua > 0 && red > 0) {
+                return;
+            }
+            this.endSplit(party, aqua > 0 ? Party.Team.AQUA : (red > 0 ? Party.Team.RED : null));
+            return;
+        }
         if (party.getAlive().size() > 1) {
             return;
         }
@@ -615,7 +661,48 @@ public class PartyManager {
         this.endMatch(party, winner);
     }
 
+    /** Ends a Split match, announcing the side rather than a person. */
+    private void endSplit(Party party, Party.Team winner) {
+        if (winner != null) {
+            this.broadcast(party, this.msg("party.team-winner", "team", this.teamName(winner)));
+            for (UUID id : party.teamMembers(winner)) {
+                Player p = Bukkit.getPlayer((UUID)id);
+                if (p != null) {
+                    p.sendTitle(this.msg("party.win-title"), this.msg("party.win-subtitle"), 5, 40, 10);
+                    Sounds.victory(p);
+                }
+            }
+        }
+        // endMatch does the teardown; passing no individual winner keeps it from
+        // announcing one on top of the team line above.
+        this.endMatch(party, null, winner == null);
+    }
+
+    private String teamName(Party.Team team) {
+        return this.msg(team == Party.Team.AQUA ? "party.team-aqua" : "party.team-red");
+    }
+
+    private void announceTeams(Party party) {
+        this.broadcast(party, this.msg("party.teams-line",
+                "aqua", String.valueOf(party.teamMembers(Party.Team.AQUA).size()),
+                "red", String.valueOf(party.teamMembers(Party.Team.RED).size())));
+    }
+
+    private int onlineOn(Party party, List<Player> online, Party.Team team) {
+        int count = 0;
+        for (Player p : online) {
+            if (party.teamOf(p.getUniqueId()) == team) {
+                ++count;
+            }
+        }
+        return count;
+    }
+
     private void endMatch(Party party, UUID winnerId) {
+        this.endMatch(party, winnerId, true);
+    }
+
+    private void endMatch(Party party, UUID winnerId, boolean announce) {
         if (party.isFinished()) {
             return;
         }
@@ -624,7 +711,9 @@ public class PartyManager {
         for (UUID id : new ArrayList<UUID>(party.involved())) {
             this.pullOut(party, id);
         }
-        if (winnerId != null) {
+        if (!announce) {
+            // A Split match already announced its winning side.
+        } else if (winnerId != null) {
             this.broadcast(party, this.msg("party.winner", "winner", this.nameOf(winnerId)));
             Player champ = Bukkit.getPlayer((UUID)winnerId);
             if (champ != null) {

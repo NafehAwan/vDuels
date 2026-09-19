@@ -1,8 +1,8 @@
-# Party Split — plan
+# Party Split
 
-Not built. The mode appears in the party match picker greyed and labelled
-"coming soon"; `PartyMode.SPLIT.isReady()` is `false` and the picker refuses the
-click. This is the design to build against.
+**Built.** `PartyMode.SPLIT.isReady()` is `true` and the mode is live in the
+party match picker. This is what it does; the "decisions" section at the end
+records how the open questions were settled.
 
 ## Flow
 
@@ -53,28 +53,35 @@ management screen.
 - Win condition: a team is out when all its members are eliminated. Last team
   standing wins.
 
-## What has to change
+## Where it lives
 
 | Where | What |
 |---|---|
-| `Party` | `Map<UUID, Team> teams`, `Team` enum (AQUA/RED), and `mode` so the match knows which shape it is |
-| `PartyManager.startMatch` | split spawns by team; win check counts teams, not heads |
-| `PartyManager.onDeath` | eliminate, then check whether that emptied a team |
+| `Party` | `Team` enum, `teams` map, `mode`, `shuffleTeams`, `aliveOn`, `aliveOrMembers` |
+| `PartyManager.startMatch(leader, mode)` | assigns any team-less member, refuses a side with nobody online, spawns by team |
+| `PartyManager.checkWin` | counts sides, not heads; `endSplit` announces the winning team |
 | `DuelListener.onPartyFriendlyFire` | same-team hits cancelled while a Split match runs |
-| `MeowDuelsPlaceholders.partyPrefix` | team colour when the party is mid-Split |
-| new `PartyTeamMenu` | the screen above |
+| `MeowDuelsPlaceholders.partyPrefix` | aqua/red by side, skull when out |
+| `PartyTeamMenu` | the picker |
 
-## Decisions worth making before building
+## How the open questions were settled
 
-1. **Rejoining a Split match.** FFA lets a knocked-out member watch. Split
-   should too, but a spectator who was on aqua is not "on aqua" any more - the
-   team map needs to keep them for the scoreboard while excluding them from the
-   alive count. Keeping two sets (`teams` for membership, `alive` for who is
-   still in) is the same shape FFA already uses.
-2. **Uneven teams.** 3v2 is allowed above. The alternative - refusing to start
-   on an odd count - is worse: it makes a five-person party unable to play the
-   mode at all.
-3. **Party Duels**, the third mode, is a different shape again: it pairs members
-   off into real duels through `DuelManager` rather than running one match.
-   Worth building after Split, because the pairing UI is the team picker with
-   pairs instead of sides.
+1. **Knocked-out members keep their team.** `teams` is membership, `alive` is
+   who is still in - exactly the two-set shape FFA already used. So someone
+   eliminated from aqua still reads as aqua everywhere except the alive count,
+   and shows a skull instead of the bolt.
+2. **Uneven teams are allowed.** 3v2 starts. Refusing an odd count would make a
+   five-person party unable to play the mode at all, which is worse than an
+   uneven match. The odd member goes to AQUA - predictable rather than
+   whichever side the loop reached first.
+3. **A side with nobody ONLINE refuses to start.** Distinct from an empty team:
+   the picker will not let you start with an empty side, and `startMatch`
+   re-checks against who is actually online, because members can log off between
+   the picker being drawn and start being pressed.
+
+## Party Duels
+
+Still `isReady() == false`. It is a different shape again - it pairs members off
+into real duels through `DuelManager` rather than running one match - but the
+pairing UI is `PartyTeamMenu` with pairs instead of sides, so that screen is the
+place to start.

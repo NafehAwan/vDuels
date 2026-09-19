@@ -109,3 +109,5 @@ org/bukkit/block/Block | org.bukkit.Material getType();
 
 # Material.SHIELD - icon for the Party Split mode in the party match picker.
 org/bukkit/Material | public static org.bukkit.Material SHIELD;
+# Team AQUA's banner in the Party Split team picker.
+org/bukkit/Material | public static org.bukkit.Material LIGHT_BLUE_STAINED_GLASS_PANE;

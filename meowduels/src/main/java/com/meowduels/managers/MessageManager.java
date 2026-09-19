@@ -177,6 +177,10 @@ public class MessageManager {
         DEFAULTS.put("party.countdown-go", "&a&lFIGHT!");
         DEFAULTS.put("party.kill-pvp", "<#FF3B57>\u2620 <#FF8A93>{victim} <#6B7079>was killed by <#7CFF6B>{killer} <dark_gray>\u2022 <#E6E8EB>{alive} <#6B7079>left");
         DEFAULTS.put("party.kill-generic", "<#FF3B57>\u2620 <#FF8A93>{victim} <#6B7079>died <dark_gray>\u2022 <#E6E8EB>{alive} <#6B7079>left");
+        DEFAULTS.put("party.team-aqua", "<#7DE2FF>\u1d1b\u1d07\u1d00\u1d0d \u1d00\ua7af\u1d1c\u1d00");
+        DEFAULTS.put("party.team-red", "<#FF8A8A>\u1d1b\u1d07\u1d00\u1d0d \u0280\u1d07\u1d05");
+        DEFAULTS.put("party.teams-line", "<#8E959D>\u1d1b\u1d07\u1d00\u1d0d\ua731 <dark_gray>\u00bb <#7DE2FF>{aqua} <dark_gray>\u1d20\ua731 <#FF8A8A>{red}");
+        DEFAULTS.put("party.team-winner", "<#FFD65C>\u2605 {team} <#6B7079>won the party match!");
         DEFAULTS.put("party.winner", "<#FFD65C>\u2605 <gradient:#FFE9A3:#FFB02E>{winner}</gradient> <#6B7079>won the party match!");
         DEFAULTS.put("party.no-winner", "&7The party match ended with no winner.");
         DEFAULTS.put("party.win-title", "&6&lVICTORY");

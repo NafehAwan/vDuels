@@ -442,6 +442,17 @@ implements Relational {
         }
         UUID id = target.getUniqueId();
         if (party.isFighting()) {
+            // Split colours by side rather than by alive/out: in a team match
+            // which side someone is on is the thing you need at a glance, and
+            // the aqua/red pair is the one the whole plugin already uses.
+            if (party.isSplit() && party.teamOf(id) != null) {
+                boolean out = party.getWatching().contains(id);
+                boolean aqua = party.teamOf(id) == Party.Team.AQUA;
+                if (out) {
+                    return "\u00a78\u2620 \u00a78";
+                }
+                return aqua ? "\u00a7b\u26a1 \u00a7b" : "\u00a7c\u26a1 \u00a7c";
+            }
             if (party.getAlive().contains(id)) {
                 return "\u00a7a\u26a1 \u00a7a";
             }

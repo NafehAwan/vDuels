@@ -159,6 +159,14 @@ extends Menu {
             return;
         }
         party.setKit(kit);
+        if (this.mode == PartyMode.SPLIT) {
+            // Split's team picker already shows the mode, the kit and every
+            // player, which is everything the confirm would have said - asking
+            // twice would be asking for the sake of it.
+            party.getTeams().clear();
+            new PartyTeamMenu(this.plugin).open(player);
+            return;
+        }
         new PartyStartConfirmMenu(this.plugin, this.mode).open(player);
     }
 }
