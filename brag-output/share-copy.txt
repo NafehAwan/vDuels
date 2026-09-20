@@ -1,0 +1,1 @@
+I built the duels engine behind my own Minecraft server: party splits, FFA with a shrinking border, arenas and kits made entirely from in-game menus — and a build step that verifies 416 Paper API references every compile, because one wrong constant-pool entry crashes the server every tick. 21 seconds.

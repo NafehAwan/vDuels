@@ -5,3 +5,10 @@ target/
 .vscode/
 build/
 .gradle/
+
+# /brag video output. The composition source, the plan and the rendered video
+# are tracked; its assets are not - they are third-party or machine-local files
+# that brag-output/README.md says how to restore.
+brag-output/composition/node_modules/
+brag-output/composition/snapshots/
+brag-output/composition/assets/
