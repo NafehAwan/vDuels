@@ -126,14 +126,28 @@ server-name: "server"
 #           {party_alive} {party_role}
 # ============================================================================
 tab:
-  # The duel/party tab bubble hides everyone you are not fighting or partied
-  # with. false (default) hides them from the TAB LIST ONLY - they are still
-  # there in the world, visible and hittable.
+  # How a duel or party bubble hides the people you are not with.
   #
-  # Turn it true only if they keep reappearing in the list. TAB re-adds rows
-  # MeowDuels removes, and MeowDuels puts them back once a second; if your TAB
-  # build wins that argument, this switches to the cruder hide that nothing can
-  # undo - at the cost of those players vanishing from the world too.
+  # A DUEL hides them from the world as well as the tab list, and that is what
+  # makes the hiding stick. The tab-list-only call (unlistPlayer) is a request
+  # the client can be talked out of: TAB sends its own player-info updates for
+  # everyone it manages, and an update for a row the client has dropped makes
+  # the client recreate it. hidePlayer is not a request - the server stops
+  # sending them at all and nothing can put them back. Fighters and their
+  # spectators are alone in an arena, so there is nothing to lose by it.
+  #
+  # A PARTY does NOT hide the world: a party stands in the lobby with everyone
+  # else, and hiding there empties the lobby. Parties are tab-list-only and
+  # rely on the re-assert, which runs four times a second.
+  duel-hides-world: true
+  party-hides-world: false
+
+  # Logs what each bubble did, once per rebuild. Turn this on if tab hiding
+  # looks wrong and you want to know whether the plugin thinks it applied it.
+  debug: false
+
+  # DEAD KEY - no longer read. It was one flag for duels and parties together,
+  # defaulting to false, which is why duels stopped hiding anyone.
   bubble-hides-world: false
 
   # Branding, used by the duel/party layouts below and by the built-in tab when

@@ -164,12 +164,12 @@ public class TabService {
         // from - unlistPlayer is not undone by showPlayer.
         for (Player online : Bukkit.getOnlinePlayers()) {
             if (online.getUniqueId().equals(id)) continue;
-            this.setVisible(viewer, online, true, true);
-            // Undo the old world-hiding too, for anyone carrying it from a
-            // build where the bubble still used hidePlayer. Harmless when there
-            // is nothing to undo, and the alternative is a player stuck
-            // invisible until they relog.
+            // World first, then the list. listPlayer refuses a player this one
+            // cannot currently see, so re-listing before un-hiding throws and
+            // leaves the row missing - which is a player stuck out of the tab
+            // list after their duel ended.
             this.setVisible(viewer, online, true, false);
+            this.setVisible(viewer, online, true, true);
         }
     }
 
@@ -191,8 +191,7 @@ public class TabService {
             if (e.getValue() != group) continue;
             bubble.add(e.getKey());
         }
-        // Tab-list only unless the fallback is switched on - see hidesWorld.
-        boolean tabOnly = !this.hidesWorld();
+        boolean tabOnly = !this.hidesWorld(group);
         for (UUID mid : bubble) {
             Player member = Bukkit.getPlayer((UUID)mid);
             if (member == null) continue;
@@ -205,6 +204,12 @@ public class TabService {
         // match, so their tab list is just the fight - but the rest of the server
         // still sees THEM, because they are online and should look it. Hiding
         // both ways made duellists vanish from everyone's tab list mid-match.
+        if (this.debug()) {
+            this.plugin.getLogger().info("tab: " + (group instanceof Party ? "party" : "duel")
+                    + " bubble of " + bubble.size() + ", " + (tabOnly ? "tab-only" : "world+tab")
+                    + ", " + Math.max(0, Bukkit.getOnlinePlayers().size() - bubble.size())
+                    + " hidden from each member");
+        }
     }
 
     /**
@@ -448,10 +453,9 @@ public class TabService {
     }
 
     public void tick() {
-        // Before the external check on purpose: the bubble is ours whether or
-        // not TAB is drawing the rest of the list, and with TAB installed it is
-        // the case that needs this most.
-        this.reassertBubbles();
+        // reassertBubbles is no longer called from here: once a second loses
+        // too many races with TAB's own refresh. It runs on its own short timer
+        // in MeowDuels, and costs nothing while nobody is in a bubble.
         if (this.external) {
             return;
         }
@@ -478,9 +482,8 @@ public class TabService {
      * <p>Costs nothing while nobody is in a duel or a party, which is the state
      * a server is in most of the time.
      */
-    private void reassertBubbles() {
-        if (this.memberGroup.isEmpty() || this.hidesWorld()) {
-            // hidePlayer is not undone by TAB, so that mode needs no upkeep.
+    public void reassertBubbles() {
+        if (this.memberGroup.isEmpty()) {
             return;
         }
         for (Map.Entry<UUID, Object> entry : this.memberGroup.entrySet()) {
@@ -489,6 +492,10 @@ public class TabService {
                 continue;
             }
             Object group = entry.getValue();
+            // hidePlayer is not undone by TAB, so those groups need no upkeep.
+            if (this.hidesWorld(group)) {
+                continue;
+            }
             for (Player online : Bukkit.getOnlinePlayers()) {
                 UUID id = online.getUniqueId();
                 if (id.equals(entry.getKey()) || this.memberGroup.get(id) == group) {
@@ -506,16 +513,39 @@ public class TabService {
     }
 
     /**
-     * Whether the bubble should hide players from the WORLD as well as the tab
-     * list.
+     * Whether this bubble hides people from the WORLD as well as the tab list.
      *
-     * <p>Off by default, which is what was asked for: people you are not
-     * fighting stay visible around you. On, the bubble uses hidePlayer instead -
-     * cruder, but nothing else can undo it, so it is the fallback if TAB ever
-     * wins the argument above.
+     * <p>Per bubble kind, because the two want opposite things and one shared
+     * answer is why duels stopped hiding anyone.
+     *
+     * <p>A DUEL hides the world by default. unlistPlayer is a request the
+     * client can be talked out of: TAB sends its own player-info updates for
+     * every player it manages, and an update for a UUID the client has dropped
+     * makes the client recreate the row. Re-asserting once a second only wins
+     * some of those races, so the list stayed full. hidePlayer is not a request
+     * - the server stops sending the entity and the tab entry at all, and
+     * nothing downstream can put them back. Fighters are alone in an arena, so
+     * there is nothing to lose by it, and this is how it behaved back when it
+     * worked.
+     *
+     * <p>A PARTY does not. A party stands in the lobby with everybody else, and
+     * hiding the world there empties the lobby - which was a bug report of its
+     * own. Parties stay tab-only and lean on the re-assert.
+     *
+     * <p>tab.bubble-hides-world is deliberately no longer read. It was one flag
+     * for both, it defaulted to false, and servers already carry that false in
+     * their config - so flipping the default would have changed nothing on the
+     * server where it mattered.
      */
-    private boolean hidesWorld() {
-        return this.plugin.getConfig().getBoolean("tab.bubble-hides-world", false);
+    private boolean hidesWorld(Object group) {
+        if (group instanceof Party) {
+            return this.plugin.getConfig().getBoolean("tab.party-hides-world", false);
+        }
+        return this.plugin.getConfig().getBoolean("tab.duel-hides-world", true);
+    }
+
+    private boolean debug() {
+        return this.plugin.getConfig().getBoolean("tab.debug", false);
     }
 
     private static Component mm(String miniMessage) {

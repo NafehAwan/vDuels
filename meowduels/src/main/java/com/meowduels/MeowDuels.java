@@ -167,6 +167,11 @@ extends JavaPlugin {
             }
             QueuePickMenu.refreshAll();
         }, 20L, 20L);
+        // Every 5 ticks, not every 20. TAB re-sends player-info on its own
+        // refresh cycle and each one recreates a row we unlisted, so a
+        // once-a-second re-assert left the list visibly full between beats.
+        // It returns immediately while nobody is in a bubble.
+        this.getServer().getScheduler().runTaskTimer((Plugin)this, () -> this.tabService.reassertBubbles(), 5L, 5L);
         this.getServer().getScheduler().runTaskTimer((Plugin)this, () -> this.scoreboardService.updateDuelHealthTags(), 2L, 2L);
         this.getServer().getScheduler().runTaskTimer((Plugin)this, () -> this.scoreboardService.updateRankBelowName(), 20L, 20L);
         this.getLogger().info("MeowDuels enabled.");
