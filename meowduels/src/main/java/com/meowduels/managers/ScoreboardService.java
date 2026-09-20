@@ -71,6 +71,8 @@ public class ScoreboardService {
     private boolean masterEnabled = true;
     private Layout global = new Layout();
     private Layout ffa = new Layout();
+    private Layout duel = new Layout();
+    private Layout queue = new Layout();
     private final Map<UUID, Integer> rankTeamIndex = new HashMap<UUID, Integer>();
     private int rankTeamCounter = 0;
     private boolean rankNametags = false;
@@ -92,6 +94,8 @@ public class ScoreboardService {
             this.masterEnabled = false;
             this.global = new Layout();
             this.ffa = new Layout();
+            this.duel = new Layout();
+            this.queue = new Layout();
             return;
         }
         this.masterEnabled = sb.getBoolean("enabled", true);
@@ -117,6 +121,24 @@ public class ScoreboardService {
         }
         this.global = this.loadLayout(sb.getConfigurationSection("global"));
         this.ffa = this.loadLayout(sb.getConfigurationSection("ffa"));
+        this.duel = this.loadLayout(sb.getConfigurationSection("duel"));
+        this.queue = this.loadLayout(sb.getConfigurationSection("queue"));
+        // Say so at startup rather than leaving a missing board to be reported
+        // as a bug. An empty line list is a valid way to switch a board off -
+        // but it is also what a stale config looks like, and the two are
+        // indistinguishable from the outside.
+        this.warnIfEmpty("duel", this.duel, "duellists and spectators");
+        this.warnIfEmpty("queue", this.queue, "players searching for a match");
+        this.warnIfEmpty("global", this.global, "everyone else");
+    }
+
+    private void warnIfEmpty(String name, Layout layout, String who) {
+        if (!layout.lines.isEmpty()) {
+            return;
+        }
+        this.plugin.getLogger().warning("scoreboard." + name + " has no lines, so " + who
+                + " fall through to the next board down. Add lines under scoreboard." + name
+                + " in config.yml, or delete that section and restart to get the defaults back.");
     }
 
     private Layout loadLayout(ConfigurationSection section) {
@@ -262,25 +284,29 @@ public class ScoreboardService {
         boolean boardOn = this.plugin.getPlayerSettings().isScoreboard(id);
         boolean inEvent = this.plugin.getEventManager().isInvolved(id);
         boolean inParty = this.plugin.getPartyManager().inParty(id);
+        boolean queued = !inFight && !inEvent && this.plugin.getQueueManager().isQueued(id);
         if (this.masterEnabled && boardOn && !inParty) {
-            // A party gets no sidebar at all - not even the global one. Everyone
-            // else falls through to global, INCLUDING duellists: there is no
-            // duel-specific board any more, and the !inFight guard that used to
-            // keep the global one off them has gone with it.
+            // Four boards, most specific first. A party still gets no sidebar.
             //
-            // scoreboard.duel is not read. Defaulting it to false would have
-            // changed nothing on a server that already has it true, because
-            // existing config values are never overwritten - and it is the
-            // server that already has it true where this needed to take effect.
-            if (inEvent && this.ffa.enabled) {
+            // None of these read their own `enabled` flag, and that is not an
+            // oversight. Existing config values are never overwritten on
+            // update, so a server carrying `duel.enabled: false` from an older
+            // build would keep it forever and the board would stay missing with
+            // nothing to explain why - which is exactly how "the duel
+            // scoreboard doesn't work" was reported. The switch is the line
+            // list: empty `lines` means no board for that context, and it falls
+            // through to the next one down. FFA keeps its flag because nobody
+            // reported a problem with it and changing it would be a behaviour
+            // change nobody asked for.
+            if (inFight && !this.duel.lines.isEmpty()) {
+                // Spectators land here too, through `context`, so someone
+                // watching a fight reads the fight's board rather than their own.
+                sidebar = this.duel;
+            } else if (inEvent && this.ffa.enabled && !this.ffa.lines.isEmpty()) {
                 sidebar = this.ffa;
+            } else if (queued && !this.queue.lines.isEmpty()) {
+                sidebar = this.queue;
             } else if (!this.global.lines.isEmpty()) {
-                // global.enabled is deliberately not read. It existed to switch
-                // the out-of-duel board off while a separate duel board was on;
-                // there is only one board now, so the master switch above is the
-                // only switch, and a stale "enabled: false" left over from that
-                // era would otherwise mean no scoreboard anywhere - including in
-                // duels, which is exactly how it was reported.
                 sidebar = this.global;
             }
         }
@@ -475,6 +501,25 @@ public class ScoreboardService {
         return String.format("%02d:%02d", seconds / 60L, seconds % 60L);
     }
 
+    /** Up to three kit labels, then "+N" - a queue board is a narrow column. */
+    private static String joinKits(ScoreboardService svc, java.util.List<String> kits) {
+        if (kits.isEmpty()) {
+            return "";
+        }
+        StringBuilder out = new StringBuilder();
+        int shown = Math.min(3, kits.size());
+        for (int i = 0; i < shown; ++i) {
+            if (i > 0) {
+                out.append("<dark_gray>, ");
+            }
+            out.append(svc.kitLabel(kits.get(i)));
+        }
+        if (kits.size() > shown) {
+            out.append("<dark_gray> +").append(kits.size() - shown);
+        }
+        return out.toString();
+    }
+
     private Map<String, String> tokens(Player player, ActiveDuel ctx, UUID self, boolean spectator) {
         HashMap<String, String> t = new HashMap<String, String>();
         UUID id = player.getUniqueId();
@@ -507,6 +552,24 @@ public class ScoreboardService {
         t.put("ffa_kills", String.valueOf(ev.killsOf(recordId)));
         t.put("ffa_kit", this.kitLabel(ev.getKit()));
         t.put("ffa_time", ScoreboardService.clock(ev.runningSeconds()));
+        // Queue tokens. Always present so a queue board never renders a literal
+        // "{queue_time}" in the tick between leaving a queue and the board
+        // switching back to global.
+        QueueManager q = this.plugin.getQueueManager();
+        java.util.List<String> qk = new ArrayList<String>(q.queuedKits(id));
+        java.util.Collections.sort(qk);
+        int searching = 0;
+        int qDueling = 0;
+        for (String k : qk) {
+            searching = Math.max(searching, q.queued(k));
+            qDueling += q.dueling(k);
+        }
+        t.put("queue_kits", String.valueOf(qk.size()));
+        t.put("queue_list", ScoreboardService.joinKits(this, qk));
+        t.put("queue_kit", qk.isEmpty() ? "" : this.kitLabel(qk.get(0)));
+        t.put("queue_searching", String.valueOf(searching));
+        t.put("queue_dueling", String.valueOf(qDueling));
+        t.put("queue_time", ScoreboardService.clock(Math.max(0L, q.waitingSeconds(id))));
         Party party = this.plugin.getPartyManager().partyOf(id);
         t.put("party_leader", party == null ? "" : this.nameOf(party.getLeader()));
         t.put("party_size", party == null ? "0" : String.valueOf(party.size()));

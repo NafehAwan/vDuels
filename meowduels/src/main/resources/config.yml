@@ -235,10 +235,42 @@ scoreboard:
     - "<#FFC53D>⌚ <gray>ᴛɪᴍᴇ <dark_gray>» <white>{ffa_time}"
     - ""
     - "{ip_color}{server_ip}"
-  # There is no duel-specific board. Duellists see the `global` one above, and
-  # a party sees no sidebar at all. The old duel layout is in git if you want it
-  # back; it is not read from here, so leaving a copy would be a switch that
-  # does nothing.
+  # Shown to anyone in a duel, and to anyone spectating one (they read the
+  # fight's board, not their own). This is what makes a duellist's sidebar
+  # different from everybody else's.
+  #
+  # NOTE: none of duel/queue/global read an `enabled` flag. Existing config
+  # values are never overwritten on update, so a stale `enabled: false` from an
+  # older build would silently keep the board switched off forever. To turn one
+  # off, empty its `lines` - it then falls through to the next board down.
+  duel:
+    title: "<bold><gradient:#FF2D95:#FF8AD0>\u1d05\u1d1c\u1d07\u029f</gradient></bold>"
+    lines:
+    - "<gray><strikethrough>                    </strikethrough>"
+    - "{team_color}\u2694 <white>{player}"
+    - "<#FF5FB0>\u25c6 <white>{score} <dark_gray>-</dark_gray> <white>{opponent_score}  <dark_gray>\u00bb <red>{opponent}"
+    - ""
+    - "<#FF5FB0>\u2726 <gray>\u1d0b\u026a\u1d1b <dark_gray>\u00bb <white>{kit}"
+    - "<#FF5FB0>\u2666 <gray>\u0280\u1d0f\u1d1c\u0274\u1d05 <dark_gray>\u00bb <white>{round}<dark_gray>/<gray>{rounds_to_win}"
+    - "<#FF5FB0>\u25c8 <gray>\u1d00\u0280\u1d07\u0274\u1d00 <dark_gray>\u00bb <white>{arena}"
+    - "<#FF5FB0>\u231a <gray>\u1d1b\u026a\u1d0d\u1d07 <dark_gray>\u00bb <white>{time}"
+    - "<gray><strikethrough>                    </strikethrough>"
+    - "{ip_color}{server_ip}"
+
+  # Shown while searching for a match and not already in a duel, an event or a
+  # party. {queue_list} is up to three of your queued kits then "+N";
+  # {queue_searching} is the most anyone is waiting on one of those kits.
+  queue:
+    title: "<bold><gradient:#FF2E55:#FF7FC4>\u01eb\u1d1c\u1d07\u1d1c\u1d07</gradient></bold>"
+    lines:
+    - "<gray><strikethrough>                    </strikethrough>"
+    - "<#FF7FC4>\u2694 <gray>\u1d0b\u026a\u1d1b\ua731 <dark_gray>\u00bb <white>{queue_list}"
+    - "<#FF7FC4>\u25c6 <gray>\ua731\u1d07\u1d00\u0280\u1d04\u029c\u026a\u0274\u0262 <dark_gray>\u00bb <white>{queue_searching}"
+    - "<#FF7FC4>\u231a <gray>\u1d21\u1d00\u026a\u1d1b\u026a\u0274\u0262 <dark_gray>\u00bb <white>{queue_time}"
+    - ""
+    - "<#FF7FC4>\u2666 <gray>\u026a\u0274 \u1d05\u1d1c\u1d07\u029f\ua731 <dark_gray>\u00bb <white>{in_duels}"
+    - "<gray><strikethrough>                    </strikethrough>"
+    - "{ip_color}{server_ip}"
 
 # PvP inside a match.
 #

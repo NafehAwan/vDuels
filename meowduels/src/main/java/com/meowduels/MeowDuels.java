@@ -63,6 +63,7 @@ import org.bukkit.World;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
@@ -234,8 +235,17 @@ extends JavaPlugin {
         YamlConfiguration defaults = YamlConfiguration.loadConfiguration((Reader)new InputStreamReader(in, StandardCharsets.UTF_8));
         boolean changed = false;
         for (String key : defaults.getKeys(true)) {
+            Object value = defaults.get(key);
+            // Leaves only. getKeys(true) hands back parent SECTIONS as well as
+            // their leaves, and set()-ing a parent stores a live
+            // ConfigurationSection object rather than plain values. Setting the
+            // leaves instead creates the parents implicitly with ordinary maps,
+            // which is what actually round-trips through YAML - the difference
+            // only shows up when a whole new section is added, which is exactly
+            // when it matters.
+            if (value instanceof ConfigurationSection) continue;
             if (user.contains(key)) continue;
-            user.set(key, defaults.get(key));
+            user.set(key, value);
             changed = true;
         }
         if (changed) {
