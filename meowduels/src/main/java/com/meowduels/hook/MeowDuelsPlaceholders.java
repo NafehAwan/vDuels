@@ -110,9 +110,10 @@ implements Relational {
                 return Ranks.mini(this.plugin.getStatsManager(), id);
             }
             case "tabprefix": {
-                if (this.plugin.getPartyManager().inPartyMatch(id)) {
-                    return this.partyMarker() + this.lpPrefix(player);
-                }
+                // The party fight marker used to be prepended here as well.
+                // It is a suffix now, so both places agree and a party member
+                // never shows the icon on one side and their rank on the other.
+                //
                 // Viewer-independent answer: their real rank, with its real
                 // colours. Replacing it with the team bolt here was showing the
                 // whole server a fighter in aqua/red instead of their rank -
@@ -353,10 +354,11 @@ implements Relational {
             if (party != null) {
                 return party;
             }
-            // Outside the party, a party that is mid-match gets a sword in front
-            // of the name - the same idea as the duel marker, telling the rest of
-            // the server "busy, in a fight" without touching their rank.
-            return this.matchMark(target) + this.lpPrefix(target);
+            // Outside the party, a party member keeps their ordinary rank here.
+            // The "in a fight" marker is a SUFFIX, exactly like the duel one -
+            // after the name, a space, then the icon - so the two read the same
+            // way in the list instead of one leading and one trailing.
+            return this.lpPrefix(target);
         }
         if ("tagprefix".equals(key)) {
             // The name ABOVE THE HEAD, per viewer.
@@ -392,16 +394,6 @@ implements Relational {
         }
         // Anything else falls through to the ordinary, viewer-independent form.
         return this.onRequest((OfflinePlayer) target, params);
-    }
-
-    /** The sword shown to everyone outside a party that is fighting. */
-    private String matchMark(Player target) {
-        return this.plugin.getPartyManager().inPartyMatch(target.getUniqueId())
-                ? this.partyMarker() : "";
-    }
-
-    private String partyMarker() {
-        return "\u00a77\u2694 \u00a7r";
     }
 
     /** One name in the party roster line, marked by what they are. */
@@ -477,14 +469,24 @@ implements Relational {
      */
     private String suffixFor(OfflinePlayer player, UUID id, boolean showMarker) {
         if (this.plugin.getDuelManager().isInDuel(id)) {
-            String marker = this.plugin.getDuelMarker();
-            if (!showMarker || marker.isEmpty()) {
-                return "";
-            }
-            return " \u00a7r\u00a78" + marker;
+            return this.marker(this.plugin.getDuelMarker(), showMarker);
+        }
+        // A party in a match gets the same treatment in the same place - only
+        // while it is actually fighting, so an idle party in the lobby is not
+        // wearing a fight badge.
+        if (this.plugin.getPartyManager().inPartyMatch(id)) {
+            return this.marker(this.plugin.getPartyMarker(), showMarker);
         }
         String tag = Colors.toSection(this.papi(player, "%luckperms_suffix%"));
         return tag.trim().isEmpty() ? "" : " \u00a7r" + tag;
+    }
+
+    /** One shape for every after-the-name marker: space, reset, dark grey, icon. */
+    private String marker(String icon, boolean show) {
+        if (!show || icon == null || icon.isEmpty()) {
+            return "";
+        }
+        return " \u00a7r\u00a78" + icon;
     }
 
     private String lpPrefix(OfflinePlayer player) {

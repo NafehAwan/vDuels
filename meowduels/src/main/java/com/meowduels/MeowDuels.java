@@ -307,6 +307,14 @@ extends JavaPlugin {
         return marker == null ? "" : marker;
     }
 
+    /** The icon after a party fighter's name in tab. Crossed swords by default:
+     *  unlike the duel marker's emoji it is in Minecraft's own font, so it
+     *  renders without a resource pack. */
+    public String getPartyMarker() {
+        String marker = this.getConfig().getString("party-marker", "\u2694");
+        return marker == null ? "" : marker;
+    }
+
     public void giveSpawnItems(Player player) {
         SpawnItems.give(this, player);
     }

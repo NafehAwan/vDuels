@@ -87,6 +87,13 @@ event:
 # alternatives that always render: the crossed swords U+2694, or a dagger-ish
 # U+271D. Set to '' to show nothing.
 duel-marker: "\U0001F5E1"
+
+# Shown in dark grey after a party fighter's name in the tab list - the same
+# place and the same shape as duel-marker above, so a duel and a party read the
+# same way in the list. Only while the party is actually in a match; idle in the
+# lobby a party member's row is ordinary. Crossed swords U+2694 by default,
+# which is in Minecraft's own font and needs no resource pack. '' shows nothing.
+party-marker: "\u2694"
 # Health, hunger and potion effects are reset on join. The teleport to spawn and
 # the spawn hotbar are NOT part of this - they happen on every join regardless,
 # because a player who lands somewhere random with an empty hotbar has no way in.
