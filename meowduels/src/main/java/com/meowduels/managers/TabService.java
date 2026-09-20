@@ -539,6 +539,13 @@ public class TabService {
      */
     private boolean hidesWorld(Object group) {
         if (group instanceof Party) {
+            // A party IN A MATCH is in an arena, exactly like a duel, so it gets
+            // the same treatment - which is the only treatment that actually
+            // sticks with TAB installed. Idle in the lobby it stays tab-only,
+            // because hiding the world there is what emptied the lobby.
+            if (((Party)group).isFighting()) {
+                return true;
+            }
             return this.plugin.getConfig().getBoolean("tab.party-hides-world", false);
         }
         return this.plugin.getConfig().getBoolean("tab.duel-hides-world", true);

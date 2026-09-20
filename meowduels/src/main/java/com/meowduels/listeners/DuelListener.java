@@ -127,6 +127,13 @@ implements Listener {
             event.setCancelled(true);
             return;
         }
+        // The match has been called and everyone is still standing in the arena
+        // for the hold. Nothing may hurt them in it - a winner who drowns during
+        // their own victory title is not a victory.
+        if (party.isFinished()) {
+            event.setCancelled(true);
+            return;
+        }
         if (event.getCause() == EntityDamageEvent.DamageCause.VOID) {
             event.setCancelled(true);
             Location spawn = party.getArena() == null ? null : party.getArena().getEventSpawn();

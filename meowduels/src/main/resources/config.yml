@@ -35,6 +35,10 @@ party:
   # Seconds between everyone landing in the arena and the fighting opening.
   # Nobody can be hurt until it reaches zero.
   countdown-seconds: 5
+  # Seconds everyone stays standing in the arena AFTER the match is decided,
+  # the way a duel does it, so the victory title lands somewhere that still
+  # looks like the fight. Nobody can be hurt during it either.
+  end-seconds: 3.0
   # true  - a party gets its own tab list, the way a duel does. The party sees
   #         the party; the rest of the server still sees them, with their real
   #         rank, because the hiding is one-directional.

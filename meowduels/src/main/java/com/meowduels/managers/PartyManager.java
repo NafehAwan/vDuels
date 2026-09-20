@@ -54,6 +54,9 @@ public class PartyManager {
     private final MeowDuels plugin;
     /** Concurrent: party membership is read by the tab/placeholder thread. */
     private final Map<UUID, Party> byPlayer = new ConcurrentHashMap<UUID, Party>();
+    /** Matches that have been called but whose players are still in the arena
+     *  for the end-of-match hold. Identity set: a Party is only ever itself. */
+    private final Set<Party> pendingFinish = new HashSet<Party>();
 
     public PartyManager(MeowDuels plugin) {
         this.plugin = plugin;
@@ -101,7 +104,7 @@ public class PartyManager {
     /**
      * The leaders whose parties have an outstanding invite for this player.
      *
-     * <p>Only used for tab-completing /party accept and /party decline. The
+     * <p>Only used for tab-completing /party join and /party decline. The
      * invite lives on the party, not on the invitee, so answering "who invited
      * me" means asking every party - which is fine at the scale a party list
      * ever reaches, and beats keeping a second index in sync with the first.
@@ -268,7 +271,7 @@ public class PartyManager {
         target.sendMessage(this.msg("party.invite-info", "members", String.valueOf(party.size())));
         target.sendMessage("");
         TextComponent accept = new TextComponent(this.msg("party.invite-accept"));
-        accept.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/party accept " + leader.getName()));
+        accept.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/party join " + leader.getName()));
         accept.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                 new ComponentBuilder(this.msg("party.invite-accept-hover", "leader", leader.getName())).create()));
         TextComponent gap = new TextComponent(this.msg("party.invite-gap"));
@@ -673,6 +676,30 @@ public class PartyManager {
 
     /** /leave for someone watching a party match: out of the match, still in
      *  the party. */
+    /**
+     * Ends a running party match early, at the leader's word.
+     *
+     * <p>No winner is declared: a match somebody stopped did not produce one,
+     * and announcing whoever happened to still be standing would be a lie.
+     */
+    public void forceEnd(Player leader) {
+        Party party = this.partyOf(leader.getUniqueId());
+        if (party == null) {
+            leader.sendMessage(Text.prefixed("&cYou're not in a party."));
+            return;
+        }
+        if (!party.isLeader(leader.getUniqueId())) {
+            leader.sendMessage(Text.prefixed("&cOnly the party leader can end the match."));
+            return;
+        }
+        if (!party.isFighting() || party.isFinished()) {
+            leader.sendMessage(Text.prefixed("&cYour party isn't in a match."));
+            return;
+        }
+        this.broadcast(party, this.msg("party.force-ended", "leader", leader.getName()));
+        this.endMatch(party, null, false);
+    }
+
     public boolean leaveMatch(Player player) {
         UUID id = player.getUniqueId();
         Party party = this.partyOf(id);
@@ -770,15 +797,22 @@ public class PartyManager {
         this.endMatch(party, winnerId, true);
     }
 
+    /**
+     * Calls the match, then leaves everyone standing in the arena for a beat.
+     *
+     * <p>Duels do this and party matches did not: the winning hit and the
+     * teleport home landed in the same tick, so the victory title flashed over
+     * a lobby you were already standing in. The hold is the moment the match
+     * actually reads as over. PvP is already dead during it - every damage
+     * guard keys off isFinished - and the arena stays reserved until the
+     * players are out of it.
+     */
     private void endMatch(Party party, UUID winnerId, boolean announce) {
         if (party.isFinished()) {
             return;
         }
         party.setFinished(true);
-        Arena arena = party.getArena();
-        for (UUID id : new ArrayList<UUID>(party.involved())) {
-            this.pullOut(party, id);
-        }
+        this.pendingFinish.add(party);
         if (!announce) {
             // A Split match already announced its winning side.
         } else if (winnerId != null) {
@@ -790,6 +824,26 @@ public class PartyManager {
             }
         } else {
             this.broadcast(party, this.msg("party.no-winner"));
+        }
+        double hold = this.plugin.getConfig().getDouble("party.end-seconds", 3.0);
+        long ticks = Math.max(1L, Math.round(hold * 20.0));
+        Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> this.finishMatch(party), ticks);
+    }
+
+    /**
+     * The teardown half: everyone out, arena regenerated, party back to idle.
+     *
+     * <p>Guarded by pendingFinish rather than by party state, because shutdown
+     * can reach it before the scheduled run does and resetMatch has already
+     * cleared everything it could be tested on.
+     */
+    private void finishMatch(Party party) {
+        if (!this.pendingFinish.remove(party)) {
+            return;
+        }
+        Arena arena = party.getArena();
+        for (UUID id : new ArrayList<UUID>(party.involved())) {
+            this.pullOut(party, id);
         }
         if (arena != null) {
             this.plugin.getDuelManager().freeArena(arena.getName());
@@ -872,6 +926,9 @@ public class PartyManager {
                 // must not be skipped; the players are about to be disconnected
                 // anyway and DuelManager.shutdown restores what it holds.
                 this.endMatch(party, null);
+                // The hold is scheduled, and a scheduled task will not run
+                // during shutdown - so do the teardown inline right now.
+                this.finishMatch(party);
             }
         }
         this.byPlayer.clear();

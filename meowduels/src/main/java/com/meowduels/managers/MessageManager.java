@@ -193,7 +193,7 @@ public class MessageManager {
         DEFAULTS.put("party.invite-header", "  &d\u2605 &f&lPARTY INVITE");
         DEFAULTS.put("party.invite-from", "  &7{leader} &7wants you in their party.");
         DEFAULTS.put("party.invite-info", "  &8Members: &f{members}");
-        DEFAULTS.put("party.invite-accept", "  &a&l[ ACCEPT ]");
+        DEFAULTS.put("party.invite-accept", "  &a&l[ JOIN ]");
         DEFAULTS.put("party.invite-gap", "   ");
         DEFAULTS.put("party.invite-decline", "&c&l[ DECLINE ]");
         DEFAULTS.put("party.invite-accept-hover", "&aJoin {leader}'s party");
@@ -215,6 +215,7 @@ public class MessageManager {
         DEFAULTS.put("party.team-winner", "<#FFD65C>\u2605 {team} <#6B7079>won the party match!");
         DEFAULTS.put("party.winner", "<#FFD65C>\u2605 <gradient:#FFE9A3:#FFB02E>{winner}</gradient> <#6B7079>won the party match!");
         DEFAULTS.put("party.no-winner", "&7The party match ended with no winner.");
+        DEFAULTS.put("party.force-ended", "<#FF8A93>\u2716 <#6B7079>{leader} ended the party match.");
         DEFAULTS.put("party.win-title", "&6&lVICTORY");
         DEFAULTS.put("party.win-subtitle", "&7Last one standing");
         DEFAULTS.put("party.win-subtitle-split", "<#8E959D>\u028f\u1d0f\u1d1c\u0280 \u1d1b\u1d07\u1d00\u1d0d \u1d21\u026a\u1d18\u1d07\u1d05 \u1d1b\u029c\u1d07\u1d0d \u1d0f\u1d1c\u1d1b");

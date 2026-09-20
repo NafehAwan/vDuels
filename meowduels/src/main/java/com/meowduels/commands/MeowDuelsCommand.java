@@ -748,7 +748,7 @@ TabCompleter {
         ArrayList<String> out = new ArrayList<String>();
         if (args.length <= 1) {
             String prefix = args.length == 0 ? "" : args[0];
-            for (String sub : new String[]{"create", "invite", "accept", "decline", "spectate", "leave", "disband"}) {
+            for (String sub : new String[]{"create", "invite", "join", "decline", "spectate", "force_end", "leave", "disband"}) {
                 if (this.startsWith(sub, prefix)) {
                     out.add(sub);
                 }
@@ -767,7 +767,7 @@ TabCompleter {
                 if (!this.startsWith(online.getName(), args[1])) continue;
                 out.add(online.getName());
             }
-        } else if (sub.equals("accept") || sub.equals("decline")) {
+        } else if (sub.equals("join") || sub.equals("decline")) {
             for (String leader : this.plugin.getPartyManager().invitersOf(player.getUniqueId())) {
                 if (this.startsWith(leader, args[1])) {
                     out.add(leader);
@@ -791,7 +791,13 @@ TabCompleter {
             this.plugin.getPartyManager().leave(player);
             return;
         }
-        if (sub.equals("invite") || sub.equals("accept") || sub.equals("decline")) {
+        if (sub.equals("force_end") || sub.equals("forceend")) {
+            this.plugin.getPartyManager().forceEnd(player);
+            return;
+        }
+        // "accept" still works: it is in every invite message anyone has ever
+        // been sent, and those are already in people's chat history.
+        if (sub.equals("invite") || sub.equals("join") || sub.equals("accept") || sub.equals("decline")) {
             if (args.length < 2) {
                 player.sendMessage(Text.prefixed("&cUsage: &f/party " + sub + " <player>"));
                 return;
