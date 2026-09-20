@@ -26,6 +26,7 @@ import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 
@@ -88,6 +89,22 @@ implements Listener {
         }
     }
 
+    /**
+     * Every menu opens with the same sound, from one place.
+     *
+     * <p>Menus open themselves from a dozen call sites - a command, a spawn
+     * item, a button on another menu - so the sound belongs on the event, not
+     * on each of them. Quieter than the click, because browsing a kit picker
+     * fires this once per screen.
+     */
+    @EventHandler
+    public void onOpen(InventoryOpenEvent event) {
+        HumanEntity who = event.getPlayer();
+        if (who instanceof Player && event.getInventory().getHolder() instanceof Menu) {
+            Sounds.open((Player)who);
+        }
+    }
+
     @EventHandler
     public void onClose(InventoryCloseEvent event) {
         HumanEntity humanEntity = event.getPlayer();
@@ -99,6 +116,9 @@ implements Listener {
         if (inventoryHolder instanceof Menu) {
             Menu menu = (Menu)inventoryHolder;
             menu.onClose(player, event);
+            // No close sound on purpose. Every button that opens another menu
+            // closes this one first, so a close sound would turn one click into
+            // three overlapping noises on the most ordinary action there is.
         }
     }
 }

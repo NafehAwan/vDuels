@@ -40,6 +40,8 @@ public interface Player extends org.bukkit.OfflinePlayer {
     void removePotionEffect(org.bukkit.potion.PotionEffectType a0);
     boolean removeScoreboardTag(java.lang.String a0);
     void sendActionBar(net.kyori.adventure.text.Component a0);
+    int getCooldown(org.bukkit.Material a0);
+    void setCooldown(org.bukkit.Material a0, int a1);
     void sendMessage(java.lang.String a0);
     void sendMessage(net.kyori.adventure.text.Component a0);
     void sendPlayerListHeaderAndFooter(net.kyori.adventure.text.Component a0, net.kyori.adventure.text.Component a1);

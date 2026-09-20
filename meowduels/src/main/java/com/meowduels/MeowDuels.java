@@ -48,6 +48,7 @@ import com.meowduels.managers.TabEditManager;
 import com.meowduels.managers.TabService;
 import com.meowduels.managers.KitLayoutManager;
 import com.meowduels.managers.TrimPreferenceManager;
+import com.meowduels.util.Cooldowns;
 import com.meowduels.util.SpawnItems;
 import java.io.File;
 import java.io.IOException;
@@ -159,6 +160,9 @@ extends JavaPlugin {
             if (this.eventManager.isRunning() && this.eventManager.getArena() != null) {
                 DuelManager.applyWorldLocks(this.eventManager.getArena());
                 this.eventManager.tickBorderDamage();
+            }
+            for (Player online : this.getServer().getOnlinePlayers()) {
+                Cooldowns.tick(online);
             }
             QueuePickMenu.refreshAll();
         }, 20L, 20L);

@@ -22,10 +22,9 @@
 package com.meowduels.listeners;
 
 import com.meowduels.MeowDuels;
+import com.meowduels.util.Cooldowns;
 import com.meowduels.util.GoldenHead;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import com.meowduels.util.Sounds;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
@@ -52,7 +51,7 @@ implements Listener {
     private static final int HUNGER_RESTORE = 4;
     private static final float SATURATION_RESTORE = 9.6f;
     private final MeowDuels plugin;
-    private final Map<UUID, Long> lastEat = new HashMap<UUID, Long>();
+    private static final String COOLDOWN = "golden-head";
 
     public GoldenHeadListener(MeowDuels plugin) {
         this.plugin = plugin;
@@ -85,15 +84,19 @@ implements Listener {
 
     private void eat(Player player) {
         long cooldownMs = (long)(this.plugin.getConfig().getDouble("golden-head.cooldown-seconds", 5.0) * 1000.0);
-        long now = System.currentTimeMillis();
         if (cooldownMs > 0L) {
-            Long last = this.lastEat.get(player.getUniqueId());
-            if (last != null && now - last < cooldownMs) {
-                double remaining = (double)(cooldownMs - (now - last)) / 1000.0;
-                player.sendActionBar(GoldenHeadListener.mm("<red>Golden Head on cooldown: <yellow>" + String.format("%.1f", remaining) + "s"));
+            long left = Cooldowns.remaining(player, COOLDOWN);
+            if (left > 0L) {
+                // A draining bar and the item's own sweep, rather than a number
+                // that only appears when you click and only moves when you do.
+                player.sendActionBar(GoldenHeadListener.mm(
+                        "<#6B7079>" + Cooldowns.bar(left, cooldownMs, 10)
+                        + " <#FF8A93>\u0262\u1d0f\u029f\u1d05\u1d07\u0274 \u029c\u1d07\u1d00\u1d05 <#E6E8EB>"
+                        + Cooldowns.seconds(left) + "s"));
+                Sounds.cooling(player);
                 return;
             }
-            this.lastEat.put(player.getUniqueId(), now);
+            Cooldowns.start(player, COOLDOWN, this.heldHeadType(player), cooldownMs);
         }
         player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 200, 1));
         player.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 2400, 0));
@@ -107,6 +110,19 @@ implements Listener {
             // empty catch block
         }
         this.consumeOne(player);
+    }
+
+    /** Whichever item this server's golden head actually is, so the sweep lands
+     *  on the icon the player is looking at rather than on a guess. */
+    private Material heldHeadType(Player player) {
+        PlayerInventory inv = player.getInventory();
+        if (GoldenHead.isGoldenHead((Plugin)this.plugin, inv.getItemInMainHand())) {
+            return inv.getItemInMainHand().getType();
+        }
+        if (GoldenHead.isGoldenHead((Plugin)this.plugin, inv.getItemInOffHand())) {
+            return inv.getItemInOffHand().getType();
+        }
+        return Material.PLAYER_HEAD;
     }
 
     private static Component mm(String miniMessage) {

@@ -24,6 +24,7 @@ import com.meowduels.model.Kit;
 import com.meowduels.model.PlayerSnapshot;
 import com.meowduels.util.AntiCheatBypass;
 import com.meowduels.util.GameModeGuard;
+import com.meowduels.util.Sounds;
 import com.meowduels.util.Trims;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -349,6 +350,19 @@ public class EventManager {
             String hostName = h != null ? h.getName() : "Someone";
             this.broadcast(this.msg("event.announce", "host", hostName, "kit", this.kitLabel(), "time", EventManager.formatTime(remaining), "slots", this.slotsLabel()));
         }
+        // The last ten seconds get a title and a rising pip, to the players
+        // only. Before that the chat line is enough - a countdown that shouts
+        // for five minutes is just noise.
+        if (remaining <= 10L) {
+            int left = (int)remaining;
+            for (UUID id : new HashSet<UUID>(this.players)) {
+                Player p = Bukkit.getPlayer((UUID)id);
+                if (p == null) continue;
+                p.sendTitle(this.msg("event.countdown-title", "seconds", String.valueOf(left)),
+                        this.msg("event.countdown-subtitle"), 0, 25, 0);
+                Sounds.tick(p, left, 10);
+            }
+        }
         Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, this::announceTick, 20L);
     }
 
@@ -376,8 +390,23 @@ public class EventManager {
         }
         if (killer != null && !killerId.equals(victimId)) {
             this.broadcast(this.msg("event.kill.pvp", "killer", killer.getName(), "victim", victimName, "alive", String.valueOf(left)));
+            Sounds.kill(killer);
         } else {
             this.broadcast(this.msg("event.kill.generic", "victim", victimName, "alive", String.valueOf(left)));
+        }
+        if (victim != null) {
+            Sounds.death(victim);
+            victim.sendTitle(this.msg("event.out-title"),
+                    this.msg("event.out-subtitle", "kills", String.valueOf(this.killsOf(victimId))), 5, 40, 10);
+        }
+        // Everyone still in hears it too - an event where players quietly stop
+        // existing reads as an event that is not happening.
+        for (UUID id : new HashSet<UUID>(this.alive)) {
+            if (id.equals(victimId) || id.equals(killerId)) continue;
+            Player p = Bukkit.getPlayer((UUID)id);
+            if (p != null) {
+                Sounds.eliminated(p);
+            }
         }
     }
 
@@ -400,6 +429,12 @@ public class EventManager {
                     started.applyStartEffects(p);
                 }
             }
+        }
+        for (UUID id : new HashSet<UUID>(this.alive)) {
+            Player p = Bukkit.getPlayer((UUID)id);
+            if (p == null) continue;
+            p.sendTitle(this.msg("event.start-title"), this.msg("event.start-subtitle"), 0, 40, 10);
+            Sounds.fight(p);
         }
         this.broadcast(this.msg("event.started", new String[0]));
         this.startBorder();
@@ -544,6 +579,7 @@ public class EventManager {
             }
             catch (Throwable throwable) {}
             this.warnOutside(p, seconds, damage);
+            Sounds.border(p, seconds);
         }
     }
 
@@ -655,6 +691,10 @@ public class EventManager {
                 Player w = Bukkit.getPlayer((UUID)winnerId);
                 String name = w != null ? w.getName() : "A player";
                 this.broadcast(this.msg("event.win", "winner", name));
+                if (w != null) {
+                    w.sendTitle(this.msg("event.win-title"), this.msg("event.win-subtitle"), 5, 50, 10);
+                    Sounds.victory(w);
+                }
             }
             this.end();
         }

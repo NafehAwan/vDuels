@@ -76,6 +76,7 @@ import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
@@ -291,6 +292,22 @@ implements Listener {
      * their arena ten ticks later with the arena kit - the same sequence it
      * already ran, just starting from spawn instead of a bed.
      */
+    /**
+     * Put the sidebar back after a world change.
+     *
+     * <p>A duel, a party match and an event all teleport the player into an
+     * arena world, and plugins that key off worlds - TAB, per-world scoreboard
+     * setups, anything with a world-change hook - commonly hand the player a
+     * different scoreboard when they arrive. MeowDuels only attached its own
+     * when the board was first built, so the sidebar stayed gone for the rest
+     * of the match. The tick reconcile catches this within a second anyway;
+     * doing it here means the board never visibly blinks out on arrival.
+     */
+    @EventHandler
+    public void onWorldChange(PlayerChangedWorldEvent event) {
+        this.plugin.getScoreboardService().handleJoin(event.getPlayer());
+    }
+
     @EventHandler
     public void onRespawn(PlayerRespawnEvent event) {
         Player player = event.getPlayer();

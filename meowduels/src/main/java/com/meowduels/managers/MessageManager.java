@@ -235,6 +235,14 @@ public class MessageManager {
         DEFAULTS.put("event.started-cannot-join", "&cThe event already started - you can't join now.");
         DEFAULTS.put("event.host-usage", "&cUsage: &f/event host <kit> <minutes> [slots]&c, &f/event host force_start&c or &f/event host force_end");
         DEFAULTS.put("event.force-ended", "&cThe event has been ended by a host.");
+        DEFAULTS.put("event.countdown-title", "<gradient:#FFD65C:#FF8A2E>{seconds}</gradient>");
+        DEFAULTS.put("event.countdown-subtitle", "<#8E959D>\u1d1b\u029c\u1d07 \u1d07\u1d20\u1d07\u0274\u1d1b \u026a\ua731 \u1d00\u0299\u1d0f\u1d1c\u1d1b \u1d1b\u1d0f \ua731\u1d1b\u1d00\u0280\u1d1b");
+        DEFAULTS.put("event.start-title", "<gradient:#7CFF6B:#1FA32F>\ua730\u026a\u0262\u029c\u1d1b</gradient>");
+        DEFAULTS.put("event.start-subtitle", "<#8E959D>\u029f\u1d00\ua731\u1d1b \u1d0f\u0274\u1d07 \ua731\u1d1b\u1d00\u0274\u1d05\u026a\u0274\u0262 \u1d21\u026a\u0274\ua731");
+        DEFAULTS.put("event.win-title", "<gradient:#FFE9A3:#FFB02E>\u1d20\u026a\u1d04\u1d1b\u1d0f\u0280\u028f</gradient>");
+        DEFAULTS.put("event.win-subtitle", "<#8E959D>\u029f\u1d00\ua731\u1d1b \u1d0f\u0274\u1d07 \ua731\u1d1b\u1d00\u0274\u1d05\u026a\u0274\u0262");
+        DEFAULTS.put("event.out-title", "<gradient:#FF8A8A:#C0392B>\u1d07\u029f\u026a\u1d0d\u026a\u0274\u1d00\u1d1b\u1d07\u1d05</gradient>");
+        DEFAULTS.put("event.out-subtitle", "<#8E959D>\u028f\u1d0f\u1d1c\u0280 \u1d0b\u026a\u029f\u029f\ua731 <dark_gray>\u00bb <#E6E8EB>{kills}");
         DEFAULTS.put("countdown.player-ready", "&7{player} is Ready !");
         DEFAULTS.put("countdown.forced", "&7\u267b Duel Started Forcefully !");
         DEFAULTS.put("duel.forfeit-broadcast", "&7Someone got ragebaited! &4\u2620");

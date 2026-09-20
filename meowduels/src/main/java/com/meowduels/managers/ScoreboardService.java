@@ -301,6 +301,15 @@ public class ScoreboardService {
             this.boards.put(id, board);
             player.setScoreboard(board.scoreboard);
             this.lastRank.clear();
+        } else if (player.getScoreboard() != board.scoreboard) {
+            // The board is built once and handed over once, so anything that
+            // gives the player a different scoreboard - another plugin, a
+            // /scoreboard, a respawn handled elsewhere - used to make the
+            // sidebar disappear permanently: the shape still matched, so this
+            // branch never re-attached it, and nothing else ever would. Which
+            // is exactly what "scoreboard works everywhere except in a duel"
+            // looks like when something only touches you inside the arena.
+            player.setScoreboard(board.scoreboard);
         }
         if (sidebar != null) {
             Map<String, String> tokens = this.tokens(player, context, self, spectator);

@@ -40,6 +40,16 @@ implements Listener {
 
     @EventHandler(priority=EventPriority.HIGH)
     public void onPvp(EntityDamageByEntityEvent event) {
+        this.revive(event);
+    }
+
+    // There is deliberately no second pass at MONITOR. It would run after
+    // DuelListener's own HIGHEST handler, which cancels a lethal hit ON PURPOSE
+    // to end the round without killing anyone - reviving that would turn every
+    // round-ending hit into a real death. HIGH is the last slot that beats the
+    // region plugins without stepping on MeowDuels' own decisions.
+
+    private void revive(EntityDamageByEntityEvent event) {
         if (!event.isCancelled()) {
             return;
         }

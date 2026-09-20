@@ -7,6 +7,7 @@ import com.meowduels.model.Party;
 import com.meowduels.model.PartyMode;
 import com.meowduels.model.PlayerSnapshot;
 import com.meowduels.util.AntiCheatBypass;
+import com.meowduels.util.Cooldowns;
 import com.meowduels.util.Colors;
 import com.meowduels.util.GameModeGuard;
 import com.meowduels.util.Sounds;
@@ -129,6 +130,7 @@ public class PartyManager {
             player.sendMessage(Text.prefixed("&cYou have no invite from " + leader.getName() + "."));
             return;
         }
+        Sounds.deny(player);
         player.sendMessage(this.msg("party.invite-declined", "leader", leader.getName()));
         leader.sendMessage(this.msg("party.invite-declined-by", "player", player.getName()));
     }
@@ -227,6 +229,14 @@ public class PartyManager {
         }
         party.add(id);
         this.byPlayer.put(id, party);
+        Sounds.join(player);
+        for (UUID other : party.getMembers()) {
+            if (other.equals(id)) continue;
+            Player op = Bukkit.getPlayer((UUID)other);
+            if (op != null) {
+                Sounds.join(op);
+            }
+        }
         this.broadcast(party, "&f" + player.getName() + "&a joined the party.");
         // Old spawn items out, party items in - see refreshItems.
         this.refreshItems(player);
@@ -249,6 +259,7 @@ public class PartyManager {
      */
     private void sendInviteCard(Player target, Player leader, Party party) {
         target.sendMessage("");
+        Sounds.invite(target);
         target.sendMessage(this.msg("party.invite-header"));
         target.sendMessage(this.msg("party.invite-from", "leader", leader.getName()));
         // Members only. The kit was on here and did not belong: at invite time
@@ -291,6 +302,7 @@ public class PartyManager {
         party.remove(id);
         this.byPlayer.remove(id);
         this.broadcast(party, "&f" + player.getName() + "&7 left the party.");
+        Sounds.leave(player);
         player.sendMessage(Text.prefixed("&7You left the party."));
         this.refreshItems(player);
         this.plugin.getTabService().detach(id);
@@ -412,7 +424,7 @@ public class PartyManager {
         party.setFightStartsAt(System.currentTimeMillis() + (long)seconds * 1000L);
         this.broadcast(party, this.msg("party.match-started", "count", String.valueOf(online.size()),
                 "arena", arena.getName()));
-        this.countdownTick(party, seconds);
+        this.countdownTick(party, seconds, seconds * 20);
     }
 
     /**
@@ -499,12 +511,20 @@ public class PartyManager {
      * and a stray tick from the old one would then shout FIGHT over the new
      * one's countdown. Comparing fightStartsAt catches exactly that.
      */
-    private void countdownTick(Party party, int secondsLeft) {
+    /**
+     * The party countdown, stepped every half second rather than every second.
+     *
+     * <p>The number only changes once a second, but the bar under it moves at
+     * every step, which is the difference between a countdown that is running
+     * and one that looks frozen between beats. The title is re-sent on the
+     * second with a stay longer than the gap, so it never blinks out and back.
+     */
+    private void countdownTick(Party party, int totalSeconds, int remainingTicks) {
         if (!party.isFighting() || party.isFinished()) {
             return;
         }
         long deadline = party.getFightStartsAt();
-        if (secondsLeft <= 0) {
+        if (remainingTicks <= 0) {
             Kit kit = party.getKit() == null ? null : this.plugin.getKitManager().get(party.getKit());
             for (UUID id : party.getAlive()) {
                 Player p = Bukkit.getPlayer((UUID)id);
@@ -515,24 +535,40 @@ public class PartyManager {
                         kit.applyStartEffects(p);
                     }
                     p.sendTitle(this.msg("party.countdown-go"), "", 0, 20, 10);
+                    p.sendActionBar(this.deserialize(""));
                     Sounds.fight(p);
                 }
             }
             return;
         }
+        int secondsLeft = (remainingTicks + 19) / 20;
+        boolean onTheSecond = remainingTicks % 20 == 0;
+        String bar = "<#6B7079>" + Cooldowns.bar((long)remainingTicks * 50L,
+                (long)Math.max(1, totalSeconds) * 1000L, 20);
         for (UUID id : party.getAlive()) {
             Player p = Bukkit.getPlayer((UUID)id);
-            if (p != null) {
+            if (p == null) continue;
+            p.sendActionBar(this.deserialize(bar));
+            if (onTheSecond) {
                 p.sendTitle(this.msg("party.countdown-title", "seconds", String.valueOf(secondsLeft)),
                         this.countdownSubtitle(party, id), 0, 25, 0);
-                Sounds.countdown(p);
+                Sounds.tick(p, secondsLeft, totalSeconds);
             }
         }
         Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
             if (party.getFightStartsAt() == deadline) {
-                this.countdownTick(party, secondsLeft - 1);
+                this.countdownTick(party, totalSeconds, remainingTicks - 10);
             }
-        }, 20L);
+        }, 10L);
+    }
+
+    private net.kyori.adventure.text.Component deserialize(String mini) {
+        try {
+            return net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize((Object)mini);
+        }
+        catch (Throwable t) {
+            return net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize((Object)"");
+        }
     }
 
     /**
@@ -575,6 +611,20 @@ public class PartyManager {
             p.sendMessage(Text.prefixed("&7You're out - watching the rest. &f/leave&7 to stop."));
         }
         String left = String.valueOf(party.getAlive().size());
+        if (p != null) {
+            Sounds.death(p);
+        }
+        // Killer, victim and the survivors each hear something different, so a
+        // kill lands without anyone reading chat.
+        for (UUID other : party.getAlive()) {
+            Player op = Bukkit.getPlayer((UUID)other);
+            if (op == null) continue;
+            if (other.equals(killerId)) {
+                Sounds.kill(op);
+            } else {
+                Sounds.eliminated(op);
+            }
+        }
         if (killerId != null && !killerId.equals(id) && party.has(killerId)) {
             this.broadcast(party, this.msg("party.kill-pvp", "victim", this.nameOf(id),
                     "killer", this.nameOf(killerId), "alive", left));
