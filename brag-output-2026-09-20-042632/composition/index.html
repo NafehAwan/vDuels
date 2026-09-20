@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>MeowDuels — launch</title>
+    <!-- GSAP is vendored locally: cdn.jsdelivr.net is blocked by this
+         environment's network policy, so the scaffold's CDN <script> would
+         leave the timeline undefined in headless Chrome. -->
+    <script src="assets/vendor/gsap.min.js"></script>
+    <script src="assets/audio-data.js"></script>
+    <style>
+      /* Unifont is Minecraft's own fallback font, and the only face here with
+         complete coverage of the Phonetic Extensions (ᴅᴜᴇʟ) and Latin
+         Extended-D (ꜰ ꜱ ǫ) glyphs the plugin's strings are written in.
+         text-transform would lose the signature; these are real glyphs. */
+      @font-face {
+        font-family: "Unifont";
+        src: url("assets/fonts/unifont.otf") format("opentype");
+        font-weight: 400; font-style: normal;
+      }
+      @font-face {
+        font-family: "DejaVuSans";
+        src: url("assets/fonts/DejaVuSans.ttf") format("truetype");
+        font-weight: 400; font-style: normal;
+      }
+      @font-face {
+        font-family: "DejaVuSans";
+        src: url("assets/fonts/DejaVuSans-Bold.ttf") format("truetype");
+        font-weight: 700; font-style: normal;
+      }
+
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        margin: 0; width: 1080px; height: 1920px;
+        overflow: hidden; background: #0b0c0e;
+      }
+      #root {
+        width: 100%; height: 100%;
+        position: relative; overflow: hidden;
+        background: #0b0c0e;
+        font-family: "Unifont", monospace;
+        color: #e6e8eb;
+      }
+      #brandbar {
+        position: absolute; top: 132px; left: 0; right: 0; text-align: center;
+        font-size: 34px; letter-spacing: 0.22em; color: #6b7079;
+      }
+      #vignette {
+        position: absolute; inset: 0; pointer-events: none;
+        background: radial-gradient(90% 55% at 50% 45%, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0) 60%);
+      }
+      .clip { position: absolute; inset: 0; }
+      .mid { position: absolute; inset: 0; display: flex; flex-direction: column;
+             align-items: center; justify-content: center; }
+      .g-party   { background: linear-gradient(96deg, #ff8ad0 0%, #b04bd6 100%);
+                   -webkit-background-clip: text; background-clip: text; color: transparent; }
+      .g-go      { background: linear-gradient(180deg, #7cff6b 0%, #1fa32f 100%);
+                   -webkit-background-clip: text; background-clip: text; color: transparent; }
+      .g-gold    { background: linear-gradient(180deg, #ffd65c 0%, #ffb02e 100%);
+                   -webkit-background-clip: text; background-clip: text; color: transparent; }
+      .g-aqua    { background: linear-gradient(90deg, #7de2ff 0%, #4b7bff 100%);
+                   -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+      /* ---------- scene 1: typing the command ---------- */
+      #bar {
+        width: 940px; padding: 38px 40px;
+        background: rgba(12,13,15,0.92); border: 1px solid #24272c;
+        display: flex; align-items: center;
+      }
+      #cmd { font-size: 54px; letter-spacing: 0.02em; white-space: pre; }
+      #cmd .ch { opacity: 0; }
+      #cmd .slash { color: #8e959d; }
+      #caret { display: inline-block; width: 20px; height: 54px;
+               background: #e6e8eb; margin-left: 8px; vertical-align: -6px; }
+      #bar-hint { margin-top: 40px; font-size: 34px; color: #6b7079; letter-spacing: 0.05em; }
+
+      /* ---------- scene 2: duel request menu ---------- */
+      #menu {
+        width: 980px; background: #15171a; border: 1px solid #24272c;
+        padding: 38px 38px 40px;
+      }
+      #menu-head { font-size: 46px; letter-spacing: 0.04em; }
+      #menu-head .bar { color: #6b7079; }
+      #menu-head .sep { color: #6b7079; }
+      #menu-head .who { color: #e6e8eb; }
+      .row {
+        margin-top: 30px; display: flex; align-items: center; gap: 30px;
+        padding: 34px 32px; background: #101215; border: 1px solid #24272c;
+      }
+      .row-ico {
+        width: 88px; height: 88px; flex: 0 0 88px; display: grid; place-items: center;
+        font-size: 46px; background: #191c20; border: 1px solid #2c3036;
+      }
+      .row-lab { font-size: 36px; letter-spacing: 0.05em; color: #8e959d; }
+      .row-val { font-size: 48px; margin-top: 8px; color: #e6e8eb; }
+      #send {
+        margin-top: 40px; padding: 38px 0; text-align: center;
+        background: #0f1a10; border: 2px solid #1fa32f;
+        font-size: 54px; letter-spacing: 0.06em;
+      }
+      #send-hl { position: absolute; inset: 0; background: rgba(124,255,107,0.16); }
+      #cursor { position: absolute; left: 0; top: 0; width: 54px; height: 54px; }
+
+      /* ---------- scene 3: countdown ---------- */
+      .cd { position: absolute; left: 0; right: 0; top: 620px; text-align: center;
+            font-size: 560px; line-height: 1; }
+      #fight { position: absolute; left: 0; right: 0; top: 800px; text-align: center;
+               font-size: 286px; line-height: 1; }
+
+      /* ---------- scene 4: victory + taunt ---------- */
+      #win { font-size: 206px; line-height: 1; letter-spacing: 0.04em; }
+      #score { margin-top: 44px; font-size: 60px; color: #8e959d; letter-spacing: 0.04em; }
+      #score .a { color: #7cff6b; }
+      #score .b { color: #ff8a93; }
+      #taunt {
+        margin-top: 104px; padding: 30px 36px; font-size: 42px;
+        background: rgba(12,13,15,0.92); border: 1px solid #24272c;
+        white-space: nowrap;
+      }
+      #taunt .ico { font-family: "DejaVuSans", sans-serif; }
+      #taunt .gold { color: #ffd65c; }
+      #taunt .win { color: #7cff6b; }
+      #taunt .mid { color: #8e959d; position: static; display: inline; }
+      #taunt .lose { color: #ff8a93; }
+      #taunt .dot { color: #6b7079; }
+      #taunt .sc { color: #e6e8eb; }
+
+      /* ---------- scene 5: feature cards ---------- */
+      .card {
+        width: 980px; margin-top: 38px; display: flex; align-items: center; gap: 32px;
+        padding: 40px 36px; background: #15171a; border: 1px solid #24272c;
+      }
+      .card:first-child { margin-top: 0; }
+      .card-ico {
+        width: 88px; height: 88px; flex: 0 0 88px; display: grid; place-items: center;
+        font-size: 46px; background: #101215; border: 1px solid #2c3036;
+      }
+      .card-txt { font-size: 44px; letter-spacing: 0.03em; color: #e6e8eb; }
+
+      /* ---------- scene 6: wordmark ---------- */
+      #mark { font-size: 184px; line-height: 1.05; letter-spacing: 0.01em; display: block; }
+      #tag { margin-top: 56px; font-size: 44px; color: #8e959d; letter-spacing: 0.06em; }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="18.52"
+      data-width="1080"
+      data-height="1920"
+      data-fps="30"
+    >
+      <!-- ===== scene 1 — type the command — 0 → 2.52 ===== -->
+      <section id="s1" class="clip" data-start="0" data-duration="2.52" data-track-index="0">
+        <div class="mid">
+          <div id="bar-lift">
+            <div id="bar">
+              <span id="cmd"><span class="ch slash">/</span><span class="ch slash">d</span><span class="ch slash">u</span><span class="ch slash">e</span><span class="ch slash">l</span><span class="ch"> </span><span class="ch">G</span><span class="ch">o</span><span class="ch">o</span><span class="ch">d</span><span class="ch">B</span><span class="ch">o</span><span class="ch">y</span></span><span id="caret"></span>
+            </div>
+            <div id="bar-hint">ᴘʀᴇꜱꜱ ᴇɴᴛᴇʀ</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== scene 2 — duel request menu — 2.52 → 6.03 ===== -->
+      <section id="s2" class="clip" data-start="2.52" data-duration="3.51" data-track-index="1">
+        <div class="mid">
+          <div id="menu">
+            <div id="menu-head"><span class="bar">▏</span> <span class="g-aqua">ᴅᴜᴇʟ ʀᴇǫᴜᴇꜱᴛ</span> <span class="sep">›</span> <span class="who">GoodBoy</span></div>
+            <div class="row" id="row-arena">
+              <div class="row-ico" style="color:#7de2ff">⛨</div>
+              <div><div class="row-lab">ᴀʀᴇɴᴀ</div><div class="row-val">ᴄᴏʟᴏꜱꜱᴇᴜᴍ</div></div>
+            </div>
+            <div class="row" id="row-kit">
+              <div class="row-ico" style="color:#ff8ad0">✎</div>
+              <div><div class="row-lab">ᴋɪᴛ</div><div class="row-val">ɴᴇᴛʜᴇʀɪᴛᴇ ᴏᴘ</div></div>
+            </div>
+            <div class="row" id="row-rounds">
+              <div class="row-ico" style="color:#ffd65c">★</div>
+              <div><div class="row-lab">ʀᴏᴜɴᴅꜱ</div><div class="row-val">ꜰɪʀꜱᴛ ᴛᴏ 3</div></div>
+            </div>
+            <div id="send" style="position: relative">
+              <div id="send-hl"></div>
+              <span class="g-go" style="position: relative">ꜱᴇɴᴅ ʀᴇǫᴜᴇꜱᴛ</span>
+            </div>
+          </div>
+          <svg id="cursor" viewBox="0 0 32 32" aria-hidden="true">
+            <path d="M6 3 L6 25 L12 19.5 L16.5 29 L20.5 27 L16 18 L24 18 Z"
+                  fill="#ffffff" stroke="#0b0c0e" stroke-width="1.6" stroke-linejoin="round" />
+          </svg>
+        </div>
+      </section>
+
+      <!-- ===== scene 3 — countdown → FIGHT — 6.03 → 9.02 ===== -->
+      <section id="s3" class="clip" data-start="6.03" data-duration="2.99" data-track-index="2">
+        <div class="cd g-gold" id="cd-3">3</div>
+        <div class="cd g-gold" id="cd-2">2</div>
+        <div class="cd g-gold" id="cd-1">1</div>
+        <div id="fight" class="g-go">ꜰɪɢʜᴛ</div>
+      </section>
+
+      <!-- ===== scene 4 — victory + the taunt — 9.02 → 12.02 ===== -->
+      <section id="s4" class="clip" data-start="9.02" data-duration="3.0" data-track-index="3">
+        <div class="mid">
+          <div id="win" class="g-go">ᴠɪᴄᴛᴏʀʏ</div>
+          <div id="score">ꜱᴄᴏʀᴇ <span style="color:#3f444b">»</span> <span class="a">3</span> - <span class="b">1</span></div>
+          <div id="taunt"><span class="ico gold">☄</span> <span class="win">Nafeh</span> <span class="mid">obliterated</span> <span class="lose">GoodBoy</span> <span class="ico lose">☠</span> <span class="dot">•</span> <span class="sc">3</span><span class="dot">-</span><span class="sc">1</span></div>
+        </div>
+      </section>
+
+      <!-- ===== scene 5 — feature cards — 12.02 → 15.52 ===== -->
+      <section id="s5" class="clip" data-start="12.02" data-duration="3.5" data-track-index="4">
+        <div class="mid">
+          <div class="card" id="card-1">
+            <div class="card-ico" style="color:#ffd65c">★</div>
+            <div class="card-txt">ʀᴀɴᴋᴇᴅ ᴅᴜᴇʟꜱ · ǫᴜᴇᴜᴇꜱ · ᴋɪᴛꜱ</div>
+          </div>
+          <div class="card" id="card-2">
+            <div class="card-ico" style="color:#7de2ff">⚔</div>
+            <div class="card-txt">ᴘᴀʀᴛɪᴇꜱ · ꜰꜰᴀ · ᴛᴇᴀᴍ ꜱᴘʟɪᴛ</div>
+          </div>
+          <div class="card" id="card-3">
+            <div class="card-ico" style="color:#ff8ad0">⬥</div>
+            <div class="card-txt">ᴀʀᴇɴᴀꜱ ᴛʜᴀᴛ ʀᴇʙᴜɪʟᴅ ᴛʜᴇᴍꜱᴇʟᴠᴇꜱ</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== scene 6 — wordmark — 15.52 → 18.52 ===== -->
+      <section id="s6" class="clip" data-start="15.52" data-duration="3.0" data-track-index="5">
+        <div class="mid">
+          <span id="mark-glow" style="display:block; text-align:center">
+            <span id="mark" class="g-party">MeowDuels</span>
+          </span>
+          <div id="tag">ᴍᴏᴅᴇʀɴ ᴅᴜᴇʟꜱ ꜰᴏʀ ᴘᴀᴘᴇʀ 1.21</div>
+        </div>
+      </section>
+
+      <div id="brandbar" class="clip" data-start="0" data-duration="15.52" data-track-index="6"
+           style="display:block">ᴍᴇᴏᴡᴅᴜᴇʟꜱ</div>
+
+      <div id="vignette"></div>
+
+      <!-- ===== audio ===== -->
+      <audio
+        id="bed"
+        src="assets/music/happy-beats-business-moves-vol-1-by-ende-dot-app.mp3"
+        data-start="0"
+        data-duration="18.52"
+        data-track-index="10"
+        data-automation='{"version":1,"lanes":[{"target":"volume","points":[{"t":0,"v":0.30},{"t":2.5,"v":0.30},{"t":3.0,"v":0.48},{"t":17.6,"v":0.48},{"t":18.52,"v":0}]}]}'
+      ></audio>
+
+      <!-- typing: thinned to five ticks so it reads as typing, not a machine gun -->
+      <audio id="k1" src="assets/sfx/keypress.wav" data-start="0.52" data-track-index="11" data-volume="0.32"></audio>
+      <audio id="k2" src="assets/sfx/keypress.wav" data-start="0.70" data-track-index="12" data-volume="0.32"></audio>
+      <audio id="k3" src="assets/sfx/keypress.wav" data-start="0.88" data-track-index="13" data-volume="0.32"></audio>
+      <audio id="k4" src="assets/sfx/keypress.wav" data-start="1.06" data-track-index="14" data-volume="0.32"></audio>
+      <audio id="k5" src="assets/sfx/keypress.wav" data-start="1.24" data-track-index="15" data-volume="0.32"></audio>
+      <audio id="sfx-enter" src="assets/sfx/click_003.ogg" data-start="2.10" data-track-index="16" data-volume="0.60"></audio>
+
+      <audio id="sfx-r1" src="assets/sfx/click2.ogg" data-start="3.02" data-track-index="17" data-volume="0.45"></audio>
+      <audio id="sfx-r2" src="assets/sfx/click2.ogg" data-start="4.02" data-track-index="18" data-volume="0.45"></audio>
+      <audio id="sfx-r3" src="assets/sfx/click2.ogg" data-start="5.03" data-track-index="19" data-volume="0.45"></audio>
+      <audio id="sfx-send" src="assets/sfx/click_003.ogg" data-start="5.53" data-track-index="20" data-volume="0.80"></audio>
+
+      <audio id="sfx-p3" src="assets/sfx/bong_001.ogg" data-start="6.03" data-track-index="21" data-volume="0.50"></audio>
+      <audio id="sfx-p2" src="assets/sfx/bong_001.ogg" data-start="6.52" data-track-index="22" data-volume="0.50"></audio>
+      <audio id="sfx-p1" src="assets/sfx/bong_001.ogg" data-start="7.02" data-track-index="23" data-volume="0.50"></audio>
+      <audio id="sfx-fight" src="assets/sfx/impactSoft_medium_001.ogg" data-start="7.52" data-track-index="24" data-volume="0.70"></audio>
+
+      <audio id="sfx-win" src="assets/sfx/impactSoft_heavy_002.ogg" data-start="9.02" data-track-index="25" data-volume="0.60"></audio>
+
+      <audio id="sfx-c1" src="assets/sfx/rollover2.ogg" data-start="12.02" data-track-index="26" data-volume="0.40"></audio>
+      <audio id="sfx-c2" src="assets/sfx/rollover2.ogg" data-start="13.01" data-track-index="27" data-volume="0.40"></audio>
+      <audio id="sfx-c3" src="assets/sfx/rollover2.ogg" data-start="14.02" data-track-index="28" data-volume="0.40"></audio>
+
+      <audio id="sfx-mark" src="assets/sfx/impactSoft_heavy_000.ogg" data-start="15.52" data-track-index="29" data-volume="0.50"></audio>
+      <audio id="sfx-tag" src="assets/sfx/rollover2.ogg" data-start="17.02" data-track-index="30" data-volume="0.45"></audio>
+    </div>
+
+    <script>
+      (function () {
+        var tl = gsap.timeline({ paused: true });
+
+        /* ---------- scene 1 — type the command (0 → 2.52) ---------- */
+        // beat-grid: typing starts on the extrapolated 0.52s beat. The preset's
+        // grid is listed from 3.02s; the track is 120.19 BPM, so the same
+        // 0.4993s period extends cleanly back through the opening.
+        var chars = document.querySelectorAll("#cmd .ch");
+        for (var i = 0; i < chars.length; i++) {
+          tl.set(chars[i], { opacity: 1 }, 0.52 + i * 0.06);
+        }
+        tl.fromTo("#bar", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.34, ease: "power3.out" }, 0.20);
+        tl.fromTo("#bar-hint", { opacity: 0 }, { opacity: 1, duration: 0.30, ease: "power1.out" }, 1.40);
+        // A finite blink — never repeat:-1, the render has to be seekable.
+        tl.to("#caret", { opacity: 0, duration: 0.26, repeat: 5, yoyo: true, ease: "none" }, 1.30);
+        // ENTER: the bar flashes and lifts out of frame as if sent.
+        tl.to("#bar", { backgroundColor: "rgba(124,255,107,0.14)", duration: 0.08, ease: "none" }, 2.10);
+        tl.to("#bar", { backgroundColor: "rgba(12,13,15,0.92)", duration: 0.14, ease: "none" }, 2.18);
+        tl.to("#bar-hint", { opacity: 0, duration: 0.12, ease: "none" }, 2.10);
+        tl.to("#bar-lift", { y: -150, opacity: 0, duration: 0.30, ease: "power2.in" }, 2.20);
+
+        /* ---------- scene 2 — duel request menu (2.52 → 6.03) ---------- */
+        tl.set(["#row-arena", "#row-kit", "#row-rounds"], { opacity: 0 }, 2.52);
+        tl.set("#send-hl", { opacity: 0 }, 2.52);
+        tl.set("#cursor", { opacity: 0 }, 2.52);
+        tl.fromTo("#menu", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.40, ease: "power3.out" }, 2.56);
+        // beat-grid: rows at 3.02s / 4.02s / 5.03s — every OTHER beat (~1.0s),
+        // so each label clears the reading floor before the next lands.
+        tl.fromTo("#row-arena",  { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.36, ease: "power3.out" }, 3.02);
+        tl.fromTo("#row-kit",    { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.36, ease: "power3.out" }, 4.02);
+        tl.fromTo("#row-rounds", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.36, ease: "power3.out" }, 5.03);
+        // Simulated interaction: the cursor arrives and presses ꜱᴇɴᴅ ʀᴇǫᴜᴇꜱᴛ.
+        tl.fromTo("#cursor",
+          { opacity: 0, x: 700, y: 1560 },
+          { opacity: 1, x: 560, y: 1378, duration: 0.42, ease: "power2.inOut" },
+          5.06
+        );
+        tl.to("#cursor", { x: 554, y: 1384, duration: 0.05, ease: "power2.in" }, 5.48);
+        tl.to("#send-hl", { opacity: 1, duration: 0.08, ease: "power1.out" }, 5.53);
+        tl.to("#cursor", { x: 560, y: 1378, duration: 0.10, ease: "power2.out" }, 5.61);
+
+        /* ---------- scene 3 — countdown → FIGHT (6.03 → 9.02) ---------- */
+        tl.set(["#cd-3", "#cd-2", "#cd-1", "#fight"], { opacity: 0 }, 6.03);
+        // beat-grid: digits on CONSECUTIVE beats (6.03 / 6.52 / 7.02). A single
+        // glyph is not prose — half a second reads fine, and the plugin's own
+        // countdown is one number a second, so this is the same shape, faster.
+        [["#cd-3", 6.03], ["#cd-2", 6.52], ["#cd-1", 7.02]].forEach(function (n) {
+          tl.fromTo(n[0], { opacity: 0, scale: 1.3 }, { opacity: 1, scale: 1, duration: 0.22, ease: "power3.out" }, n[1]);
+          tl.to(n[0], { opacity: 0, duration: 0.12, ease: "power1.in" }, n[1] + 0.38);
+        });
+        // beat-locked: 7.52s
+        tl.fromTo("#fight", { opacity: 0, scale: 0.84 }, { opacity: 1, scale: 1, duration: 0.28, ease: "back.out(1.7)" }, 7.52);
+        tl.to("#fight", { opacity: 0, duration: 0.20, ease: "power1.in" }, 8.76);
+
+        /* ---------- scene 4 — victory + the taunt (9.02 → 12.02) ---------- */
+        tl.fromTo("#win", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.34, ease: "back.out(1.4)" }, 9.02);
+        tl.fromTo("#score", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.30, ease: "power3.out" }, 9.52);
+        // beat-grid: the plugin's own random match-end broadcast, at 10.52s,
+        // held 1.5s — it is a full sentence and it has to be readable.
+        tl.fromTo("#taunt", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.34, ease: "power3.out" }, 10.52);
+        tl.to(["#win", "#score", "#taunt"], { opacity: 0, duration: 0.22, ease: "power1.in" }, 11.78);
+
+        /* ---------- scene 5 — feature cards (12.02 → 15.52) ---------- */
+        // beat-grid: 12.02 / 13.01 / 14.02 — every other beat, all three held
+        // together for the last 1.5s.
+        tl.fromTo("#card-1", { opacity: 0, x: -34 }, { opacity: 1, x: 0, duration: 0.34, ease: "power3.out" }, 12.02);
+        tl.fromTo("#card-2", { opacity: 0, x: -34 }, { opacity: 1, x: 0, duration: 0.34, ease: "power3.out" }, 13.01);
+        tl.fromTo("#card-3", { opacity: 0, x: -34 }, { opacity: 1, x: 0, duration: 0.34, ease: "power3.out" }, 14.02);
+        tl.to(["#card-1", "#card-2", "#card-3"], { opacity: 0, duration: 0.22, ease: "power1.in" }, 15.28);
+
+        /* ---------- scene 6 — wordmark (15.52 → 18.52) ---------- */
+        tl.fromTo("#mark", { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: 0.44, ease: "power3.out" }, 15.54);
+        // beat-locked: 17.02s strong cue — the tagline lands on the track's
+        // own accent. The whole cut is 18.52s so this beat falls here.
+        tl.fromTo("#tag", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.26, ease: "power3.out" }, 17.02);
+
+        /* ---------- audio-reactive: the wordmark breathes ---------- */
+        var A = window.AUDIO_DATA;
+        if (A && A.bass && A.bass.length) {
+          var glow = document.getElementById("mark-glow");
+          for (var f = 0; f < A.totalFrames; f++) {
+            tl.call(
+              (function (b, l) {
+                return function () {
+                  glow.style.scale = 1 + b * 0.04;
+                  glow.style.filter =
+                    "drop-shadow(0 0 " + (6 + l * 26).toFixed(1) +
+                    "px rgba(255,138,208," + (0.10 + l * 0.26).toFixed(3) + "))";
+                };
+              })(A.bass[f], A.low[f]),
+              [],
+              f / A.fps
+            );
+          }
+        }
+
+        window.__timelines["main"] = tl;
+        tl.seek(0);
+      })();
+    </script>
+  </body>
+</html>

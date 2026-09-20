@@ -1,0 +1,1 @@
+MeowDuels — a modern duels plugin for Paper 1.21. Ranked 1v1s, queues, parties, FFA with a shrinking border, and arenas that rebuild themselves after every fight. Every arena and kit is set up from in-game menus — nothing is edited by hand.
