@@ -81,12 +81,12 @@ event:
       per-second: 1.0
       max: 20.0
 
-# Shown in dark grey after a fighter's name in the tab list.
-# NOTE: the default is an emoji, which Minecraft's built-in font does not have -
-# without a resource pack providing the glyph it renders as a box. Vanilla-safe
-# alternatives that always render: the crossed swords U+2694, or a dagger-ish
-# U+271D. Set to '' to show nothing.
-duel-marker: "\U0001F5E1"
+# Shown in dark grey after a fighter's name in the tab list. Crossed swords
+# U+2694, which is in Minecraft's own font and needs no resource pack. The old
+# default was a dagger emoji that rendered as a box without one; a config still
+# carrying that exact value is migrated to this on startup. Set to '' to show
+# nothing.
+duel-marker: "\u2694"
 
 # Shown in dark grey after a party fighter's name in the tab list - the same
 # place and the same shape as duel-marker above, so a duel and a party read the

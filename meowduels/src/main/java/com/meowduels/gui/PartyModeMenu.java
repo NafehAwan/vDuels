@@ -116,6 +116,12 @@ extends Menu {
         if (!mode.isReady()) {
             return;
         }
+        // Party Duels picks its opponent BEFORE its kit: the kit is a property
+        // of the match, and there is no match until there are two parties.
+        if (mode == PartyMode.DUELS) {
+            new PartyOpponentMenu(this.plugin).open(player);
+            return;
+        }
         new PartyKitMenu(this.plugin, mode).open(player);
     }
 }

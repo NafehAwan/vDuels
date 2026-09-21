@@ -216,6 +216,7 @@ public class MessageManager {
         DEFAULTS.put("party.winner", "<#FFD65C>\u2605 <gradient:#FFE9A3:#FFB02E>{winner}</gradient> <#6B7079>won the party match!");
         DEFAULTS.put("party.no-winner", "&7The party match ended with no winner.");
         DEFAULTS.put("party.force-ended", "<#FF8A93>\u2716 <#6B7079>{leader} ended the party match.");
+        DEFAULTS.put("party.duels-started", "<#7DE2FF>\u2694 <#6B7079>ᴘᴀʀᴛʏ ᴅᴜᴇʟꜱ ᴠꜱ <#E6E8EB>{party} <dark_gray>\u2022 <#E6E8EB>{pairs} <#6B7079>ᴘᴀɪʀꜱ <dark_gray>\u2022 <#6B7079>ꜰɪʀꜱᴛ ᴛᴏ <#E6E8EB>{rounds}");
         DEFAULTS.put("party.win-title", "&6&lVICTORY");
         DEFAULTS.put("party.win-subtitle", "&7Last one standing");
         DEFAULTS.put("party.win-subtitle-split", "<#8E959D>\u028f\u1d0f\u1d1c\u0280 \u1d1b\u1d07\u1d00\u1d0d \u1d21\u026a\u1d18\u1d07\u1d05 \u1d1b\u029c\u1d07\u1d0d \u1d0f\u1d1c\u1d1b");

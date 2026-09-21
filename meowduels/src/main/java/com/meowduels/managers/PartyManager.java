@@ -423,6 +423,9 @@ public class PartyManager {
         if (mode == PartyMode.SPLIT) {
             this.announceTeams(party);
         }
+        // The bubble's hiding mode depends on whether the party is fighting, so
+        // it has to be rebuilt now that it is.
+        this.plugin.getTabService().refreshParty(party);
         int seconds = Math.max(1, this.plugin.getConfig().getInt("party.countdown-seconds", 5));
         party.setFightStartsAt(System.currentTimeMillis() + (long)seconds * 1000L);
         this.broadcast(party, this.msg("party.match-started", "count", String.valueOf(online.size()),
@@ -697,7 +700,161 @@ public class PartyManager {
             return;
         }
         this.broadcast(party, this.msg("party.force-ended", "leader", leader.getName()));
+        if (party.getMode() == PartyMode.DUELS) {
+            // Nothing to tear down here - the pairings are real duels that own
+            // their own arenas. This releases the party, and each duel plays
+            // out or is left with /leave.
+            this.endDuels(party);
+            leader.sendMessage(Text.prefixed("&7Any duels already running will finish on their own."));
+            return;
+        }
         this.endMatch(party, null, false);
+    }
+
+    /**
+     * Every other party that could be fought right now.
+     *
+     * <p>Idle only, and never your own. A party already in a match is not a
+     * choice, and showing it as one just produces a click that fails.
+     */
+    public List<Party> opponentParties(Party mine) {
+        ArrayList<Party> out = new ArrayList<Party>();
+        HashSet<Party> seen = new HashSet<Party>();
+        for (Party party : this.byPlayer.values()) {
+            if (party == mine || !seen.add(party)) continue;
+            if (party.isFighting() || party.size() < 1) continue;
+            if (Bukkit.getPlayer((UUID)party.getLeader()) == null) continue;
+            out.add(party);
+        }
+        return out;
+    }
+
+    /** The party led by this player, or null. */
+    public Party partyLedBy(UUID leaderId) {
+        if (leaderId == null) {
+            return null;
+        }
+        Party party = this.partyOf(leaderId);
+        return party != null && party.isLeader(leaderId) ? party : null;
+    }
+
+    /**
+     * Party Duels: pair the two rosters off into ordinary 1v1s.
+     *
+     * <p>Deliberately thin. Each pair becomes a real duel, so the arena, the
+     * countdown, the rounds, the scoreboard and the teardown are all
+     * DuelManager's, already built and already correct. The party layer only
+     * marks both sides busy so nobody wanders into a queue mid-match, and lets
+     * go again when the last duel is over - which {@link #tick} notices,
+     * rather than this reaching into DuelManager for a callback.
+     *
+     * <p>Uneven rosters are allowed. The extra members sit it out in the lobby
+     * rather than the whole thing being refused for one odd player.
+     */
+    public void startDuels(Player leader) {
+        Party party = this.partyOf(leader.getUniqueId());
+        if (party == null || !party.isLeader(leader.getUniqueId())) {
+            leader.sendMessage(Text.prefixed("&cOnly the party leader can start a match."));
+            return;
+        }
+        if (party.isFighting()) {
+            leader.sendMessage(Text.prefixed("&cYour party is already fighting."));
+            return;
+        }
+        Party target = this.partyLedBy(party.getDuelTarget());
+        if (target == null || target == party) {
+            leader.sendMessage(Text.prefixed("&cThat party is gone - pick another."));
+            return;
+        }
+        if (target.isFighting()) {
+            leader.sendMessage(Text.prefixed("&cThat party just started a match of their own."));
+            return;
+        }
+        Kit kit = party.getKit() == null ? null : this.plugin.getKitManager().get(party.getKit());
+        if (kit == null) {
+            leader.sendMessage(Text.prefixed("&cPick a kit first."));
+            return;
+        }
+        List<Player> mine = this.onlineMembers(party);
+        List<Player> theirs = this.onlineMembers(target);
+        if (mine.isEmpty() || theirs.isEmpty()) {
+            leader.sendMessage(Text.prefixed("&cBoth parties need someone online."));
+            return;
+        }
+        int pairs = Math.min(mine.size(), theirs.size());
+        int rounds = party.getDuelRounds();
+        int started = 0;
+        for (int i = 0; i < pairs; ++i) {
+            if (this.plugin.getDuelManager().startPartyDuel(mine.get(i), theirs.get(i), kit.getName(), rounds)) {
+                ++started;
+                continue;
+            }
+            // Out of arenas. Stop here rather than leaving gaps in the middle.
+            break;
+        }
+        if (started == 0) {
+            leader.sendMessage(Text.prefixed("&cNo free arena supports that kit right now."));
+            leader.sendMessage(Text.prefixed("&8" + this.plugin.getDuelManager().arenaAvailability(kit.getName())));
+            return;
+        }
+        this.beginDuels(party, target, started, rounds);
+        this.beginDuels(target, party, started, rounds);
+        if (started < pairs) {
+            leader.sendMessage(Text.prefixed("&eOnly &f" + started + "&e of &f" + pairs
+                    + "&e pairs could start - the rest are waiting on a free arena."));
+        }
+    }
+
+    private void beginDuels(Party party, Party against, int pairs, int rounds) {
+        party.setMode(PartyMode.DUELS);
+        party.setState(Party.State.FIGHTING);
+        party.setFinished(false);
+        party.setStartedAt(System.currentTimeMillis());
+        party.getAlive().clear();
+        party.getWatching().clear();
+        // No arena and no snapshots on purpose: every member who is fighting is
+        // inside a real duel, and DuelManager owns their inventory and their
+        // way home. Touching either here would fight it for them.
+        this.plugin.getTabService().refreshParty(party);
+        this.broadcast(party, this.msg("party.duels-started",
+                "party", this.nameOf(against.getLeader()), "pairs", String.valueOf(pairs),
+                "rounds", String.valueOf(rounds)));
+    }
+
+    /** Ends a Party Duels match: no arena to give back, no inventories to restore. */
+    private void endDuels(Party party) {
+        party.resetMatch();
+        // attachParty, not refreshParty: every member was moved into their own
+        // DUEL bubble when their pairing started, and released from it when it
+        // finished, so the party bubble has to be built again from scratch
+        // rather than reconciled from a membership map that no longer has them.
+        this.plugin.getTabService().attachParty(party);
+        for (UUID id : party.getMembers()) {
+            Player p = Bukkit.getPlayer((UUID)id);
+            if (p != null) {
+                this.refreshItems(p);
+            }
+        }
+    }
+
+    private boolean anyoneDueling(Party party) {
+        for (UUID id : party.getMembers()) {
+            if (this.plugin.getDuelManager().isInDuel(id)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private List<Player> onlineMembers(Party party) {
+        ArrayList<Player> out = new ArrayList<Player>();
+        for (UUID id : party.getMembers()) {
+            Player p = Bukkit.getPlayer((UUID)id);
+            if (p != null) {
+                out.add(p);
+            }
+        }
+        return out;
     }
 
     public boolean leaveMatch(Player player) {
@@ -866,6 +1023,8 @@ public class PartyManager {
             this.plugin.getArenaManager().clearLooseEntities(arena);
         }
         party.resetMatch();
+        // Back to the lobby rules: tab-only, so the lobby does not look empty.
+        this.plugin.getTabService().refreshParty(party);
     }
 
     // ------------------------------------------------------------- upkeep
@@ -904,6 +1063,16 @@ public class PartyManager {
         }
         for (Party party : new HashSet<Party>(this.byPlayer.values())) {
             if (!party.isFighting() || party.isFinished()) {
+                continue;
+            }
+            if (party.getMode() == PartyMode.DUELS) {
+                // Two seconds of grace: the duels are started before the party
+                // is flagged, but a member can still be between one round's
+                // teardown and the next round's setup.
+                if (System.currentTimeMillis() - party.getStartedAt() > 2000L
+                        && !this.anyoneDueling(party)) {
+                    this.endDuels(party);
+                }
                 continue;
             }
             boolean anyone = false;

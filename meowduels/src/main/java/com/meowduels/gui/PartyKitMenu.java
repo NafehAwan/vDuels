@@ -191,6 +191,10 @@ extends Menu {
             new PartyTeamMenu(this.plugin).open(player);
             return;
         }
+        if (this.mode == PartyMode.DUELS) {
+            new PartyDuelsConfirmMenu(this.plugin).open(player);
+            return;
+        }
         new PartyStartConfirmMenu(this.plugin, this.mode).open(player);
     }
 }

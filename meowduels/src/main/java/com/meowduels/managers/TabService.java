@@ -122,6 +122,21 @@ public class TabService {
 
     /** Takes a whole party out of its bubble - disband, or the last member
      *  leaving a pair. */
+    /**
+     * Re-applies a party's bubble because what it should DO has changed.
+     *
+     * <p>hidesWorld asks whether the party is fighting, and that answer flips
+     * when a match starts or ends - but reconcile only ran on membership
+     * changes, so the bubble kept whatever mode it was built with. A party that
+     * formed in the lobby stayed tab-only for the whole match it then played.
+     */
+    public void refreshParty(Party party) {
+        if (party == null) {
+            return;
+        }
+        this.reconcile(party);
+    }
+
     public void detachParty(Party party) {
         if (party == null) {
             return;

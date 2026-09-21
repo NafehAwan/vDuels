@@ -285,7 +285,10 @@ public class ScoreboardService {
         boolean inEvent = this.plugin.getEventManager().isInvolved(id);
         boolean inParty = this.plugin.getPartyManager().inParty(id);
         boolean queued = !inFight && !inEvent && this.plugin.getQueueManager().isQueued(id);
-        if (this.masterEnabled && boardOn && !inParty) {
+        // A party member IN A DUEL is in a real duel - Party Duels pairs the two
+        // rosters off into ordinary 1v1s - so the duel board wins over the
+        // party's no-sidebar rule. Without this they fight with a blank side.
+        if (this.masterEnabled && boardOn && (!inParty || inFight)) {
             // Four boards, most specific first. A party still gets no sidebar.
             //
             // None of these read their own `enabled` flag, and that is not an

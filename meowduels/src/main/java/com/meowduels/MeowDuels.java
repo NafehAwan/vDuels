@@ -105,6 +105,7 @@ extends JavaPlugin {
     public void onEnable() {
         this.saveDefaultConfig();
         this.mergeConfigDefaults();
+        this.migrateDuelMarker();
         if (!this.getDataFolder().exists()) {
             this.getDataFolder().mkdirs();
         }
@@ -303,8 +304,27 @@ extends JavaPlugin {
      *  because the default is an emoji, which only renders with a resource pack
      *  that provides the glyph - "duel-marker" in config.yml takes any text. */
     public String getDuelMarker() {
-        String marker = this.getConfig().getString("duel-marker", "\ud83d\udde1");
+        String marker = this.getConfig().getString("duel-marker", "\u2694");
         return marker == null ? "" : marker;
+    }
+
+    /**
+     * Moves servers off the old dagger emoji.
+     *
+     * <p>The shipped default used to be U+1F5E1, which Minecraft's own font does
+     * not have - it rendered as a box unless a resource pack supplied the glyph.
+     * Changing the default alone fixes nothing, because an existing config is
+     * never overwritten, so this rewrites the value ONLY when it is still
+     * exactly that old default. Anyone who picked their own marker keeps it.
+     */
+    private void migrateDuelMarker() {
+        if (!"\ud83d\udde1".equals(this.getConfig().getString("duel-marker"))) {
+            return;
+        }
+        this.getConfig().set("duel-marker", (Object)"\u2694");
+        this.saveConfig();
+        this.getLogger().info("duel-marker was the old dagger emoji, which needs a resource pack to render. "
+                + "Switched it to crossed swords; set it back in config.yml if you had a pack for it.");
     }
 
     /** The icon after a party fighter's name in tab. Crossed swords by default:

@@ -52,6 +52,12 @@ public class Party {
      */
     private final Map<UUID, Team> teams = new HashMap<UUID, Team>();
     private PartyMode mode = PartyMode.FFA;
+    /** For Party Duels: the LEADER of the party we are about to fight, carried
+     *  across the opponent picker, the kit picker and the confirm screen.
+     *  A leader id rather than a Party reference, so a party that disbands
+     *  between two menus resolves to nothing instead of to a ghost. */
+    private UUID duelTarget;
+    private int duelRounds = 3;
     private State state = State.IDLE;
     private String kit;
     private Arena arena;
@@ -233,6 +239,22 @@ public class Party {
         return this.changedBlocks;
     }
 
+    public UUID getDuelTarget() {
+        return this.duelTarget;
+    }
+
+    public void setDuelTarget(UUID leaderId) {
+        this.duelTarget = leaderId;
+    }
+
+    public int getDuelRounds() {
+        return this.duelRounds;
+    }
+
+    public void setDuelRounds(int rounds) {
+        this.duelRounds = Math.max(1, Math.min(9, rounds));
+    }
+
     public PartyMode getMode() {
         return this.mode;
     }
@@ -324,5 +346,6 @@ public class Party {
         this.changedBlocks.clear();
         this.teams.clear();
         this.mode = PartyMode.FFA;
+        this.duelTarget = null;
     }
 }
