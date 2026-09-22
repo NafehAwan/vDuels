@@ -44,6 +44,10 @@ party:
   # duel.request-cooldown-seconds. Re-inviting someone who already has your
   # invite is refused outright.
   invite-cooldown-seconds: 5.0
+  # How long a Party Duels challenge stays on the table before it expires.
+  # The kit and rounds are frozen when it is sent, so what the other leader
+  # accepts is what they were shown.
+  duel-request-seconds: 60.0
   # Seconds everyone stays standing in the arena AFTER the match is decided,
   # the way a duel does it, so the victory title lands somewhere that still
   # looks like the fight. Nobody can be hurt during it either.

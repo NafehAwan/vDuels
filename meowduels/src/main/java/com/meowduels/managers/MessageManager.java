@@ -217,6 +217,14 @@ public class MessageManager {
         DEFAULTS.put("party.no-winner", "&7The party match ended with no winner.");
         DEFAULTS.put("party.force-ended", "<#FF8A93>\u2716 <#6B7079>{leader} ended the party match.");
         DEFAULTS.put("party.duels-started", "<#7DE2FF>\u2694 <#6B7079>ᴘᴀʀᴛʏ ᴅᴜᴇʟꜱ ᴠꜱ <#E6E8EB>{party} <dark_gray>\u2022 <#E6E8EB>{pairs} <#6B7079>ᴘᴀɪʀꜱ <dark_gray>\u2022 <#6B7079>ꜰɪʀꜱᴛ ᴛᴏ <#E6E8EB>{rounds}");
+        DEFAULTS.put("party.duel-header", "  <#7DE2FF>\u2694 <bold>ᴘᴀʀᴛʏ ᴅᴜᴇʟ ᴄʜᴀʟʟᴇɴɢᴇ</bold>");
+        DEFAULTS.put("party.duel-from", "  <#6B7079>ꜰʀᴏᴍ <#E6E8EB>{leader}<#6B7079>'ꜱ ᴘᴀʀᴛʏ <dark_gray>\u2022 <#E6E8EB>{members} <#6B7079>ᴍᴇᴍʙᴇʀꜱ");
+        DEFAULTS.put("party.duel-terms", "  <#6B7079>ᴋɪᴛ <dark_gray>\u00bb <#E6E8EB>{kit} <dark_gray>\u2022 <#6B7079>ꜰɪʀꜱᴛ ᴛᴏ <#E6E8EB>{rounds} <dark_gray>\u2022 <#E6E8EB>{pairs} <#6B7079>ᴘᴀɪʀꜱ");
+        DEFAULTS.put("party.duel-accept", "  &a&l[ ACCEPT ]");
+        DEFAULTS.put("party.duel-decline", "&c&l[ DECLINE ]");
+        DEFAULTS.put("party.duel-accept-hover", "&aFight {leader}'s party");
+        DEFAULTS.put("party.duel-decline-hover", "&cTurn down {leader}'s party duel");
+        DEFAULTS.put("party.duel-sent", "<#7DE2FF>\u2694 <#6B7079>ᴄʜᴀʟʟᴇɴɢᴇᴅ <#E6E8EB>{party}<#6B7079>'ꜱ ᴘᴀʀᴛʏ <dark_gray>\u2022 <#E6E8EB>{kit} <dark_gray>\u2022 <#6B7079>ꜰɪʀꜱᴛ ᴛᴏ <#E6E8EB>{rounds}");
         DEFAULTS.put("party.win-title", "&6&lVICTORY");
         DEFAULTS.put("party.win-subtitle", "&7Last one standing");
         DEFAULTS.put("party.win-subtitle-split", "<#8E959D>\u028f\u1d0f\u1d1c\u0280 \u1d1b\u1d07\u1d00\u1d0d \u1d21\u026a\u1d18\u1d07\u1d05 \u1d1b\u029c\u1d07\u1d0d \u1d0f\u1d1c\u1d1b");

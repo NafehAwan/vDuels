@@ -748,18 +748,37 @@ TabCompleter {
         ArrayList<String> out = new ArrayList<String>();
         if (args.length <= 1) {
             String prefix = args.length == 0 ? "" : args[0];
-            for (String sub : new String[]{"create", "invite", "join", "decline", "spectate", "force_end", "leave", "disband"}) {
+            for (String sub : new String[]{"create", "invite", "join", "decline", "duel", "spectate", "force_end", "leave", "disband"}) {
                 if (this.startsWith(sub, prefix)) {
                     out.add(sub);
                 }
             }
             return out;
         }
-        if (args.length != 2 || !(sender instanceof Player)) {
+        if (!(sender instanceof Player)) {
             return out;
         }
         Player player = (Player)sender;
         String sub = args[0].toLowerCase(Locale.ROOT);
+        if (sub.equals("duel")) {
+            if (args.length == 2) {
+                for (String action : new String[]{"accept", "decline"}) {
+                    if (this.startsWith(action, args[1])) {
+                        out.add(action);
+                    }
+                }
+            } else if (args.length == 3) {
+                for (String leader : this.plugin.getPartyManager().duelChallengers(player.getUniqueId())) {
+                    if (this.startsWith(leader, args[2])) {
+                        out.add(leader);
+                    }
+                }
+            }
+            return out;
+        }
+        if (args.length != 2) {
+            return out;
+        }
         if (sub.equals("invite")) {
             for (Player online : this.plugin.getServer().getOnlinePlayers()) {
                 if (online.getUniqueId().equals(player.getUniqueId())) continue;
@@ -789,6 +808,28 @@ TabCompleter {
         }
         if (sub.equals("leave") || sub.equals("disband")) {
             this.plugin.getPartyManager().leave(player);
+            return;
+        }
+        // /party duel accept|decline <leader> - answering another party's
+        // challenge. Deliberately its own subcommand rather than sharing
+        // "join": joining a party and agreeing to fight one are different
+        // enough that one word for both would be a trap.
+        if (sub.equals("duel")) {
+            String action = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "";
+            if (args.length < 3 || !action.equals("accept") && !action.equals("decline")) {
+                player.sendMessage(Text.prefixed("&cUsage: &f/party duel <accept|decline> <leader>"));
+                return;
+            }
+            Player from = this.plugin.getServer().getPlayerExact(args[2]);
+            if (from == null) {
+                player.sendMessage(Text.prefixed("&c" + args[2] + " isn't online."));
+                return;
+            }
+            if (action.equals("accept")) {
+                this.plugin.getPartyManager().acceptDuels(player, from);
+            } else {
+                this.plugin.getPartyManager().declineDuels(player, from);
+            }
             return;
         }
         if (sub.equals("force_end") || sub.equals("forceend")) {

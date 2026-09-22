@@ -160,7 +160,7 @@ extends Menu {
         }
         if ("pd-go".equals(id)) {
             player.closeInventory();
-            this.plugin.getPartyManager().startDuels(player);
+            this.plugin.getPartyManager().challengeDuels(player);
         }
     }
 }

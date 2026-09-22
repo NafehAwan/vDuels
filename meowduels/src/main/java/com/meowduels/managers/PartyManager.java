@@ -4,6 +4,7 @@ import com.meowduels.MeowDuels;
 import com.meowduels.model.Arena;
 import com.meowduels.model.Kit;
 import com.meowduels.model.Party;
+import com.meowduels.model.PartyDuelRequest;
 import com.meowduels.model.PartyMode;
 import com.meowduels.model.PlayerSnapshot;
 import com.meowduels.util.AntiCheatBypass;
@@ -19,6 +20,7 @@ import net.md_5.bungee.api.chat.TextComponent;
 import com.meowduels.util.SpawnItems;
 import com.meowduels.util.Text;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +60,9 @@ public class PartyManager {
      *  for the end-of-match hold. Identity set: a Party is only ever itself. */
     private final Set<Party> pendingFinish = new HashSet<Party>();
     private static final String INVITE_COOLDOWN = "party-invite";
+    private static final String CHALLENGE_COOLDOWN = "party-duel-challenge";
+    /** target leader -> challenging leader -> the offer on the table. */
+    private final Map<UUID, Map<UUID, PartyDuelRequest>> duelRequests = new HashMap<UUID, Map<UUID, PartyDuelRequest>>();
 
     public PartyManager(MeowDuels plugin) {
         this.plugin = plugin;
@@ -772,7 +777,7 @@ public class PartyManager {
      * <p>Uneven rosters are allowed. The extra members sit it out in the lobby
      * rather than the whole thing being refused for one odd player.
      */
-    public void startDuels(Player leader) {
+    public void challengeDuels(Player leader) {
         Party party = this.partyOf(leader.getUniqueId());
         if (party == null || !party.isLeader(leader.getUniqueId())) {
             leader.sendMessage(Text.prefixed("&cOnly the party leader can start a match."));
@@ -802,11 +807,111 @@ public class PartyManager {
             leader.sendMessage(Text.prefixed("&cBoth parties need someone online."));
             return;
         }
-        int pairs = Math.min(mine.size(), theirs.size());
+        Player targetLeader = Bukkit.getPlayer((UUID)target.getLeader());
+        if (targetLeader == null) {
+            leader.sendMessage(Text.prefixed("&cTheir leader is offline."));
+            return;
+        }
+        Map<UUID, PartyDuelRequest> pending = this.duelRequests.get(target.getLeader());
+        PartyDuelRequest existing = pending == null ? null : pending.get(leader.getUniqueId());
+        if (existing != null && !existing.isExpired(this.duelRequestTtl())) {
+            leader.sendMessage(Text.prefixed("&cThey already have your challenge - give them a moment."));
+            Sounds.deny(leader);
+            return;
+        }
+        long left = Cooldowns.remaining(leader, CHALLENGE_COOLDOWN);
+        if (left > 0L) {
+            leader.sendMessage(Text.prefixed("&cWait &f" + Cooldowns.seconds(left)
+                    + "s&c before challenging again."));
+            Sounds.deny(leader);
+            return;
+        }
+        Cooldowns.start(leader, CHALLENGE_COOLDOWN, null,
+                (long)(this.plugin.getConfig().getDouble("party.invite-cooldown-seconds", 5.0) * 1000.0));
         int rounds = party.getDuelRounds();
+        this.duelRequests.computeIfAbsent(target.getLeader(), k -> new HashMap<UUID, PartyDuelRequest>())
+                .put(leader.getUniqueId(), new PartyDuelRequest(leader.getUniqueId(), target.getLeader(),
+                        kit.getName(), rounds));
+        int pairs = Math.min(mine.size(), theirs.size());
+        leader.sendMessage(this.msg("party.duel-sent", "party", targetLeader.getName(),
+                "kit", this.kitLabel(kit.getName()), "rounds", String.valueOf(rounds)));
+        this.sendDuelChallengeCard(targetLeader, leader, party, kit.getName(), rounds, pairs);
+    }
+
+    /** Leaders who have an unexpired Party Duels challenge out to this player. */
+    public List<String> duelChallengers(UUID leaderId) {
+        ArrayList<String> out = new ArrayList<String>();
+        Map<UUID, PartyDuelRequest> pending = this.duelRequests.get(leaderId);
+        if (pending == null) {
+            return out;
+        }
+        for (PartyDuelRequest request : pending.values()) {
+            if (request.isExpired(this.duelRequestTtl())) continue;
+            Player from = Bukkit.getPlayer((UUID)request.getFrom());
+            if (from != null) {
+                out.add(from.getName());
+            }
+        }
+        return out;
+    }
+
+    public void declineDuels(Player leader, Player from) {
+        Map<UUID, PartyDuelRequest> pending = this.duelRequests.get(leader.getUniqueId());
+        if (pending == null || pending.remove(from.getUniqueId()) == null) {
+            leader.sendMessage(Text.prefixed("&cNo challenge from &f" + from.getName() + "&c."));
+            return;
+        }
+        Sounds.deny(leader);
+        leader.sendMessage(Text.prefixed("&7You turned down &f" + from.getName() + "&7's party duel."));
+        from.sendMessage(Text.prefixed("&7" + leader.getName() + " &7turned down your party duel."));
+    }
+
+    /**
+     * The other leader said yes. Everything is re-checked from scratch.
+     *
+     * <p>A challenge sits in chat for up to a minute, and in that time either
+     * party can start a match of its own, lose people, or have its leader walk
+     * away. Validating at send time and trusting it at accept time is how you
+     * end up pairing somebody who is already in an arena.
+     */
+    public void acceptDuels(Player leader, Player from) {
+        Map<UUID, PartyDuelRequest> pending = this.duelRequests.get(leader.getUniqueId());
+        PartyDuelRequest request = pending == null ? null : pending.get(from.getUniqueId());
+        if (request == null || request.isExpired(this.duelRequestTtl())) {
+            leader.sendMessage(Text.prefixed("&cThat challenge has expired."));
+            return;
+        }
+        pending.remove(from.getUniqueId());
+        Party ours = this.partyLedBy(leader.getUniqueId());
+        Party theirs = this.partyLedBy(from.getUniqueId());
+        if (ours == null) {
+            leader.sendMessage(Text.prefixed("&cYou need to be leading a party to accept."));
+            return;
+        }
+        if (theirs == null || theirs == ours) {
+            leader.sendMessage(Text.prefixed("&cTheir party is gone."));
+            return;
+        }
+        if (ours.isFighting() || theirs.isFighting()) {
+            leader.sendMessage(Text.prefixed("&cOne of the parties is already in a match."));
+            return;
+        }
+        Kit kit = this.plugin.getKitManager().get(request.getKit());
+        if (kit == null) {
+            leader.sendMessage(Text.prefixed("&cThat kit no longer exists."));
+            return;
+        }
+        List<Player> mine = this.onlineMembers(ours);
+        List<Player> yours = this.onlineMembers(theirs);
+        if (mine.isEmpty() || yours.isEmpty()) {
+            leader.sendMessage(Text.prefixed("&cBoth parties need someone online."));
+            return;
+        }
+        int pairs = Math.min(mine.size(), yours.size());
         int started = 0;
         for (int i = 0; i < pairs; ++i) {
-            if (this.plugin.getDuelManager().startPartyDuel(mine.get(i), theirs.get(i), kit.getName(), rounds)) {
+            if (this.plugin.getDuelManager().startPartyDuel(yours.get(i), mine.get(i),
+                    kit.getName(), request.getRounds())) {
                 ++started;
                 continue;
             }
@@ -814,16 +919,88 @@ public class PartyManager {
             break;
         }
         if (started == 0) {
-            leader.sendMessage(Text.prefixed("&cNo free arena supports that kit right now."));
-            leader.sendMessage(Text.prefixed("&8" + this.plugin.getDuelManager().arenaAvailability(kit.getName())));
+            String none = Text.prefixed("&cNo free arena supports that kit right now.");
+            leader.sendMessage(none);
+            from.sendMessage(none);
             return;
         }
-        this.beginDuels(party, target, started, rounds);
-        this.beginDuels(target, party, started, rounds);
+        this.beginDuels(ours, theirs, started, request.getRounds());
+        this.beginDuels(theirs, ours, started, request.getRounds());
         if (started < pairs) {
-            leader.sendMessage(Text.prefixed("&eOnly &f" + started + "&e of &f" + pairs
-                    + "&e pairs could start - the rest are waiting on a free arena."));
+            String partial = Text.prefixed("&eOnly &f" + started + "&e of &f" + pairs
+                    + "&e pairs could start - the rest are waiting on a free arena.");
+            leader.sendMessage(partial);
+            from.sendMessage(partial);
         }
+    }
+
+    /**
+     * Drops challenges nobody answered.
+     *
+     * <p>Also drops any aimed at, or coming from, a party that is now fighting:
+     * accepting one of those can only fail, and an offer that cannot be taken
+     * should not still be sitting in someone's chat looking live.
+     */
+    private void sweepDuelRequests() {
+        if (this.duelRequests.isEmpty()) {
+            return;
+        }
+        long ttl = this.duelRequestTtl();
+        java.util.Iterator<Map.Entry<UUID, Map<UUID, PartyDuelRequest>>> outer =
+                this.duelRequests.entrySet().iterator();
+        while (outer.hasNext()) {
+            Map.Entry<UUID, Map<UUID, PartyDuelRequest>> entry = outer.next();
+            Party to = this.partyLedBy(entry.getKey());
+            java.util.Iterator<PartyDuelRequest> inner = entry.getValue().values().iterator();
+            while (inner.hasNext()) {
+                PartyDuelRequest request = inner.next();
+                Party from = this.partyLedBy(request.getFrom());
+                if (request.isExpired(ttl) || to == null || from == null
+                        || to.isFighting() || from.isFighting()) {
+                    inner.remove();
+                }
+            }
+            if (entry.getValue().isEmpty()) {
+                outer.remove();
+            }
+        }
+    }
+
+    private long duelRequestTtl() {
+        return (long)Math.max(5.0, this.plugin.getConfig().getDouble("party.duel-request-seconds", 60.0)) * 1000L;
+    }
+
+    private void sendDuelChallengeCard(Player target, Player from, Party fromParty,
+                                       String kit, int rounds, int pairs) {
+        target.sendMessage("");
+        Sounds.invite(target);
+        target.sendMessage(this.msg("party.duel-header"));
+        target.sendMessage(this.msg("party.duel-from", "leader", from.getName(),
+                "members", String.valueOf(fromParty.size())));
+        target.sendMessage(this.msg("party.duel-terms", "kit", this.kitLabel(kit),
+                "rounds", String.valueOf(rounds), "pairs", String.valueOf(pairs)));
+        target.sendMessage("");
+        TextComponent accept = new TextComponent(this.msg("party.duel-accept"));
+        accept.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/party duel accept " + from.getName()));
+        accept.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                new ComponentBuilder(this.msg("party.duel-accept-hover", "leader", from.getName())).create()));
+        TextComponent gap = new TextComponent(this.msg("party.invite-gap"));
+        TextComponent decline = new TextComponent(this.msg("party.duel-decline"));
+        decline.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/party duel decline " + from.getName()));
+        decline.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                new ComponentBuilder(this.msg("party.duel-decline-hover", "leader", from.getName())).create()));
+        target.spigot().sendMessage(new BaseComponent[]{accept, gap, decline});
+        target.sendMessage("");
+        Sounds.request(target);
+    }
+
+    private String kitLabel(String name) {
+        Kit kit = name == null ? null : this.plugin.getKitManager().get(name);
+        if (kit == null) {
+            return name == null ? "?" : name;
+        }
+        return kit.getDisplayName() == null || kit.getDisplayName().isEmpty()
+                ? kit.getName() : kit.getDisplayName();
     }
 
     private void beginDuels(Party party, Party against, int pairs, int rounds) {
@@ -1079,6 +1256,7 @@ public class PartyManager {
      * dirty, and no remaining player is going to trigger the code that frees it.
      */
     public void tick() {
+        this.sweepDuelRequests();
         if (this.byPlayer.isEmpty()) {
             return;
         }
