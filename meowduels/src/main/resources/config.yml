@@ -48,6 +48,9 @@ party:
   # The kit and rounds are frozen when it is sent, so what the other leader
   # accepts is what they were shown.
   duel-request-seconds: 60.0
+  # Party Duels is played to a number of rounds. This is the pause between one
+  # side being wiped and everyone being put back on their spawns for the next.
+  round-seconds: 2.5
   # Seconds everyone stays standing in the arena AFTER the match is decided,
   # the way a duel does it, so the victory title lands somewhere that still
   # looks like the fight. Nobody can be hurt during it either.

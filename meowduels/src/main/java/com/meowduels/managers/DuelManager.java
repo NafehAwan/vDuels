@@ -269,29 +269,6 @@ public class DuelManager {
         return latest;
     }
 
-    /**
-     * Starts a duel directly, with no request and no acceptance.
-     *
-     * <p>For Party Duels: the two party leaders have already agreed by the time
-     * anyone gets here, and asking every pair to accept individually would turn
-     * one decision into eight. Never ranked - a match somebody else arranged
-     * should not move your ELO.
-     *
-     * @return false when no free arena supports the kit, so the caller can say
-     *         how many pairs it managed to start
-     */
-    public boolean startPartyDuel(Player p1, Player p2, String kit, int rounds) {
-        if (p1 == null || p2 == null || this.plugin.getKitManager().get(kit) == null) {
-            return false;
-        }
-        Arena arena = this.plugin.getArenaManager().findFreeArena(
-                a -> this.arenasInUse.contains(a.getName().toLowerCase()) || !a.supportsKit(kit));
-        if (arena == null) {
-            return false;
-        }
-        this.startDuel(p1, p2, arena, kit, rounds, false);
-        return true;
-    }
 
     private void startDuel(Player p1, Player p2, Arena arena, String kit, int rounds, boolean ranked) {
         if (this.isArenaBusy(arena)) {

@@ -68,7 +68,9 @@ extends Menu {
         for (int i = 0; i < SIZE; ++i) {
             this.inventory.setItem(i, filler);
         }
-        int pairs = Math.min(this.onlineCount(party), this.onlineCount(target));
+        int ours = this.onlineCount(party);
+        int theirs = this.onlineCount(target);
+        int pairs = Math.min(ours, theirs);
         this.inventory.setItem(SLOT_INFO, Items.of(Material.PLAYER_HEAD)
                 .skull(Bukkit.getOfflinePlayer((UUID)target.getLeader()))
                 .rawName(PartyModeMenu.accent(this.nameOf(target.getLeader())) + LABEL + "'ꜱ ᴘᴀʀᴛʏ")

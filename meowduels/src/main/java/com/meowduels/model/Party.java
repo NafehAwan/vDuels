@@ -58,6 +58,28 @@ public class Party {
      *  between two menus resolves to nothing instead of to a ghost. */
     private UUID duelTarget;
     private int duelRounds = 3;
+    /**
+     * The other party in a Party Duels match.
+     *
+     * <p>Party Duels is Split played across two parties instead of inside one,
+     * so the two sides need to see one match. Rather than invent a shared match
+     * object, the match state - arena, alive, watching, teams, timings - is
+     * MIRRORED into both parties, and this is the link that keeps them in step.
+     * Every guard in the plugin starts from partyOf(someone) and finds a party
+     * that already knows the whole fight, which is why nothing else had to
+     * learn about two-party matches.
+     *
+     * <p>Only the host carries the snapshots and the changed blocks, because
+     * those are restored exactly once.
+     */
+    private Party opponent;
+    private boolean matchHost;
+    /** Party Duels is played to a number of rounds, like a duel. Mirrored into
+     *  both sides with everything else. */
+    private int roundsToWin = 1;
+    private int round = 1;
+    private int scoreAqua;
+    private int scoreRed;
     private State state = State.IDLE;
     private String kit;
     private Arena arena;
@@ -263,6 +285,56 @@ public class Party {
         this.mode = mode == null ? PartyMode.FFA : mode;
     }
 
+    public Party getOpponent() {
+        return this.opponent;
+    }
+
+    public void setOpponent(Party other) {
+        this.opponent = other;
+    }
+
+    public int getRoundsToWin() {
+        return this.roundsToWin;
+    }
+
+    public void setRoundsToWin(int rounds) {
+        this.roundsToWin = Math.max(1, Math.min(9, rounds));
+    }
+
+    public int getRound() {
+        return this.round;
+    }
+
+    public void setRound(int round) {
+        this.round = Math.max(1, round);
+    }
+
+    public int scoreOf(Team team) {
+        return team == Team.AQUA ? this.scoreAqua : this.scoreRed;
+    }
+
+    public void addScore(Team team) {
+        if (team == Team.AQUA) {
+            ++this.scoreAqua;
+        } else {
+            ++this.scoreRed;
+        }
+    }
+
+    public boolean isMatchHost() {
+        return this.matchHost;
+    }
+
+    public void setMatchHost(boolean host) {
+        this.matchHost = host;
+    }
+
+    /** Split and Party Duels are both two-sided; FFA is not. Anything that asks
+     *  "are there teams here" wants this, not isSplit. */
+    public boolean isTeamMode() {
+        return this.mode == PartyMode.SPLIT || this.mode == PartyMode.DUELS;
+    }
+
     public boolean isSplit() {
         return this.mode == PartyMode.SPLIT;
     }
@@ -347,5 +419,11 @@ public class Party {
         this.teams.clear();
         this.mode = PartyMode.FFA;
         this.duelTarget = null;
+        this.opponent = null;
+        this.matchHost = false;
+        this.roundsToWin = 1;
+        this.round = 1;
+        this.scoreAqua = 0;
+        this.scoreRed = 0;
     }
 }

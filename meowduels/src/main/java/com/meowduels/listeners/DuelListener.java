@@ -506,7 +506,7 @@ implements Listener {
         // Split: your own side is never a valid target, whatever the party's
         // friendly-fire setting says. A team mode where you can kill your own
         // team by accident is a bug report waiting to happen.
-        if (party.isSplit() && party.isFighting()) {
+        if (party.isTeamMode() && party.isFighting()) {
             Party.Team mine = party.teamOf(attacker.getUniqueId());
             if (mine != null && mine == party.teamOf(victim.getUniqueId())) {
                 event.setCancelled(true);

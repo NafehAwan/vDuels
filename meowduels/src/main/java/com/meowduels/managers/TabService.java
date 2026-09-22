@@ -137,6 +137,41 @@ public class TabService {
         this.reconcile(party);
     }
 
+    /**
+     * One shared tab list for a two-party match.
+     *
+     * <p>Both rosters are mapped to the HOST party, so reconcile builds a
+     * single bubble containing everyone in the fight. Keeping them in separate
+     * bubbles is what would hide the enemy team from you - the people you most
+     * need to see.
+     */
+    public void attachMatch(Party host, Party guest) {
+        if (host == null || guest == null) {
+            return;
+        }
+        if (!this.plugin.getConfig().getBoolean("party.separate-tab", true)) {
+            return;
+        }
+        for (Party side : new Party[]{host, guest}) {
+            for (UUID id : side.getMembers()) {
+                this.memberGroup.put(id, host);
+            }
+        }
+        for (UUID id : host.getMembers()) {
+            Player p = Bukkit.getPlayer((UUID)id);
+            if (p != null) {
+                this.sendHeaderFooter(p);
+            }
+        }
+        for (UUID id : guest.getMembers()) {
+            Player p = Bukkit.getPlayer((UUID)id);
+            if (p != null) {
+                this.sendHeaderFooter(p);
+            }
+        }
+        this.reconcileAll();
+    }
+
     public void detachParty(Party party) {
         if (party == null) {
             return;
@@ -507,7 +542,22 @@ public class TabService {
                 continue;
             }
             Object group = entry.getValue();
-            // hidePlayer is not undone by TAB, so those groups need no upkeep.
+            // Whatever the mode, the people IN the bubble must be able to see
+            // each other. hidePlayer is sticky and one missed showPlayer - a
+            // race between a duel ending and a party match starting, a bubble
+            // rebuilt while someone was still loading - leaves two players in
+            // the same arena permanently invisible to one another, with nothing
+            // to tell them why. Re-asserting the inside of the bubble costs a
+            // handful of packets and makes that self-correcting.
+            for (Map.Entry<UUID, Object> mate : this.memberGroup.entrySet()) {
+                if (mate.getValue() != group || mate.getKey().equals(entry.getKey())) continue;
+                Player other = Bukkit.getPlayer((UUID)mate.getKey());
+                if (other == null) continue;
+                this.setVisible(member, other, true, false);
+                this.setVisible(member, other, true, true);
+            }
+            // hidePlayer is not undone by TAB, so those groups need no upkeep
+            // beyond the inside-the-bubble repair above.
             if (this.hidesWorld(group)) {
                 continue;
             }

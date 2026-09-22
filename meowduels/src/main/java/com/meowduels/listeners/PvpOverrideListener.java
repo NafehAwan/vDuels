@@ -103,7 +103,7 @@ implements Listener {
         if (!party.getAlive().contains(attacker) || !party.getAlive().contains(victim)) {
             return false;
         }
-        if (!party.isSplit()) {
+        if (!party.isTeamMode()) {
             return true;
         }
         Party.Team mine = party.teamOf(attacker);

@@ -437,7 +437,7 @@ implements Relational {
             // Split colours by side rather than by alive/out: in a team match
             // which side someone is on is the thing you need at a glance, and
             // the aqua/red pair is the one the whole plugin already uses.
-            if (party.isSplit() && party.teamOf(id) != null) {
+            if (party.isTeamMode() && party.teamOf(id) != null) {
                 boolean out = party.getWatching().contains(id);
                 boolean aqua = party.teamOf(id) == Party.Team.AQUA;
                 if (out) {

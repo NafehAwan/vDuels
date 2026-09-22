@@ -494,13 +494,24 @@ public class PartyManager {
     }
 
     private void sendIn(Party party, Player player, Kit kit, Arena arena) {
+        this.sendIn(party, player, kit, arena, true);
+    }
+
+    /**
+     * @param capture false between rounds. The snapshot is what the player
+     *                looked like BEFORE the match; re-taking it mid-match would
+     *                save them holding the kit and send them home with it.
+     */
+    private void sendIn(Party party, Player player, Kit kit, Arena arena, boolean capture) {
         UUID id = player.getUniqueId();
         party.getAlive().add(id);
-        party.getSnapshots().put(id, PlayerSnapshot.capture(player));
+        if (capture) {
+            party.getSnapshots().put(id, PlayerSnapshot.capture(player));
+        }
         // Split sends the sides to the arena's two duel spawns, which every
         // configured arena already has - that is what lets Split run in an
         // ordinary duel arena with no FFA spawn set.
-        Party.Team team = party.isSplit() ? party.teamOf(player.getUniqueId()) : null;
+        Party.Team team = party.isTeamMode() ? party.teamOf(player.getUniqueId()) : null;
         Location spawn = team == null ? this.partySpawn(arena)
                 : (team == Party.Team.AQUA ? arena.getSpawn1() : arena.getSpawn2());
         if (spawn == null) {
@@ -611,7 +622,7 @@ public class PartyManager {
      * the fight they are about to be in.
      */
     private String countdownSubtitle(Party party, UUID id) {
-        if (!party.isSplit()) {
+        if (!party.isTeamMode()) {
             return this.msg("party.countdown-subtitle");
         }
         Party.Team team = party.teamOf(id);
@@ -630,13 +641,13 @@ public class PartyManager {
      */
     public void onDeath(UUID id, UUID killerId) {
         Party party = this.partyOf(id);
-        if (party == null || !party.isFighting() || !party.getAlive().remove(id)) {
+        if (party == null || !party.isFighting() || !party.getAlive().contains(id)) {
             return;
         }
         if (killerId != null && !killerId.equals(id)) {
             party.addKill(killerId);
         }
-        party.getWatching().add(id);
+        this.markOut(party, id);
         Player p = Bukkit.getPlayer((UUID)id);
         if (p != null) {
             this.watchFrom(party, p);
@@ -658,10 +669,10 @@ public class PartyManager {
             }
         }
         if (killerId != null && !killerId.equals(id) && party.has(killerId)) {
-            this.broadcast(party, this.msg("party.kill-pvp", "victim", this.nameOf(id),
+            this.broadcastMatch(party, this.msg("party.kill-pvp", "victim", this.nameOf(id),
                     "killer", this.nameOf(killerId), "alive", left));
         } else {
-            this.broadcast(party, this.msg("party.kill-generic", "victim", this.nameOf(id),
+            this.broadcastMatch(party, this.msg("party.kill-generic", "victim", this.nameOf(id),
                     "alive", left));
         }
         this.checkWin(party);
@@ -698,7 +709,13 @@ public class PartyManager {
             player.sendMessage(Text.prefixed("&7You're already watching. &f/leave&7 to stop."));
             return;
         }
-        party.getSnapshots().put(id, PlayerSnapshot.capture(player));
+        // Both rosters, and the snapshot on the host: teardown walks the host's
+        // involved() list, so a watcher recorded on one side only is a watcher
+        // who never gets put back.
+        for (Party side : this.sides(party)) {
+            side.getWatching().add(id);
+        }
+        this.matchHostOf(party).getSnapshots().put(id, PlayerSnapshot.capture(player));
         this.watchFrom(party, player);
         player.sendMessage(Text.prefixed("&7Spectating the party match. &f/leave&7 to stop."));
     }
@@ -726,14 +743,6 @@ public class PartyManager {
             return;
         }
         this.broadcast(party, this.msg("party.force-ended", "leader", leader.getName()));
-        if (party.getMode() == PartyMode.DUELS) {
-            // Nothing to tear down here - the pairings are real duels that own
-            // their own arenas. This releases the party, and each duel plays
-            // out or is left with /leave.
-            this.endDuels(party);
-            leader.sendMessage(Text.prefixed("&7Any duels already running will finish on their own."));
-            return;
-        }
         this.endMatch(party, null, false);
     }
 
@@ -907,30 +916,112 @@ public class PartyManager {
             leader.sendMessage(Text.prefixed("&cBoth parties need someone online."));
             return;
         }
-        int pairs = Math.min(mine.size(), yours.size());
-        int started = 0;
-        for (int i = 0; i < pairs; ++i) {
-            if (this.plugin.getDuelManager().startPartyDuel(yours.get(i), mine.get(i),
-                    kit.getName(), request.getRounds())) {
-                ++started;
-                continue;
-            }
-            // Out of arenas. Stop here rather than leaving gaps in the middle.
-            break;
-        }
-        if (started == 0) {
+        Arena arena = this.plugin.getArenaManager().findFreeArena(
+                a -> this.plugin.getDuelManager().isArenaInUse(a.getName())
+                     || !a.supportsKit(kit.getName()));
+        if (arena == null) {
             String none = Text.prefixed("&cNo free arena supports that kit right now.");
             leader.sendMessage(none);
             from.sendMessage(none);
             return;
         }
-        this.beginDuels(ours, theirs, started, request.getRounds());
-        this.beginDuels(theirs, ours, started, request.getRounds());
-        if (started < pairs) {
-            String partial = Text.prefixed("&eOnly &f" + started + "&e of &f" + pairs
-                    + "&e pairs could start - the rest are waiting on a free arena.");
-            leader.sendMessage(partial);
-            from.sendMessage(partial);
+        // The challenger is AQUA, the party that accepted is RED. Fixed rather
+        // than shuffled: in Split the sides are a choice the leader makes, here
+        // they are just which party you are in, and a shuffle would put you on
+        // a team with the people you came to fight.
+        this.startTeamMatch(theirs, ours, arena, kit, request.getRounds());
+    }
+
+    /**
+     * Party Duels: both parties into one arena, one side each.
+     *
+     * <p>Split played across two parties rather than inside one. The match
+     * state is mirrored into both Party objects - same arena, same alive set,
+     * same teams map, same timings - so every guard in the plugin, all of which
+     * start from partyOf(someone), finds a party that already knows the whole
+     * fight. Only the host holds the snapshots and the changed blocks, because
+     * those are restored exactly once.
+     */
+    private void startTeamMatch(Party host, Party guest, Arena arena, Kit kit, int rounds) {
+        List<Player> aqua = this.onlineMembers(host);
+        List<Player> red = this.onlineMembers(guest);
+        HashMap<UUID, Party.Team> teams = new HashMap<UUID, Party.Team>();
+        for (Player p : aqua) {
+            teams.put(p.getUniqueId(), Party.Team.AQUA);
+        }
+        for (Player p : red) {
+            teams.put(p.getUniqueId(), Party.Team.RED);
+        }
+        HashSet<UUID> everyone = new HashSet<UUID>(teams.keySet());
+        long now = System.currentTimeMillis();
+        int seconds = Math.max(1, this.plugin.getConfig().getInt("party.countdown-seconds", 5));
+        for (Party side : new Party[]{host, guest}) {
+            side.setMode(PartyMode.DUELS);
+            side.setKit(kit.getName());
+            side.setArena(arena);
+            side.setState(Party.State.FIGHTING);
+            side.setFinished(false);
+            side.setStartedAt(now);
+            side.setFightStartsAt(now + (long)seconds * 1000L);
+            side.setOpponent(side == host ? guest : host);
+            side.setMatchHost(side == host);
+            side.setRoundsToWin(rounds);
+            side.setRound(1);
+            side.getAlive().clear();
+            side.getAlive().addAll(everyone);
+            side.getWatching().clear();
+            side.getSnapshots().clear();
+            side.getTeams().clear();
+            side.getTeams().putAll(teams);
+        }
+        this.plugin.getDuelManager().markArenaInUse(arena.getName());
+        this.plugin.getArenaManager().clearLooseEntities(arena);
+        // Snapshots all land on the host: pullOut reads them from whichever
+        // party it is handed, and endMatch always hands it the host.
+        for (Player p : aqua) {
+            this.sendIn(host, p, kit, arena);
+        }
+        for (Player p : red) {
+            this.sendIn(host, p, kit, arena);
+        }
+        this.plugin.getTabService().attachMatch(host, guest);
+        this.announceTeams(host);
+        this.broadcastMatch(host, this.msg("party.match-started",
+                "count", String.valueOf(everyone.size()), "arena", arena.getName()));
+        this.countdownTick(host, seconds, seconds * 20);
+    }
+
+    /** The side that owns the arena, the snapshots and the teardown. */
+    private Party matchHostOf(Party party) {
+        if (party == null) {
+            return null;
+        }
+        return party.isMatchHost() || party.getOpponent() == null ? party : party.getOpponent();
+    }
+
+    /** Both sides of a match, or just this one outside a Party Duels match. */
+    private Party[] sides(Party party) {
+        Party other = party == null ? null : party.getOpponent();
+        return other == null ? new Party[]{party} : new Party[]{party, other};
+    }
+
+    /** Sends to every member of both sides. */
+    private void broadcastMatch(Party party, String message) {
+        for (Party side : this.sides(party)) {
+            this.broadcast(side, message);
+        }
+    }
+
+    /**
+     * Moves someone from alive to watching on BOTH sides.
+     *
+     * <p>The two parties hold mirrored copies of the rosters, so a death has to
+     * land in both or one side keeps counting a corpse and the match never ends.
+     */
+    private void markOut(Party party, UUID id) {
+        for (Party side : this.sides(party)) {
+            side.getAlive().remove(id);
+            side.getWatching().add(id);
         }
     }
 
@@ -1003,46 +1094,8 @@ public class PartyManager {
                 ? kit.getName() : kit.getDisplayName();
     }
 
-    private void beginDuels(Party party, Party against, int pairs, int rounds) {
-        party.setMode(PartyMode.DUELS);
-        party.setState(Party.State.FIGHTING);
-        party.setFinished(false);
-        party.setStartedAt(System.currentTimeMillis());
-        party.getAlive().clear();
-        party.getWatching().clear();
-        // No arena and no snapshots on purpose: every member who is fighting is
-        // inside a real duel, and DuelManager owns their inventory and their
-        // way home. Touching either here would fight it for them.
-        this.plugin.getTabService().refreshParty(party);
-        this.broadcast(party, this.msg("party.duels-started",
-                "party", this.nameOf(against.getLeader()), "pairs", String.valueOf(pairs),
-                "rounds", String.valueOf(rounds)));
-    }
 
-    /** Ends a Party Duels match: no arena to give back, no inventories to restore. */
-    private void endDuels(Party party) {
-        party.resetMatch();
-        // attachParty, not refreshParty: every member was moved into their own
-        // DUEL bubble when their pairing started, and released from it when it
-        // finished, so the party bubble has to be built again from scratch
-        // rather than reconciled from a membership map that no longer has them.
-        this.plugin.getTabService().attachParty(party);
-        for (UUID id : party.getMembers()) {
-            Player p = Bukkit.getPlayer((UUID)id);
-            if (p != null) {
-                this.refreshItems(p);
-            }
-        }
-    }
 
-    private boolean anyoneDueling(Party party) {
-        for (UUID id : party.getMembers()) {
-            if (this.plugin.getDuelManager().isInDuel(id)) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     private List<Player> onlineMembers(Party party) {
         ArrayList<Player> out = new ArrayList<Player>();
@@ -1061,9 +1114,11 @@ public class PartyManager {
         if (party == null || !party.isFighting() || !party.involved().contains(id)) {
             return false;
         }
-        this.pullOut(party, id);
-        party.getAlive().remove(id);
-        party.getWatching().remove(id);
+        this.pullOut(this.matchHostOf(party), id);
+        for (Party side : this.sides(party)) {
+            side.getAlive().remove(id);
+            side.getWatching().remove(id);
+        }
         player.sendMessage(Text.prefixed("&7You left the party match."));
         this.checkWin(party);
         return true;
@@ -1092,16 +1147,16 @@ public class PartyManager {
         if (!party.isFighting() || party.isFinished()) {
             return;
         }
-        if (party.isSplit()) {
-            // A side is out when nobody on it is alive. Last side standing wins,
-            // however many of them are left - counting heads instead would end a
-            // 3v1 the moment it became interesting.
+        if (party.isTeamMode()) {
+            // A side is out when nobody on it is alive. Last side standing wins
+            // the round, however many of them are left - counting heads instead
+            // would end a 3v1 the moment it became interesting.
             int aqua = party.aliveOn(Party.Team.AQUA);
             int red = party.aliveOn(Party.Team.RED);
             if (aqua > 0 && red > 0) {
                 return;
             }
-            this.endSplit(party, aqua > 0 ? Party.Team.AQUA : (red > 0 ? Party.Team.RED : null));
+            this.roundOver(party, aqua > 0 ? Party.Team.AQUA : (red > 0 ? Party.Team.RED : null));
             return;
         }
         if (party.getAlive().size() > 1) {
@@ -1112,9 +1167,108 @@ public class PartyManager {
     }
 
     /** Ends a Split match, announcing the side rather than a person. */
+    /**
+     * A side has been wiped. Either that is the match, or it is one round of it.
+     *
+     * <p>Split is always a single round, so it lands on the match-over branch
+     * immediately. Party Duels is played to a number, the same way a duel is,
+     * which is what the rounds picker on its confirm screen is choosing.
+     */
+    private void roundOver(Party party, Party.Team winner) {
+        Party host = this.matchHostOf(party);
+        // Nobody left at all: no round to award, and nothing to play on for.
+        if (winner == null) {
+            this.endSplit(host, null);
+            return;
+        }
+        for (Party side : this.sides(host)) {
+            side.addScore(winner);
+        }
+        if (host.scoreOf(winner) >= host.getRoundsToWin()) {
+            this.endSplit(host, winner);
+            return;
+        }
+        this.broadcastMatch(host, this.msg("party.round-won",
+                "team", this.teamName(winner),
+                "aqua", String.valueOf(host.scoreOf(Party.Team.AQUA)),
+                "red", String.valueOf(host.scoreOf(Party.Team.RED)),
+                "rounds", String.valueOf(host.getRoundsToWin())));
+        for (UUID id : host.involved()) {
+            Player p = Bukkit.getPlayer((UUID)id);
+            if (p == null) continue;
+            boolean won = host.teamOf(id) == winner;
+            p.sendTitle(this.msg(won ? "party.round-win-title" : "party.round-lose-title"),
+                    this.msg("party.round-subtitle",
+                            "aqua", String.valueOf(host.scoreOf(Party.Team.AQUA)),
+                            "red", String.valueOf(host.scoreOf(Party.Team.RED))), 5, 30, 10);
+            if (won) {
+                Sounds.roundWon(p);
+            } else {
+                Sounds.roundLost(p);
+            }
+        }
+        double gap = this.plugin.getConfig().getDouble("party.round-seconds", 2.5);
+        int roundNow = host.getRound();
+        Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
+            if (host.isFighting() && !host.isFinished() && host.getRound() == roundNow) {
+                this.nextRound(host);
+            }
+        }, Math.max(1L, Math.round(gap * 20.0)));
+    }
+
+    /** Everyone back on their feet, back on their spawn, kit reissued. */
+    private void nextRound(Party host) {
+        Kit kit = host.getKit() == null ? null : this.plugin.getKitManager().get(host.getKit());
+        Arena arena = host.getArena();
+        if (kit == null || arena == null) {
+            this.endSplit(host, null);
+            return;
+        }
+        ArrayList<Player> back = new ArrayList<Player>();
+        for (UUID id : host.getTeams().keySet()) {
+            Player p = Bukkit.getPlayer((UUID)id);
+            if (p != null) {
+                back.add(p);
+            }
+        }
+        int aqua = 0;
+        int red = 0;
+        for (Player p : back) {
+            if (host.teamOf(p.getUniqueId()) == Party.Team.AQUA) {
+                ++aqua;
+            } else {
+                ++red;
+            }
+        }
+        // A side that logged off between rounds cannot play the next one.
+        if (aqua == 0 || red == 0) {
+            this.endSplit(host, aqua > 0 ? Party.Team.AQUA : (red > 0 ? Party.Team.RED : null));
+            return;
+        }
+        this.plugin.getArenaManager().clearLooseEntities(arena);
+        long now = System.currentTimeMillis();
+        int seconds = Math.max(1, this.plugin.getConfig().getInt("party.countdown-seconds", 5));
+        for (Party side : this.sides(host)) {
+            side.setRound(side.getRound() + 1);
+            side.getAlive().clear();
+            side.getWatching().clear();
+            side.setStartedAt(now);
+            side.setFightStartsAt(now + (long)seconds * 1000L);
+        }
+        for (Player p : back) {
+            // capture=false: the snapshot is who they were before the match.
+            this.sendIn(host, p, kit, arena, false);
+            host.getOpponent().getAlive().add(p.getUniqueId());
+        }
+        this.broadcastMatch(host, this.msg("party.round-start",
+                "round", String.valueOf(host.getRound()),
+                "rounds", String.valueOf(host.getRoundsToWin())));
+        this.countdownTick(host, seconds, seconds * 20);
+    }
+
     private void endSplit(Party party, Party.Team winner) {
         if (winner != null) {
-            this.broadcast(party, this.msg("party.team-winner", "team", this.teamName(winner)));
+            this.broadcastMatch(party, this.msg("party.team-winner", "team", this.teamName(winner)));
             for (UUID id : party.teamMembers(winner)) {
                 Player p = Bukkit.getPlayer((UUID)id);
                 if (p != null) {
@@ -1133,7 +1287,7 @@ public class PartyManager {
     }
 
     private void announceTeams(Party party) {
-        this.broadcast(party, this.msg("party.teams-line",
+        this.broadcastMatch(party, this.msg("party.teams-line",
                 "aqua", String.valueOf(party.teamMembers(Party.Team.AQUA).size()),
                 "red", String.valueOf(party.teamMembers(Party.Team.RED).size())));
     }
@@ -1163,26 +1317,31 @@ public class PartyManager {
      * players are out of it.
      */
     private void endMatch(Party party, UUID winnerId, boolean announce) {
-        if (party.isFinished()) {
+        // In a two-party match the host owns the arena, the snapshots and the
+        // teardown; whichever side the caller happened to hand us, end that one.
+        Party host = this.matchHostOf(party);
+        if (host.isFinished()) {
             return;
         }
-        party.setFinished(true);
-        this.pendingFinish.add(party);
+        for (Party side : this.sides(host)) {
+            side.setFinished(true);
+        }
+        this.pendingFinish.add(host);
         if (!announce) {
             // A Split match already announced its winning side.
         } else if (winnerId != null) {
-            this.broadcast(party, this.msg("party.winner", "winner", this.nameOf(winnerId)));
+            this.broadcastMatch(host, this.msg("party.winner", "winner", this.nameOf(winnerId)));
             Player champ = Bukkit.getPlayer((UUID)winnerId);
             if (champ != null) {
                 champ.sendTitle(this.msg("party.win-title"), this.msg("party.win-subtitle"), 5, 40, 10);
                 Sounds.victory(champ);
             }
         } else {
-            this.broadcast(party, this.msg("party.no-winner"));
+            this.broadcastMatch(host, this.msg("party.no-winner"));
         }
         double hold = this.plugin.getConfig().getDouble("party.end-seconds", 3.0);
         long ticks = Math.max(1L, Math.round(hold * 20.0));
-        Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> this.finishMatch(party), ticks);
+        Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> this.finishMatch(host), ticks);
     }
 
     /**
@@ -1220,9 +1379,18 @@ public class PartyManager {
             // regen touches them.
             this.plugin.getArenaManager().clearLooseEntities(arena);
         }
+        Party guest = party.getOpponent();
         party.resetMatch();
-        // Back to the lobby rules: tab-only, so the lobby does not look empty.
-        this.plugin.getTabService().refreshParty(party);
+        if (guest != null) {
+            guest.resetMatch();
+        }
+        // Back to the lobby rules: tab-only, so the lobby does not look empty,
+        // and each party gets its own list back instead of the shared one the
+        // match was using.
+        this.plugin.getTabService().attachParty(party);
+        if (guest != null) {
+            this.plugin.getTabService().attachParty(guest);
+        }
     }
 
     // ------------------------------------------------------------- upkeep
@@ -1237,9 +1405,11 @@ public class PartyManager {
             return;
         }
         if (party.isFighting() && party.involved().contains(id)) {
-            party.getAlive().remove(id);
-            party.getWatching().remove(id);
-            party.getSnapshots().remove(id);
+            for (Party side : this.sides(party)) {
+                side.getAlive().remove(id);
+                side.getWatching().remove(id);
+            }
+            this.matchHostOf(party).getSnapshots().remove(id);
         }
         party.remove(id);
         this.byPlayer.remove(id);
@@ -1262,16 +1432,6 @@ public class PartyManager {
         }
         for (Party party : new HashSet<Party>(this.byPlayer.values())) {
             if (!party.isFighting() || party.isFinished()) {
-                continue;
-            }
-            if (party.getMode() == PartyMode.DUELS) {
-                // Two seconds of grace: the duels are started before the party
-                // is flagged, but a member can still be between one round's
-                // teardown and the next round's setup.
-                if (System.currentTimeMillis() - party.getStartedAt() > 2000L
-                        && !this.anyoneDueling(party)) {
-                    this.endDuels(party);
-                }
                 continue;
             }
             boolean anyone = false;
