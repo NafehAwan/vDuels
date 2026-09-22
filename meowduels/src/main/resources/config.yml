@@ -6,6 +6,11 @@
 # ---- Duel requests ----
 duel:
   request-expiry-seconds: 60
+  # Seconds between one player's duel challenges. A challenge is a message in
+  # somebody else's chat that they did not ask for; this is the floor on how
+  # often anyone can put one there. A request already pending on the same target
+  # is refused outright, however long ago it was sent.
+  request-cooldown-seconds: 5.0
   default-rounds: 1
 
 # ---- Ranked / ELO ----
@@ -35,6 +40,10 @@ party:
   # Seconds between everyone landing in the arena and the fighting opening.
   # Nobody can be hurt until it reaches zero.
   countdown-seconds: 5
+  # Seconds between one leader's party invites, for the same reason as
+  # duel.request-cooldown-seconds. Re-inviting someone who already has your
+  # invite is refused outright.
+  invite-cooldown-seconds: 5.0
   # Seconds everyone stays standing in the arena AFTER the match is decided,
   # the way a duel does it, so the victory title lands somewhere that still
   # looks like the fight. Nobody can be hurt during it either.
@@ -94,6 +103,32 @@ duel-marker: "\u2694"
 # lobby a party member's row is ordinary. Crossed swords U+2694 by default,
 # which is in Minecraft's own font and needs no resource pack. '' shows nothing.
 party-marker: "\u2694"
+
+# ============================================================================
+#  Commands during a match
+# ============================================================================
+commands:
+  # Block commands while in a duel, a party match or an FFA event. A command
+  # mid-fight is either an escape hatch or an exploit - /home, /tp and /kit all
+  # end the fight in a way the plugin never sees, leaving an arena booked and an
+  # opponent standing in it. Spectators are never blocked; they are not in the
+  # fight and /spectate is how they stop.
+  block-in-match: true
+  # The exceptions. Everything not listed here is blocked, because the dangerous
+  # list is open-ended and this one is not.
+  #
+  # An entry is a root command ("leave") or a root plus a subcommand
+  # ("party leave"), matched on whole words, longest entry first - so "party"
+  # would permit the whole command while "party leave" permits only that one.
+  # Namespaced forms are resolved, so /meowduels:leave is not a way round it.
+  #
+  # Permission meowduels.bypass.commands skips all of this.
+  allowed-in-match:
+  - leave
+  - party leave
+  - party force_end
+  - ff
+  - eventleave
 # Health, hunger and potion effects are reset on join. The teleport to spawn and
 # the spawn hotbar are NOT part of this - they happen on every join regardless,
 # because a player who lands somewhere random with an empty hotbar has no way in.

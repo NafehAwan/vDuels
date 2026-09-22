@@ -57,6 +57,7 @@ public class PartyManager {
     /** Matches that have been called but whose players are still in the arena
      *  for the end-of-match hold. Identity set: a Party is only ever itself. */
     private final Set<Party> pendingFinish = new HashSet<Party>();
+    private static final String INVITE_COOLDOWN = "party-invite";
 
     public PartyManager(MeowDuels plugin) {
         this.plugin = plugin;
@@ -203,6 +204,26 @@ public class PartyManager {
             leader.sendMessage(Text.prefixed("&c" + target.getName() + " is already in a party."));
             return;
         }
+        // You cannot hand out invites from inside a duel, a queue or an event.
+        if (this.busyElsewhere(leader)) {
+            return;
+        }
+        if (this.busyTarget(leader, target)) {
+            return;
+        }
+        if (party.isInvited(targetId)) {
+            leader.sendMessage(Text.prefixed("&c" + target.getName() + " already has your invite."));
+            return;
+        }
+        long left = Cooldowns.remaining(leader, INVITE_COOLDOWN);
+        if (left > 0L) {
+            leader.sendMessage(Text.prefixed("&cWait &f" + Cooldowns.seconds(left)
+                    + "s&c before inviting again."));
+            Sounds.deny(leader);
+            return;
+        }
+        Cooldowns.start(leader, INVITE_COOLDOWN, null,
+                (long)(this.plugin.getConfig().getDouble("party.invite-cooldown-seconds", 5.0) * 1000.0));
         party.invite(targetId);
         leader.sendMessage(this.msg("party.invite-sent", "player", target.getName()));
         this.sendInviteCard(target, leader, party);
@@ -1126,6 +1147,24 @@ public class PartyManager {
 
     /** The mirror of {@link #busy}, for the party side: you can't form or join
      *  a party while you're already committed to something else. */
+    /** Whether the person being invited is in the middle of something. */
+    private boolean busyTarget(Player leader, Player target) {
+        UUID id = target.getUniqueId();
+        String what = null;
+        if (this.plugin.getDuelManager().isInDuel(id)) {
+            what = "in a duel";
+        } else if (this.plugin.getQueueManager().isQueued(id)) {
+            what = "in a queue";
+        } else if (this.plugin.getEventManager().isInvolved(id)) {
+            what = "in an event";
+        }
+        if (what == null) {
+            return false;
+        }
+        leader.sendMessage(Text.prefixed("&c" + target.getName() + " is " + what + " - try again after."));
+        return true;
+    }
+
     private boolean busyElsewhere(Player player) {
         UUID id = player.getUniqueId();
         if (this.plugin.getDuelManager().isInDuel(id)) {
@@ -1141,7 +1180,12 @@ public class PartyManager {
             return true;
         }
         if (this.plugin.getQueueManager().isQueued(id)) {
-            this.plugin.getQueueManager().leaveAll(player);
+            // Used to leave the queue for you. Silently cancelling something
+            // somebody deliberately joined is worse than refusing: you find out
+            // you are not queued when the match you were waiting for goes to
+            // somebody else.
+            player.sendMessage(Text.prefixed("&cYou're in a queue - type &f/queue leave&c first."));
+            return true;
         }
         return false;
     }

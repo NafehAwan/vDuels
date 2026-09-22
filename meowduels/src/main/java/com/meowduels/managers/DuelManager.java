@@ -41,6 +41,7 @@ import com.meowduels.model.DuelRequest;
 import com.meowduels.model.Kit;
 import com.meowduels.model.PlayerSnapshot;
 import com.meowduels.model.StartEffect;
+import com.meowduels.util.Cooldowns;
 import com.meowduels.util.AntiCheatBypass;
 import com.meowduels.util.Colors;
 import com.meowduels.util.GameModeGuard;
@@ -101,6 +102,7 @@ public class DuelManager {
     private final Map<UUID, PlayerSnapshot> snapshots = new HashMap<UUID, PlayerSnapshot>();
     private final Set<String> arenasInUse = new HashSet<String>();
     private final Map<UUID, UUID> lastOpponent = new HashMap<UUID, UUID>();
+    private static final String REQUEST_COOLDOWN = "duel-request";
     private final Map<String, Long> lastEloPair = new HashMap<String, Long>();
     private int gameCounter = 0;
 
@@ -144,6 +146,35 @@ public class DuelManager {
             sender.sendMessage(this.msg("duel.requests-off", "target", target.getName()));
             return;
         }
+        if (this.plugin.getPartyManager().inParty(sender.getUniqueId())) {
+            sender.sendMessage(Text.prefixed("&cYou're in a party - leave it first, or start a party match."));
+            return;
+        }
+        if (this.plugin.getPartyManager().inParty(target.getUniqueId())) {
+            sender.sendMessage(Text.prefixed("&c" + target.getName() + " is in a party right now."));
+            return;
+        }
+        // Spam control. A duel request is a message in somebody else's chat
+        // that they did not ask for, so it is rate limited twice: once on the
+        // sender, and once per target so a pending request cannot be re-sent on
+        // a loop to the same person.
+        Map<UUID, DuelRequest> pending = this.requests.get(target.getUniqueId());
+        DuelRequest existing = pending == null ? null : pending.get(sender.getUniqueId());
+        if (existing != null && !existing.isExpired(this.requestTtlMs)) {
+            sender.sendMessage(Text.prefixed("&c" + target.getName()
+                    + " already has your challenge - give them a moment."));
+            Sounds.deny(sender);
+            return;
+        }
+        long left = Cooldowns.remaining(sender, REQUEST_COOLDOWN);
+        if (left > 0L) {
+            sender.sendMessage(Text.prefixed("&cWait &f" + Cooldowns.seconds(left)
+                    + "s&c before sending another challenge."));
+            Sounds.deny(sender);
+            return;
+        }
+        Cooldowns.start(sender, REQUEST_COOLDOWN, null,
+                (long)(this.plugin.getConfig().getDouble("duel.request-cooldown-seconds", 5.0) * 1000.0));
         if (this.plugin.getKitManager().get(kit) == null) {
             sender.sendMessage(this.msg("duel.kit-gone", new String[0]));
             return;
