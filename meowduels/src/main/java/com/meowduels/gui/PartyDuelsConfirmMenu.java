@@ -30,8 +30,8 @@ extends Menu {
     private static final int SLOT_INFO = 4;
     private static final int[] ROUND_SLOTS = new int[]{11, 13, 15};
     private static final int[] ROUND_VALUES = new int[]{1, 3, 5};
-    private static final int SLOT_BACK = 21;
-    private static final int SLOT_START = 23;
+    private static final int SLOT_BACK = 27;
+    private static final int SLOT_START = 22;
 
     private static final String VALUE = "<#E6E8EB>";
     private static final String LABEL = "<#8E959D>";
@@ -87,9 +87,7 @@ extends Menu {
                     .glow(on).hideTooltip()
                     .tag(this.plugin.keyButton(), "pd-rounds:" + value).build());
         }
-        this.inventory.setItem(SLOT_BACK, Style.cancel(this.plugin.keyButton(), "pd-back",
-                "ɢᴏ ʙᴀᴄᴋ",
-                "", LABEL + "ᴄʜᴏᴏꜱᴇ ᴀ ᴅɪꜰꜰᴇʀᴇɴᴛ ᴋɪᴛ"));
+        this.inventory.setItem(SLOT_BACK, Style.back(this.plugin.keyButton(), "pd-back"));
         boolean ready = ours > 0 && theirs > 0 && party.getKit() != null;
         this.inventory.setItem(SLOT_START, Style.confirm(this.plugin.keyButton(),
                 ready ? "pd-go" : "pd-none", ready,

@@ -66,7 +66,7 @@ extends Menu {
         for (int i = this.editableSize; i < 45; ++i) {
             this.inventory.setItem(i, locked);
         }
-        ItemStack bar = Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build();
+        ItemStack bar = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
         for (int i = 45; i < 54; ++i) {
             this.inventory.setItem(i, bar);
         }
@@ -79,7 +79,7 @@ extends Menu {
     private void fillDefaults() {
         switch (this.menuId) {
             case "duelconfirm": {
-                ItemStack gray = Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build();
+                ItemStack gray = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
                 for (int i = 0; i < this.editableSize; ++i) {
                     this.inventory.setItem(i, gray);
                 }

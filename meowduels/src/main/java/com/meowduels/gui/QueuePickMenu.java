@@ -93,7 +93,7 @@ extends Menu {
             multi = categories.size() > 1;
             kitNames = this.plugin.getQueueCategoryManager().kitsFor(categories.get(this.categoryIndex));
         }
-        ItemStack filler = Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build();
+        ItemStack filler = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
         for (i = 0; i < 36; ++i) {
             this.inventory.setItem(i, filler);
         }

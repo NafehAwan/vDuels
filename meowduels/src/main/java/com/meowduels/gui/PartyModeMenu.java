@@ -29,7 +29,7 @@ extends Menu {
     private static final int SLOT_FFA = 11;
     private static final int SLOT_SPLIT = 13;
     private static final int SLOT_DUELS = 15;
-    private static final int SLOT_BACK = 22;
+    private static final int SLOT_BACK = 18;
 
     private static final String VALUE = "<#E6E8EB>";
     private static final String LABEL = "<#8E959D>";

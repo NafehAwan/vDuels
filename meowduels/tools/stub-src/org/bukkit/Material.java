@@ -25,6 +25,7 @@ public class Material {
     public static org.bukkit.Material GOLD_INGOT;
     public static org.bukkit.Material GRAY_DYE;
     public static org.bukkit.Material GRAY_STAINED_GLASS_PANE;
+    public static org.bukkit.Material IRON_BARS;
     public static org.bukkit.Material GREEN_STAINED_GLASS_PANE;
     public static org.bukkit.Material GRINDSTONE;
     public static org.bukkit.Material IRON_INGOT;

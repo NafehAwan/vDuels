@@ -44,7 +44,7 @@ extends Menu {
             boolean enabled = this.arena.supportsKitExplicit(kit.getName());
             this.inventory.setItem(i, Items.of(kit.getIcon()).name((enabled ? "&a" : "&7") + kit.getName()).lore("", enabled ? "&aENABLED &8(click to disable)" : "&cDISABLED &8(click to enable)").glow(enabled).build());
         }
-        ItemStack filler = Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build();
+        ItemStack filler = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
         for (int i = 45; i < 54; ++i) {
             this.inventory.setItem(i, filler);
         }

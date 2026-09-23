@@ -43,7 +43,7 @@ extends Menu {
     @Override
     public void build() {
         this.create(3, "\u1d0d\u1d00\u1d1b\u1d04\u029c \u0280\u1d07\u0455\u1d1c\u029f\u1d1b");
-        ItemStack filler = Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build();
+        ItemStack filler = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
         for (int i = 0; i < 27; ++i) {
             this.inventory.setItem(i, filler);
         }

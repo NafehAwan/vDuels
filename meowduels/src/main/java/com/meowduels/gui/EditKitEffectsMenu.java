@@ -34,7 +34,7 @@ extends Menu {
     @Override
     public void build() {
         this.create(3, "&7&lEdit Kit \u2192 &7" + this.kit.getName());
-        ItemStack filler = Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build();
+        ItemStack filler = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
         for (int i = 0; i < 27; ++i) {
             this.inventory.setItem(i, filler);
         }

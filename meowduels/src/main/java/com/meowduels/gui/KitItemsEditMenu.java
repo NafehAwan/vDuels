@@ -54,7 +54,7 @@ extends Menu {
         this.create(6, this.personal
                 ? "&d&lYour Layout \u2192 &5" + this.kit.getName()
                 : "&d&lEdit Items \u2192 &5" + this.kit.getName());
-        ItemStack filler = Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build();
+        ItemStack filler = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
         for (int i = 36; i < 54; ++i) {
             this.inventory.setItem(i, filler);
         }
@@ -62,7 +62,7 @@ extends Menu {
         if (this.personal) {
             // Start effects are part of the kit itself, not a personal layout,
             // so the button is admin-only and simply absent here.
-            this.inventory.setItem(43, Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build());
+            this.inventory.setItem(43, Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build());
             this.inventory.setItem(44, Items.of(Material.NAME_TAG).name("&f" + this.kit.getName()).lore("&7Arrange the kit however you like.", "&7Only YOU get this layout.", "&8Items are set by the server.").build());
             this.inventory.setItem(51, Items.of(Material.RED_STAINED_GLASS_PANE).name("&c&lReset").lore("&7Back to the server's default layout.").build());
             this.inventory.setItem(52, Items.of(Material.LIME_STAINED_GLASS_PANE).name("&a&lSave").lore("&7Save this layout for yourself.").build());

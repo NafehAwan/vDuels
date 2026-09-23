@@ -22,7 +22,7 @@ extends Menu {
     private static final int ROWS = 3;
     private static final int SLOT_OPEN = 11;
     private static final int SLOT_FF = 13;
-    private static final int SLOT_BACK = 15;
+    private static final int SLOT_BACK = 18;
 
     private static final String LABEL = "<#8E959D>";
     private static final String MUTED = "<#6B7079>";

@@ -61,17 +61,29 @@ public final class Style {
         return Style.title(from, to, smallCaps) + " " + SEP + VALUE + content;
     }
 
-    /** Black interior, dark grey border. */
+    /**
+     * The backdrop: dark grey panes, edge to edge.
+     *
+     * <p>One pane and one colour. A black interior inside a grey border was
+     * two greys arguing about which one was the background, and against a
+     * dark inventory texture the black half read as a hole rather than as a
+     * panel.
+     */
     public static void frame(Inventory inventory, int rows) {
-        ItemStack inner = Items.of(Material.BLACK_STAINED_GLASS_PANE).rawName(" ").build();
-        ItemStack edge = Items.of(Material.GRAY_STAINED_GLASS_PANE).rawName(" ").build();
+        ItemStack pane = Items.of(Material.GRAY_STAINED_GLASS_PANE).rawName(" ").build();
         int size = rows * 9;
         for (int i = 0; i < size; ++i) {
-            int row = i / 9;
-            int col = i % 9;
-            boolean border = row == 0 || row == rows - 1 || col == 0 || col == 8;
-            inventory.setItem(i, border ? edge : inner);
+            inventory.setItem(i, pane);
         }
+    }
+
+    /**
+     * Bottom-left, which is where every window in this plugin puts its way out.
+     *
+     * <p>Always the same corner, so leaving a menu never needs looking for.
+     */
+    public static int backSlot(int rows) {
+        return (rows - 1) * 9;
     }
 
     /** A green confirm button, or a grey one that says what is missing. */
@@ -95,10 +107,11 @@ public final class Style {
                 .build();
     }
 
-    /** A plain back arrow, same slot shape everywhere. */
+    /** The way out: an arrow, bottom-left, in every window that has one. */
     public static ItemStack back(org.bukkit.NamespacedKey key, String id) {
         return Items.of(Material.ARROW)
                 .rawName(VALUE + "ʙᴀᴄᴋ")
+                .rawLore("", HINT + "ᴄʟɪᴄᴋ ᴛᴏ ɢᴏ ʙᴀᴄᴋ")
                 .hideTooltip()
                 .tag(key, id)
                 .build();

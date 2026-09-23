@@ -34,7 +34,6 @@ extends Menu {
     private static final String HINT = "<dark_gray>\u25b8 <#8E959D>";
 
     private final MeowDuels plugin;
-    private int backSlot;
 
     public PartyInviteMenu(MeowDuels plugin) {
         this.plugin = plugin;
@@ -89,8 +88,7 @@ extends Menu {
                     .rawLore("", LABEL + "\u1d07\u1d20\u1d07\u0280\u028f\u1d0f\u0274\u1d07 \u1d0f\u0274\u029f\u026a\u0274\u1d07 \u026a\ua731 \u1d00\u029f\u0280\u1d07\u1d00\u1d05\u028f \u026a\u0274 \u1d00 \u1d18\u1d00\u0280\u1d1b\u028f")
                     .hideTooltip().build());
         }
-        this.backSlot = (rows - 1) * 9 + 4;
-        this.inventory.setItem(this.backSlot, Style.back(this.plugin.keyButton(), "party-back"));
+        this.inventory.setItem(Style.backSlot(rows), Style.back(this.plugin.keyButton(), "party-back"));
         player.openInventory(this.inventory);
     }
 

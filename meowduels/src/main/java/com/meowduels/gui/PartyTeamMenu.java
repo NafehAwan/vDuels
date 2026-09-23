@@ -39,6 +39,7 @@ extends Menu {
     private static final int[] AQUA_COLS = new int[]{0, 1, 2, 3};
     private static final int[] RED_COLS = new int[]{5, 6, 7, 8};
     private static final int HEAD_ROWS = 4;
+    private static final int SLOT_BACK = 45;
     private static final int SLOT_SHUFFLE = 47;
     private static final int SLOT_INFO = 49;
     private static final int SLOT_START = 51;
@@ -74,11 +75,10 @@ extends Menu {
             party.shuffleTeams();
         }
         this.createRaw(ROWS, "<dark_gray>\u258f " + PartyModeMenu.accent("\u1d18\u1d00\u0280\u1d1b\u028f \ua731\u1d18\u029f\u026a\u1d1b - \u1d1b\u1d07\u1d00\u1d0d\ua731"));
-        ItemStack filler = Items.of(Material.BLACK_STAINED_GLASS_PANE).rawName(" ").build();
-        for (int i = 0; i < SIZE; ++i) {
-            this.inventory.setItem(i, filler);
-        }
-        ItemStack divider = Items.of(Material.GRAY_STAINED_GLASS_PANE).rawName(" ").build();
+        Style.frame(this.inventory, ROWS);
+        // Iron bars, not a pane: the backdrop is panes now, so a pane divider
+        // would be a line drawn in the same colour as the thing it divides.
+        ItemStack divider = Items.of(Material.IRON_BARS).rawName(" ").build();
         // Stops above the bottom bar: the bar is shared by both sides, and a
         // divider running through it would be a line the buttons then sit on
         // top of.
@@ -92,6 +92,7 @@ extends Menu {
 
         boolean ready = party.aliveOrMembers(Party.Team.AQUA) > 0
                 && party.aliveOrMembers(Party.Team.RED) > 0;
+        this.inventory.setItem(SLOT_BACK, Style.back(this.plugin.keyButton(), "team-back"));
         this.inventory.setItem(SLOT_SHUFFLE, Items.of(Material.ENDER_PEARL)
                 .rawName(PartyModeMenu.accent("\ua731\u029c\u1d1c\ua730\ua730\u029f\u1d07"))
                 .rawLore("", LABEL + "\ua731\u1d18\u029f\u026a\u1d1b \u1d1b\u029c\u1d07 \u1d18\u1d00\u0280\u1d1b\u028f \u1d00\u1d1b \u0280\u1d00\u0274\u1d05\u1d0f\u1d0d \u1d00\u0262\u1d00\u026a\u0274")
@@ -170,6 +171,10 @@ extends Menu {
         Party party = this.plugin.getPartyManager().partyOf(player.getUniqueId());
         if (party == null || !party.isLeader(player.getUniqueId())) {
             player.closeInventory();
+            return;
+        }
+        if ("team-back".equals(id)) {
+            new PartyKitMenu(this.plugin, PartyMode.SPLIT).open(player);
             return;
         }
         if ("team-shuffle".equals(id)) {

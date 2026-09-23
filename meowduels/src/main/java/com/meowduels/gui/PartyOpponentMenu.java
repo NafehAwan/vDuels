@@ -71,7 +71,7 @@ extends Menu {
                              "", MUTED + "ᴛʜᴇʏ ɴᴇᴇᴅ ᴛᴏ ʙᴇ ᴏᴜᴛ ᴏꜰ ᴀ ᴍᴀᴛᴄʜ")
                     .hideTooltip().build());
         }
-        this.inventory.setItem((rows - 1) * 9 + 4, Style.back(this.plugin.keyButton(), "opp-back"));
+        this.inventory.setItem(Style.backSlot(rows), Style.back(this.plugin.keyButton(), "opp-back"));
         player.openInventory(this.inventory);
     }
 

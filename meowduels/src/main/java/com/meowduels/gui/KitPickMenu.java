@@ -56,7 +56,7 @@ extends Menu {
             this.create(4, "&7&lDuel Request&r &7" + category.getHeader());
             kitNames = this.plugin.getCategoryManager().kitsFor(category);
         }
-        ItemStack filler = Items.of(Material.BLACK_STAINED_GLASS_PANE).name(" ").build();
+        ItemStack filler = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
         for (i = 0; i < 36; ++i) {
             this.inventory.setItem(i, filler);
         }

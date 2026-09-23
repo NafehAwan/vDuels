@@ -35,6 +35,7 @@ extends Menu {
     private static final int SIZE = ROWS * 9;
     private static final int[] KIT_SLOTS = new int[]{10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25};
     private static final int SLOT_ARROW = 35;
+    private static final int SLOT_BACK = 27;
 
     private final MeowDuels plugin;
     private final PartyMode mode;
@@ -136,6 +137,10 @@ extends Menu {
                 this.inventory.setItem(KIT_SLOTS[i], icon);
             }
         }
+        // Picking a kit is the middle of a flow, not the start of one: Duels
+        // came here from the party picker, the other two from the mode menu,
+        // so back goes wherever this window was opened from.
+        this.inventory.setItem(SLOT_BACK, Style.back(this.plugin.keyButton(), "kit-back"));
         if (pages.size() > 1) {
             this.inventory.setItem(SLOT_ARROW, Items.of(Material.ARROW)
                     .rawName(Style.VALUE + "\u0274\u1d07x\u1d1b \u1d04\u1d00\u1d1b\u1d07\u0262\u1d0f\u0280\u028f")
@@ -166,6 +171,14 @@ extends Menu {
     @Override
     public void onClick(Player player, InventoryClickEvent event) {
         ItemStack clicked = event.getCurrentItem();
+        if ("kit-back".equals(Items.readTag(clicked, this.plugin.keyButton()))) {
+            if (this.mode == PartyMode.DUELS) {
+                new PartyOpponentMenu(this.plugin).open(player);
+            } else {
+                new PartyModeMenu(this.plugin).open(player);
+            }
+            return;
+        }
         if ("next-cat".equals(Items.readTag(clicked, this.plugin.keyButton()))) {
             int size = this.pages().size();
             if (size > 0) {

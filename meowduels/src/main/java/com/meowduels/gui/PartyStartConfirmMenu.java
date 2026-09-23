@@ -23,9 +23,9 @@ import org.bukkit.inventory.ItemStack;
 public class PartyStartConfirmMenu
 extends Menu {
     private static final int ROWS = 3;
-    private static final int SLOT_BACK = 11;
-    private static final int SLOT_WHAT = 13;
-    private static final int SLOT_START = 15;
+    private static final int SLOT_BACK = 18;
+    private static final int SLOT_WHAT = 12;
+    private static final int SLOT_START = 14;
 
     private static final String VALUE = "<#E6E8EB>";
     private static final String LABEL = "<#8E959D>";
@@ -56,9 +56,7 @@ extends Menu {
         // a border reads as a different plugin.
         this.createRaw(ROWS, Style.title("#7DE2FF", "#4B7BFF", "\ua731\u1d1b\u1d00\u0280\u1d1b \u1d0d\u1d00\u1d1b\u1d04\u029c"));
         Style.frame(this.inventory, ROWS);
-        this.inventory.setItem(SLOT_BACK, Style.cancel(this.plugin.keyButton(), "start-back",
-                "\u0262\u1d0f \u0299\u1d00\u1d04\u1d0b",
-                "", LABEL + "\u1d04\u029c\u1d0f\u1d0f\ua731\u1d07 \u1d00 \u1d05\u026a\ua730\ua730\u1d07\u0280\u1d07\u0274\u1d1b \u1d0b\u026a\u1d1b"));
+        this.inventory.setItem(SLOT_BACK, Style.back(this.plugin.keyButton(), "start-back"));
         this.inventory.setItem(SLOT_WHAT, Items.of(Material.PAPER)
                 .rawName(PartyModeMenu.accent(this.mode.getLabel()))
                 .rawLore("",
