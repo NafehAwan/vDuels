@@ -12,3 +12,7 @@ build/
 brag-output*/composition/node_modules/
 brag-output*/composition/snapshots/
 brag-output*/composition/assets/
+
+# The built plugin. Produced by "mvn package" in meowduels/ and handed over
+# per turn; it is a build output, not source.
+/MeowDuels.jar
