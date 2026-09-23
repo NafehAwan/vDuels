@@ -27,8 +27,7 @@ import org.bukkit.inventory.ItemStack;
  */
 public class PartyInviteMenu
 extends Menu {
-    private static final int PER_ROW = 9;
-    private static final int MAX_LIST_ROWS = 5;
+    private static final int MAX_LIST_ROWS = 4;
 
     private static final String VALUE = "<#E6E8EB>";
     private static final String LABEL = "<#8E959D>";
@@ -69,18 +68,15 @@ extends Menu {
             return;
         }
         List<Player> people = this.candidates(player);
-        int listRows = Math.max(1, Math.min(MAX_LIST_ROWS, (people.size() + PER_ROW - 1) / PER_ROW));
-        int rows = listRows + 1;
-        this.createRaw(rows, "<dark_gray>\u258f <gradient:#FF8AD0:#B04BD6>\u026a\u0274\u1d20\u026a\u1d1b\u1d07 \u1d1b\u1d0f \u1d18\u1d00\u0280\u1d1b\u028f</gradient>");
-        ItemStack filler = Items.of(Material.BLACK_STAINED_GLASS_PANE).rawName(" ").build();
-        for (int i = 0; i < rows * PER_ROW; ++i) {
-            this.inventory.setItem(i, filler);
-        }
-        int limit = listRows * PER_ROW;
+        int rows = Style.gridRows(people.size(), MAX_LIST_ROWS);
+        this.createRaw(rows, Style.title("#FF8AD0", "#B04BD6",
+                "\u026a\u0274\u1d20\u026a\u1d1b\u1d07 \u1d1b\u1d0f \u1d18\u1d00\u0280\u1d1b\u028f"));
+        Style.frame(this.inventory, rows);
+        int limit = (rows - 2) * Style.PER_ROW;
         for (int i = 0; i < people.size() && i < limit; ++i) {
             Player target = people.get(i);
             boolean invited = party.isInvited(target.getUniqueId());
-            this.inventory.setItem(i, Items.of(Material.PLAYER_HEAD)
+            this.inventory.setItem(Style.gridSlot(i), Items.of(Material.PLAYER_HEAD)
                     .skull(target)
                     .rawName(VALUE + target.getName())
                     .rawLore("", invited ? "<#7CFF6B>\u026a\u0274\u1d20\u026a\u1d1b\u1d07\u1d05 - \u1d21\u1d00\u026a\u1d1b\u026a\u0274\u0262 \ua730\u1d0f\u0280 \u1d1b\u029c\u1d07\u1d0d" : HINT + "\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \u026a\u0274\u1d20\u026a\u1d1b\u1d07")
@@ -88,15 +84,13 @@ extends Menu {
                     .tag(this.plugin.keyButton(), "invite:" + target.getName()).build());
         }
         if (people.isEmpty()) {
-            this.inventory.setItem(PER_ROW / 2, Items.of(Material.BARRIER)
+            this.inventory.setItem(Style.gridSlot(Style.PER_ROW / 2), Items.of(Material.BARRIER)
                     .rawName("<#FF8A93>\u0274\u1d0f\u0299\u1d0f\u1d05\u028f \u1d1b\u1d0f \u026a\u0274\u1d20\u026a\u1d1b\u1d07")
                     .rawLore("", LABEL + "\u1d07\u1d20\u1d07\u0280\u028f\u1d0f\u0274\u1d07 \u1d0f\u0274\u029f\u026a\u0274\u1d07 \u026a\ua731 \u1d00\u029f\u0280\u1d07\u1d00\u1d05\u028f \u026a\u0274 \u1d00 \u1d18\u1d00\u0280\u1d1b\u028f")
                     .hideTooltip().build());
         }
-        this.backSlot = listRows * PER_ROW + PER_ROW / 2;
-        this.inventory.setItem(this.backSlot, Items.of(Material.ARROW)
-                .rawName(VALUE + "\u0299\u1d00\u1d04\u1d0b")
-                .hideTooltip().tag(this.plugin.keyButton(), "party-back").build());
+        this.backSlot = (rows - 1) * 9 + 4;
+        this.inventory.setItem(this.backSlot, Style.back(this.plugin.keyButton(), "party-back"));
         player.openInventory(this.inventory);
     }
 

@@ -56,4 +56,7 @@ public class Material {
     public static org.bukkit.Material SPLASH_POTION;
     public static org.bukkit.Material LINGERING_POTION;
     public static org.bukkit.Material ENCHANTED_GOLDEN_APPLE;
+    public static org.bukkit.Material NOTE_BLOCK;
+    public static org.bukkit.Material EXPERIENCE_BOTTLE;
+    public static org.bukkit.Material GLASS_BOTTLE;
 }

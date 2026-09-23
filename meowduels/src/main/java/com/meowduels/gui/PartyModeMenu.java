@@ -62,17 +62,12 @@ extends Menu {
             player.sendMessage(Text.prefixed("&cOnly the party leader can start a match."));
             return;
         }
-        this.createRaw(ROWS, "<dark_gray>\u258f " + PartyModeMenu.accent("\u1d18\u1d00\u0280\u1d1b\u028f \u1d0d\u1d00\u1d1b\u1d04\u029c"));
-        ItemStack filler = Items.of(Material.BLACK_STAINED_GLASS_PANE).rawName(" ").build();
-        for (int i = 0; i < SIZE; ++i) {
-            this.inventory.setItem(i, filler);
-        }
+        this.createRaw(ROWS, Style.title("#7DE2FF", "#4B7BFF", "\u1d18\u1d00\u0280\u1d1b\u028f \u1d0d\u1d00\u1d1b\u1d04\u029c"));
+        Style.frame(this.inventory, ROWS);
         this.inventory.setItem(SLOT_FFA, this.mode(PartyMode.FFA, Material.DIAMOND_SWORD));
         this.inventory.setItem(SLOT_SPLIT, this.mode(PartyMode.SPLIT, Material.SHIELD));
         this.inventory.setItem(SLOT_DUELS, this.mode(PartyMode.DUELS, Material.IRON_SWORD));
-        this.inventory.setItem(SLOT_BACK, Items.of(Material.ARROW)
-                .rawName(VALUE + "\u0299\u1d00\u1d04\u1d0b")
-                .hideTooltip().tag(this.plugin.keyButton(), "mode-back").build());
+        this.inventory.setItem(SLOT_BACK, Style.back(this.plugin.keyButton(), "mode-back"));
         player.openInventory(this.inventory);
     }
 

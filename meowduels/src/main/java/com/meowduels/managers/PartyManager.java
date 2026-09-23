@@ -220,6 +220,13 @@ public class PartyManager {
             leader.sendMessage(Text.prefixed("&c" + target.getName() + " already has your invite."));
             return;
         }
+        // Checked here rather than at delivery so the inviter is told no, and
+        // so a refused invite never costs them the cooldown below.
+        if (!this.plugin.getPlayerSettings().isPartyInvites(targetId)) {
+            leader.sendMessage(Text.prefixed("&c" + target.getName() + " has party invites turned off."));
+            Sounds.deny(leader);
+            return;
+        }
         long left = Cooldowns.remaining(leader, INVITE_COOLDOWN);
         if (left > 0L) {
             leader.sendMessage(Text.prefixed("&cWait &f" + Cooldowns.seconds(left)

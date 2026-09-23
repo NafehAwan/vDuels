@@ -27,8 +27,7 @@ import org.bukkit.inventory.ItemStack;
  */
 public class PartyOpponentMenu
 extends Menu {
-    private static final int PER_ROW = 9;
-    private static final int MAX_LIST_ROWS = 5;
+    private static final int MAX_LIST_ROWS = 4;
 
     private static final String VALUE = "<#E6E8EB>";
     private static final String LABEL = "<#8E959D>";
@@ -54,31 +53,25 @@ extends Menu {
             return;
         }
         List<Party> parties = this.plugin.getPartyManager().opponentParties(party);
-        int listRows = Math.max(1, Math.min(MAX_LIST_ROWS, (parties.size() + PER_ROW - 1) / PER_ROW));
-        int rows = listRows + 1;
-        this.createRaw(rows, "<dark_gray>▏ " + PartyModeMenu.accent(
+        int rows = Style.gridRows(parties.size(), MAX_LIST_ROWS);
+        this.createRaw(rows, Style.title("#7DE2FF", "#4B7BFF",
                 "ᴘᴀʀᴛʏ ᴅᴜᴇʟꜱ")
-                + " <dark_gray>› " + VALUE + "ᴘɪᴄᴋ ᴀ ᴘᴀʀᴛʏ");
-        ItemStack filler = Items.of(Material.BLACK_STAINED_GLASS_PANE).rawName(" ").build();
-        for (int i = 0; i < rows * PER_ROW; ++i) {
-            this.inventory.setItem(i, filler);
-        }
-        int limit = listRows * PER_ROW;
+                + " " + Style.SEP + VALUE + "ᴘɪᴄᴋ ᴀ ᴘᴀʀᴛʏ");
+        Style.frame(this.inventory, rows);
+        int limit = (rows - 2) * Style.PER_ROW;
         for (int i = 0; i < parties.size() && i < limit; ++i) {
             Party other = parties.get(i);
-            this.inventory.setItem(i, this.card(party, other));
+            this.inventory.setItem(Style.gridSlot(i), this.card(party, other));
         }
         if (parties.isEmpty()) {
-            this.inventory.setItem(PER_ROW / 2, Items.of(Material.BARRIER)
+            this.inventory.setItem(Style.gridSlot(Style.PER_ROW / 2), Items.of(Material.BARRIER)
                     .rawName("<#FF8A93>ɴᴏ ᴘᴀʀᴛɪᴇꜱ ᴛᴏ ꜰɪɢʜᴛ")
                     .rawLore("",
                              LABEL + "ɴᴏʙᴏᴅʏ ᴇʟꜱᴇ ʜᴀꜱ ᴀ ᴘᴀʀᴛʏ ʀɪɢʜᴛ ɴᴏᴡ",
                              "", MUTED + "ᴛʜᴇʏ ɴᴇᴇᴅ ᴛᴏ ʙᴇ ᴏᴜᴛ ᴏꜰ ᴀ ᴍᴀᴛᴄʜ")
                     .hideTooltip().build());
         }
-        this.inventory.setItem(listRows * PER_ROW + PER_ROW / 2, Items.of(Material.ARROW)
-                .rawName(VALUE + "ʙᴀᴄᴋ")
-                .hideTooltip().tag(this.plugin.keyButton(), "opp-back").build());
+        this.inventory.setItem((rows - 1) * 9 + 4, Style.back(this.plugin.keyButton(), "opp-back"));
         player.openInventory(this.inventory);
     }
 

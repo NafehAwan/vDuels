@@ -17,6 +17,25 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 public class MessageManager {
     private static final Map<String, String> DEFAULTS = new LinkedHashMap<String, String>();
+
+    // The go-signal pair, kept here because a migration has to compare against
+    // them as well as ship them. Gold for the count, green for the release -
+    // the same two ramps a party countdown uses, so a player who has done one
+    // already knows what the other means. The digit stays a digit: small caps
+    // have no numerals, and "3" has to read at a glance.
+    private static final String COUNTDOWN_TITLE = "<gradient:#FFD65C:#FFB02E>{seconds}</gradient>";
+    private static final String COUNTDOWN_SUBTITLE = "<#6B7079>\u0262\u1d07\u1d1b \u0280\u1d07\u1d00\u1d05\u028f";
+    private static final String FIGHT_TITLE = "<gradient:#7CFF6B:#1FA32F>\ua730\u026a\u0262\u029c\u1d1b</gradient>";
+
+    // Exactly what those three keys used to ship as. A value that still
+    // matches was never edited, so replacing it is a no-op for anybody who
+    // did edit it - which is the only way a new default reaches a server that
+    // already has a messages.yml.
+    private static final String OLD_COUNTDOWN_TITLE = "&e{seconds}";
+    private static final String OLD_COUNTDOWN_SUBTITLE = "";
+    private static final String OLD_FIGHT_TITLE = "&eFIGHT \u2694 !";
+    private static final String OLD_PARTY_COUNTDOWN = "&d{seconds}";
+    private static final String OLD_PARTY_GO = "&a&lFIGHT!";
     private final MeowDuels plugin;
     private final File file;
     private YamlConfiguration config;
@@ -34,6 +53,7 @@ public class MessageManager {
         }
         this.config = YamlConfiguration.loadConfiguration((File)this.file);
         this.fillMissing();
+        this.retireOldTitles();
         this.prefix = this.raw("prefix");
     }
 
@@ -79,6 +99,50 @@ public class MessageManager {
         }
     }
 
+    /**
+     * Moves the countdown and FIGHT titles onto the new pair - but only for a
+     * server still running the ones this plugin shipped.
+     *
+     * <p>fillMissing deliberately never overwrites, which is right for a
+     * message somebody has worded themselves and wrong for a default nobody
+     * ever touched: without this, changing a default changes nothing on any
+     * server that has run the plugin once. Comparing against the exact old
+     * string is what tells those two cases apart.
+     */
+    private void retireOldTitles() {
+        if (this.config == null) {
+            return;
+        }
+        boolean changed = MessageManager.replaceIfUntouched(this.config, "titles.countdown.title", OLD_COUNTDOWN_TITLE, COUNTDOWN_TITLE);
+        changed |= MessageManager.replaceIfUntouched(this.config, "titles.countdown.subtitle", OLD_COUNTDOWN_SUBTITLE, COUNTDOWN_SUBTITLE);
+        changed |= MessageManager.replaceIfUntouched(this.config, "titles.fight.title", OLD_FIGHT_TITLE, FIGHT_TITLE);
+        // The party countdown moves with it. Three countdowns in one plugin
+        // that each pick their own colour is three plugins as far as a player
+        // can tell.
+        changed |= MessageManager.replaceIfUntouched(this.config, "party.countdown-title", OLD_PARTY_COUNTDOWN, COUNTDOWN_TITLE);
+        changed |= MessageManager.replaceIfUntouched(this.config, "party.countdown-go", OLD_PARTY_GO, FIGHT_TITLE);
+        if (!changed) {
+            return;
+        }
+        try {
+            this.config.save(this.file);
+            this.plugin.getLogger().info("Updated the duel countdown and FIGHT titles to the new ones. "
+                    + "Your own wording, if you had any, was left alone - edit titles.* or party.countdown-* in messages.yml to change them back.");
+        }
+        catch (IOException e) {
+            this.plugin.getLogger().warning("Failed to update messages.yml: " + e.getMessage());
+        }
+    }
+
+    private static boolean replaceIfUntouched(YamlConfiguration config, String key, String old, String now) {
+        String value = config.getString(key);
+        if (value == null || !value.equals(old)) {
+            return false;
+        }
+        config.set(key, (Object)now);
+        return true;
+    }
+
     public String raw(String key) {
         String value;
         String string = value = this.config == null ? null : this.config.getString(key);
@@ -96,7 +160,14 @@ public class MessageManager {
             i += 2;
         }
         if (key.startsWith("request.") || key.startsWith("titles.")) {
-            return Text.color(value);
+            // Two renderers, chosen by what the line is written in rather than
+            // by a flag. A line with a tag in it was written by hand in
+            // MiniMessage, so it keeps its own casing and gets its gradients
+            // resolved; an &-coded line is the old shape and still gets the
+            // automatic small caps it has always had. Running Text.color over
+            // a tag would small-cap the word "gradient" inside it and leave
+            // the whole thing on screen as literal text.
+            return value.indexOf(60) >= 0 ? Colors.toSection(value) : Text.color(value);
         }
         if (key.startsWith("party.") || key.startsWith("event.")) {
             // Colors.toSection rather than colorNormal: these lines carry hex
@@ -174,9 +245,9 @@ public class MessageManager {
         DEFAULTS.put("arena.cannot-edit", "{prefix}&cYou cannot edit an arena here.");
         DEFAULTS.put("titles.match-found.title", "&cMATCH FOUND!");
         DEFAULTS.put("titles.match-found.subtitle", "&7Preparing your arena...");
-        DEFAULTS.put("titles.countdown.title", "&e{seconds}");
-        DEFAULTS.put("titles.countdown.subtitle", "");
-        DEFAULTS.put("titles.fight.title", "&eFIGHT \u2694 !");
+        DEFAULTS.put("titles.countdown.title", COUNTDOWN_TITLE);
+        DEFAULTS.put("titles.countdown.subtitle", COUNTDOWN_SUBTITLE);
+        DEFAULTS.put("titles.fight.title", FIGHT_TITLE);
         DEFAULTS.put("titles.fight.subtitle", "");
         DEFAULTS.put("titles.round-won.title", "&a&lVICTORY");
         DEFAULTS.put("titles.round-won.subtitle", "&7Score &8\u00bb &a{yourScore} &7- &c{theirScore}");
@@ -202,9 +273,9 @@ public class MessageManager {
         DEFAULTS.put("party.invite-declined", "&7You turned down &f{leader}&7's invite.");
         DEFAULTS.put("party.invite-declined-by", "&7{player} &7turned down your party invite.");
         DEFAULTS.put("party.match-started", "&aParty match started &8\u2022 &f{count} &7fighting on &f{arena}");
-        DEFAULTS.put("party.countdown-title", "&d{seconds}");
+        DEFAULTS.put("party.countdown-title", COUNTDOWN_TITLE);
         DEFAULTS.put("party.countdown-subtitle", "&7Free-for-all \u2022 last one standing");
-        DEFAULTS.put("party.countdown-go", "&a&lFIGHT!");
+        DEFAULTS.put("party.countdown-go", FIGHT_TITLE);
         DEFAULTS.put("party.countdown-subtitle-split", "<#8E959D>\u1d1b\u1d07\u1d00\u1d0d \u1d20\ua731 \u1d1b\u1d07\u1d00\u1d0d <dark_gray>\u2022 <#8E959D>\u028f\u1d0f\u1d1c'\u0280\u1d07 \u1d0f\u0274 {team}");
         DEFAULTS.put("party.countdown-subtitle-split-noteam", "<#8E959D>\u1d1b\u1d07\u1d00\u1d0d \u1d20\ua731 \u1d1b\u1d07\u1d00\u1d0d <dark_gray>\u2022 <#8E959D>\u1d21\u026a\u1d18\u1d07 \u1d1b\u029c\u1d07 \u1d0f\u1d1b\u029c\u1d07\u0280 \ua731\u026a\u1d05\u1d07");
         DEFAULTS.put("party.kill-pvp", "<#FF3B57>\u2620 <#FF8A93>{victim} <#6B7079>was killed by <#7CFF6B>{killer} <dark_gray>\u2022 <#E6E8EB>{alive} <#6B7079>left");

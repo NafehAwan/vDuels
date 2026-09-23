@@ -6,16 +6,40 @@
  */
 package com.meowduels.util;
 
+import java.util.function.Predicate;
 import org.bukkit.entity.Player;
 
 public final class Sounds {
+    /**
+     * Who has turned the plugin's sounds off.
+     *
+     * <p>Every cue in this class is static and has no way back to the plugin,
+     * so the one thing it needs to know arrives as a predicate instead: set
+     * once at enable, read on every cue. Null until then, which is what makes
+     * a sound played during startup audible rather than a crash.
+     *
+     * <p>volatile because the answer is set on the main thread and cues can be
+     * played from a scheduler thread.
+     */
+    private static volatile Predicate<Player> muted;
+
     private Sounds() {
     }
 
+    /** Called once, at enable, with the /settings toggle. */
+    public static void mutedWhen(Predicate<Player> check) {
+        muted = check;
+    }
+
     private static void play(Player player, String key, float volume, float pitch) {
-        if (player != null) {
-            player.playSound(player.getLocation(), key, volume, pitch);
+        if (player == null) {
+            return;
         }
+        Predicate<Player> check = muted;
+        if (check != null && check.test(player)) {
+            return;
+        }
+        player.playSound(player.getLocation(), key, volume, pitch);
     }
 
     public static void click(Player player) {

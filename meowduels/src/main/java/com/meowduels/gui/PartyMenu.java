@@ -1,6 +1,7 @@
 package com.meowduels.gui;
 
 import com.meowduels.MeowDuels;
+import com.meowduels.gui.Style;
 import com.meowduels.gui.Menu;
 import com.meowduels.model.Kit;
 import com.meowduels.model.Party;
@@ -38,8 +39,11 @@ extends Menu {
     private static final int SLOT_KIT = 11;
     private static final int SLOT_INVITE = 13;
     private static final int SLOT_SETTINGS = 15;
-    private static final int MEMBER_ROW = 18;
-    private static final int MEMBER_SLOTS = 9;
+    // The interior of the members row, not the whole row: the frame owns
+    // columns 0 and 8, and a head sitting in the border makes the window look
+    // like the border failed rather than like there are more members.
+    private static final int MEMBER_ROW = 19;
+    private static final int MEMBER_SLOTS = 7;
     private static final int SLOT_START = 29;
     private static final int SLOT_LEAVE_LEADER = 33;
     private static final int SLOT_LEAVE_MEMBER = 31;
@@ -62,11 +66,8 @@ extends Menu {
 
     @Override
     public void build() {
-        this.createRaw(ROWS, "<dark_gray>\u258f " + PartyMenu.accent("\u1d18\u1d00\u0280\u1d1b\u028f"));
-        ItemStack filler = Items.of(Material.BLACK_STAINED_GLASS_PANE).rawName(" ").build();
-        for (int i = 0; i < SIZE; ++i) {
-            this.inventory.setItem(i, filler);
-        }
+        this.createRaw(ROWS, Style.title("#FF8AD0", "#B04BD6", "\u1d18\u1d00\u0280\u1d1b\u028f"));
+        Style.frame(this.inventory, ROWS);
     }
 
     /** Built per viewer: what is in the window depends on who opened it. */
@@ -84,11 +85,10 @@ extends Menu {
             this.addLeaderButtons(party);
         }
         this.inventory.setItem(leader ? SLOT_LEAVE_LEADER : SLOT_LEAVE_MEMBER,
-                Items.of(Material.RED_DYE)
-                        .rawName("<gradient:#FF6B6B:#A01028>" + (leader ? "\u1d05\u026a\ua731\u0299\u1d00\u0274\u1d05 \u1d18\u1d00\u0280\u1d1b\u028f" : "\u029f\u1d07\u1d00\u1d20\u1d07 \u1d18\u1d00\u0280\u1d1b\u028f") + "</gradient>")
-                        .rawLore("", LABEL + (leader ? "\u1d07\u0274\u1d05\ua731 \u1d1b\u029c\u1d07 \u1d18\u1d00\u0280\u1d1b\u028f \ua730\u1d0f\u0280 \u1d07\u1d20\u1d07\u0280\u028f\u1d0f\u0274\u1d07" : "\u1d1b\u029c\u1d07 \u1d18\u1d00\u0280\u1d1b\u028f \u1d04\u1d00\u0280\u0280\u026a\u1d07\ua731 \u1d0f\u0274 \u1d21\u026a\u1d1b\u029c\u1d0f\u1d1c\u1d1b \u028f\u1d0f\u1d1c"),
-                                 "", HINT + "\u028f\u1d0f\u1d1c'\u029f\u029f \u0299\u1d07 \u1d00\ua731\u1d0b\u1d07\u1d05 \u1d1b\u1d0f \u1d04\u1d0f\u0274\ua730\u026a\u0280\u1d0d")
-                        .hideTooltip().tag(this.plugin.keyButton(), "party-leave-open").build());
+                Style.cancel(this.plugin.keyButton(), "party-leave-open",
+                        leader ? "\u1d05\u026a\ua731\u0299\u1d00\u0274\u1d05 \u1d18\u1d00\u0280\u1d1b\u028f" : "\u029f\u1d07\u1d00\u1d20\u1d07 \u1d18\u1d00\u0280\u1d1b\u028f",
+                        "", LABEL + (leader ? "\u1d07\u0274\u1d05\ua731 \u1d1b\u029c\u1d07 \u1d18\u1d00\u0280\u1d1b\u028f \ua730\u1d0f\u0280 \u1d07\u1d20\u1d07\u0280\u028f\u1d0f\u0274\u1d07" : "\u1d1b\u029c\u1d07 \u1d18\u1d00\u0280\u1d1b\u028f \u1d04\u1d00\u0280\u0280\u026a\u1d07\ua731 \u1d0f\u0274 \u1d21\u026a\u1d1b\u029c\u1d0f\u1d1c\u1d1b \u028f\u1d0f\u1d1c"),
+                        "", HINT + "\u028f\u1d0f\u1d1c'\u029f\u029f \u0299\u1d07 \u1d00\ua731\u1d0b\u1d07\u1d05 \u1d1b\u1d0f \u1d04\u1d0f\u0274\ua730\u026a\u0280\u1d0d"));
         player.openInventory(this.inventory);
     }
 
@@ -120,27 +120,26 @@ extends Menu {
     private void addLeaderButtons(Party party) {
         Kit kit = this.kitOf(party);
         this.inventory.setItem(SLOT_KIT, Items.of(kit != null ? kit.getIcon() : Material.GOLDEN_APPLE)
-                .rawName(PartyMenu.accent("\u1d0b\u026a\u1d1b"))
+                .rawName(VALUE + "\u1d0b\u026a\u1d1b")
                 .rawLore("", LABEL + "\ua731\u1d07\u029f\u1d07\u1d04\u1d1b\u1d07\u1d05 " + SEP + this.kitLabel(party), "", HINT + "\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \u1d18\u026a\u1d04\u1d0b \u1d00 \u1d0b\u026a\u1d1b")
                 .glow(kit != null).hideTooltip()
                 .tag(this.plugin.keyButton(), "party-kit").build());
         this.inventory.setItem(SLOT_INVITE, Items.of(Material.PLAYER_HEAD)
-                .rawName(PartyMenu.accent("\u026a\u0274\u1d20\u026a\u1d1b\u1d07"))
+                .rawName(VALUE + "\u026a\u0274\u1d20\u026a\u1d1b\u1d07")
                 .rawLore("", LABEL + "\u1d00\u1d05\u1d05 \ua731\u1d0f\u1d0d\u1d07\u1d0f\u0274\u1d07 \u1d1b\u1d0f \u1d1b\u029c\u1d07 \u1d18\u1d00\u0280\u1d1b\u028f", "", HINT + "\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \u1d18\u026a\u1d04\u1d0b \u1d21\u029c\u1d0f")
                 .hideTooltip().tag(this.plugin.keyButton(), "party-invite").build());
         this.inventory.setItem(SLOT_SETTINGS, Items.of(Material.GRINDSTONE)
-                .rawName(PartyMenu.accent("\ua731\u1d07\u1d1b\u1d1b\u026a\u0274\u0262\ua731"))
+                .rawName(VALUE + "\ua731\u1d07\u1d1b\u1d1b\u026a\u0274\u0262\ua731")
                 .rawLore("", HINT + "\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \u1d0f\u1d18\u1d07\u0274")
                 .hideTooltip().tag(this.plugin.keyButton(), "party-settings-open").build());
         // No kit requirement here any more: the kit is chosen inside the match
         // flow now, so demanding one before the button lights up would block the
         // only route to choosing it.
         boolean ready = !party.isFighting() && party.size() >= 2;
-        this.inventory.setItem(SLOT_START, Items.of(ready ? Material.LIME_DYE : Material.GRAY_DYE)
-                .rawName(ready ? "<gradient:#7CFF6B:#1FA32F>\ua731\u1d1b\u1d00\u0280\u1d1b \u1d0d\u1d00\u1d1b\u1d04\u029c</gradient>" : MUTED + "\ua731\u1d1b\u1d00\u0280\u1d1b \u1d0d\u1d00\u1d1b\u1d04\u029c")
-                .rawLore("", this.startHint(party, kit != null))
-                .glow(ready).hideTooltip()
-                .tag(this.plugin.keyButton(), "party-start").build());
+        this.inventory.setItem(SLOT_START, Style.confirm(this.plugin.keyButton(), "party-start", ready,
+                "\ua731\u1d1b\u1d00\u0280\u1d1b \u1d0d\u1d00\u1d1b\u1d04\u029c",
+                "\ua731\u1d1b\u1d00\u0280\u1d1b \u1d0d\u1d00\u1d1b\u1d04\u029c",
+                "", this.startHint(party, kit != null)));
     }
 
     /**

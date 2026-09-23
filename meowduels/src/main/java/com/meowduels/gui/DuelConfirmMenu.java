@@ -4,12 +4,15 @@ import com.meowduels.MeowDuels;
 import com.meowduels.gui.KitPickMenu;
 import com.meowduels.gui.MapSelectMenu;
 import com.meowduels.gui.Menu;
+import com.meowduels.gui.Style;
 import com.meowduels.managers.StatsManager;
 import com.meowduels.model.Arena;
 import com.meowduels.model.Kit;
 import com.meowduels.util.Items;
 import com.meowduels.util.Ranks;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -17,44 +20,33 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 
 /**
- * The duel setup screen: who you are challenging, on what, for how long, and
+ * The duel setup screen: what you are fighting on, with what, for how long, and
  * whether it counts.
  *
- * <p>Four rows. The top strip is a frame, the second row holds the four things
- * you can change, the third shows the person you are challenging with every
- * choice summarised under their head, and the last row sends or closes. Nothing
- * is written twice: the buttons carry the "what" and the head carries the
- * "so far", so a glance at the middle of the menu is the whole request.
+ * <p>Four rows inside {@link Style}'s frame. The first interior row is the four
+ * things you can change; the second is the two things that end the decision.
+ * There is no head: the person you are challenging is already in the window
+ * title, and a second copy of their face only pushed the actual choices apart.
+ * The whole request is summarised in the confirm button's tooltip, which is the
+ * one place you look before you press it.
  *
- * <p>Two fonts, on purpose. Labels are small-caps unicode; anything variable -
- * names, numbers, kit titles - stays in the normal font, because small caps
- * turns "Steve" into "\u1d1b\u1d07\u1d20\u1d07" and "First to 3" loses its digit weight.
- * Nothing is bold: at this size the gradient carries the emphasis, and bold on
- * top of it just muddies the colour ramp.
+ * <p>Colour does the work. Green with a tick means it will send, red with a
+ * cross means it will not, and everything in between is printed plainly -
+ * gradients are spent on the title and the two decision buttons, nowhere else.
+ * Names, kit titles and numbers stay in the normal font, because small caps
+ * turn "Steve" into "ᴛᴇᴠᴇ".
  */
 public class DuelConfirmMenu
 extends Menu {
     private static final int[] ROUND_OPTIONS = new int[]{1, 2, 3, 5};
 
     private static final int ROWS = 4;
-    private static final int SIZE = ROWS * 9;
     private static final int SLOT_ARENA = 10;
     private static final int SLOT_KIT = 12;
     private static final int SLOT_ROUNDS = 14;
     private static final int SLOT_RANKED = 16;
-    private static final int SLOT_TARGET = 22;
-    private static final int SLOT_CONFIRM = 29;
-    private static final int SLOT_CANCEL = 33;
-
-    // One palette, used everywhere, so the menu reads as one object instead of
-    // five differently-coloured buttons that happen to share a window.
-    private static final String ACCENT_A = "#FF2E55";
-    private static final String ACCENT_B = "#FF7FC4";
-    private static final String VALUE = "<#E6E8EB>";
-    private static final String LABEL = "<#8E959D>";
-    private static final String MUTED = "<#6B7079>";
-    private static final String SEP = "<dark_gray>\u203a ";
-    private static final String HINT = "<dark_gray>\u25b8 <#8E959D>";
+    private static final int SLOT_CONFIRM = 21;
+    private static final int SLOT_CANCEL = 23;
 
     private final MeowDuels plugin;
     private final Player target;
@@ -101,24 +93,18 @@ extends Menu {
         return ROUND_OPTIONS[this.roundsIndex];
     }
 
-    private static String accent(String text) {
-        return "<gradient:" + ACCENT_A + ":" + ACCENT_B + ">" + text + "</gradient>";
-    }
-
     @Override
     public void build() {
-        this.createRaw(ROWS, "<dark_gray>\u258f " + DuelConfirmMenu.accent("\u1d05\u1d1c\u1d07\u029f \u0280\u1d07\ua7af\u1d1c\u1d07\ua731\u1d1b") + " " + SEP + VALUE + this.target.getName());
-        // Paint the frame first and always. A layout saved back when this menu
-        // was a single row only covers slots 0-8, and without this the other
-        // three rows would open as holes.
-        ItemStack filler = Items.of(Material.BLACK_STAINED_GLASS_PANE).rawName(" ").build();
-        for (int i = 0; i < SIZE; ++i) {
-            this.inventory.setItem(i, filler);
-        }
+        this.createRaw(ROWS, Style.title("#FF2E55", "#FF7FC4",
+                "ᴅᴜᴇʟ ʀᴇꞯᴜᴇꜱᴛ", this.target.getName()));
+        // Frame first and always. A layout saved back when this menu was a
+        // single row only covers slots 0-8, and without this the other three
+        // rows would open as holes.
+        Style.frame(this.inventory, ROWS);
         HashMap<String, Integer> buttonSlots = new HashMap<String, Integer>();
         if (this.plugin.getGuiLayoutManager().has("duelconfirm")) {
             for (Map.Entry<Integer, ItemStack> e : this.plugin.getGuiLayoutManager().get("duelconfirm").entrySet()) {
-                if (e.getKey() >= SIZE) continue;
+                if (e.getKey() >= ROWS * 9) continue;
                 String id = Items.readTag(e.getValue(), this.plugin.keyButton());
                 if (id != null) {
                     buttonSlots.put(id, e.getKey());
@@ -131,52 +117,51 @@ extends Menu {
         this.inventory.setItem(buttonSlots.getOrDefault("kit", SLOT_KIT).intValue(), this.renderButton("kit"));
         this.inventory.setItem(buttonSlots.getOrDefault("clock", SLOT_ROUNDS).intValue(), this.renderButton("clock"));
         this.inventory.setItem(buttonSlots.getOrDefault("ranked", SLOT_RANKED).intValue(), this.renderButton("ranked"));
-        this.inventory.setItem(buttonSlots.getOrDefault("target", SLOT_TARGET).intValue(), this.renderButton("target"));
         this.inventory.setItem(buttonSlots.getOrDefault("confirm", SLOT_CONFIRM).intValue(), this.renderButton("confirm"));
         this.inventory.setItem(buttonSlots.getOrDefault("cancel", SLOT_CANCEL).intValue(), this.renderButton("cancel"));
     }
 
     private String arenaLabel() {
         if (this.selectedArena == null) {
-            return MUTED + "\u0280\u1d00\u0274\u1d05\u1d0f\u1d0d";
+            return Style.MUTED + "ʀᴀɴᴅᴏᴍ";
         }
-        return VALUE + this.selectedArena;
+        return Style.VALUE + this.selectedArena;
     }
 
     private String kitLabel() {
         Kit kit = this.selectedKit == null ? null : this.plugin.getKitManager().get(this.selectedKit);
         if (kit == null) {
-            return MUTED + "\u0274\u1d0f\u1d1b \u1d04\u029c\u1d0f\ua731\u1d07\u0274";
+            return Style.BAD + "ɴᴏᴛ ᴄʜᴏꜱᴇɴ";
         }
         String name = kit.getDisplayName();
-        return name == null || name.isEmpty() ? VALUE + kit.getName() : name;
+        return name == null || name.isEmpty() ? Style.VALUE + kit.getName() : name;
     }
 
-    private String modeLabel() {
-        return this.ranked ? "<gradient:#5CE1FF:#3E8BFF>\u0280\u1d00\u0274\u1d0b\u1d07\u1d05</gradient>" : MUTED + "\u1d1c\u0274\u0280\u1d00\u0274\u1d0b\u1d07\u1d05";
+    private String roundsLabel() {
+        return Style.VALUE + "ꜰɪʀꜱᴛ ᴛᴏ " + this.currentRounds();
     }
 
     private ItemStack renderButton(String id) {
         switch (id) {
             case "map": {
                 return Items.of(Material.FILLED_MAP)
-                        .rawName(DuelConfirmMenu.accent("\u1d00\u0280\u1d07\u0274\u1d00"))
+                        .rawName(Style.VALUE + "ᴀʀᴇɴᴀ")
                         .rawLore("",
-                                 LABEL + "\ua731\u1d07\u029f\u1d07\u1d04\u1d1b\u1d07\u1d05 " + SEP + this.arenaLabel(),
+                                 Style.LABEL + "ɴᴏᴡ " + Style.SEP + this.arenaLabel(),
                                  "",
-                                 HINT + "\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \u1d18\u026a\u1d04\u1d0b \u1d00 \u1d0d\u1d00\u1d18")
+                                 Style.HINT + "ᴄʟɪᴄᴋ ᴛᴏ ᴘɪᴄᴋ ᴀ ᴍᴀᴘ")
                         .hideTooltip()
                         .tag(this.plugin.keyButton(), "map")
                         .build();
             }
             case "kit": {
                 Kit kit = this.selectedKit == null ? null : this.plugin.getKitManager().get(this.selectedKit);
-                return Items.of(kit != null ? kit.getIcon() : Material.GOLDEN_APPLE)
-                        .rawName(DuelConfirmMenu.accent("\u1d0b\u026a\u1d1b"))
+                return Items.of(kit != null ? kit.getIcon() : Material.IRON_SWORD)
+                        .rawName(Style.VALUE + "ᴋɪᴛ")
                         .rawLore("",
-                                 LABEL + "\ua731\u1d07\u029f\u1d07\u1d04\u1d1b\u1d07\u1d05 " + SEP + this.kitLabel(),
+                                 Style.LABEL + "ɴᴏᴡ " + Style.SEP + this.kitLabel(),
                                  "",
-                                 HINT + "\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \u1d18\u026a\u1d04\u1d0b \u1d00 \u1d0b\u026a\u1d1b")
+                                 Style.HINT + "ᴄʟɪᴄᴋ ᴛᴏ ᴘɪᴄᴋ ᴀ ᴋɪᴛ")
                         .glow(this.selectedKit != null)
                         .hideTooltip()
                         .tag(this.plugin.keyButton(), "kit")
@@ -191,78 +176,75 @@ extends Menu {
                 for (int i = 0; i < ROUND_OPTIONS.length; ++i) {
                     boolean on = i == this.roundsIndex;
                     lore[i + 1] = on
-                            ? "<#FF7FC4>\u25b8 " + VALUE + "\ua730\u026a\u0280\ua731\u1d1b \u1d1b\u1d0f " + ROUND_OPTIONS[i]
-                            : "<dark_gray>  " + MUTED + "\ua730\u026a\u0280\ua731\u1d1b \u1d1b\u1d0f " + ROUND_OPTIONS[i];
+                            ? Style.GOOD + Style.TICK + Style.VALUE + "ꜰɪʀꜱᴛ ᴛᴏ " + ROUND_OPTIONS[i]
+                            : "<dark_gray>  " + Style.MUTED + "ꜰɪʀꜱᴛ ᴛᴏ " + ROUND_OPTIONS[i];
                 }
                 lore[ROUND_OPTIONS.length + 1] = "";
-                lore[ROUND_OPTIONS.length + 2] = HINT + "\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \u1d04\u029c\u1d00\u0274\u0262\u1d07";
-                lore[ROUND_OPTIONS.length + 3] = HINT + "\u0280\u026a\u0262\u029c\u1d1b-\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \u0262\u1d0f \u0299\u1d00\u1d04\u1d0b";
+                lore[ROUND_OPTIONS.length + 2] = Style.HINT + "ᴄʟɪᴄᴋ ᴛᴏ ᴄʜᴀɴɢᴇ";
+                lore[ROUND_OPTIONS.length + 3] = Style.HINT + "ʀɪɢʜᴛ-ᴄʟɪᴄᴋ ᴛᴏ ɢᴏ ʙᴀᴄᴋ";
                 return Items.of(Material.CLOCK)
-                        .rawName(DuelConfirmMenu.accent("\u0280\u1d0f\u1d1c\u0274\u1d05\ua731"))
+                        .rawName(Style.VALUE + "ʀᴏᴜɴᴅꜱ")
                         .rawLore(lore)
                         .hideTooltip()
                         .tag(this.plugin.keyButton(), "clock")
                         .build();
             }
             case "ranked": {
-                return Items.of(this.ranked ? Material.LIME_DYE : Material.GRAY_DYE)
-                        .rawName(this.modeLabel())
+                return Items.of(this.ranked ? Material.EXPERIENCE_BOTTLE : Material.GLASS_BOTTLE)
+                        .rawName(Style.VALUE + "ʀᴀɴᴋᴇᴅ")
                         .rawLore("",
-                                 this.ranked ? LABEL + "\u1d21\u026a\u0274\u0274\u1d07\u0280 \u0262\u1d00\u026a\u0274\ua731 \u1d07\u029f\u1d0f" : LABEL + "\u0274\u1d0f \u1d07\u029f\u1d0f \u026a\ua731 \u1d07x\u1d04\u029c\u1d00\u0274\u0262\u1d07\u1d05",
+                                 Style.state(this.ranked,
+                                         "ᴡɪɴɴᴇʀ ɢᴀɪɴꜱ ᴇʟᴏ",
+                                         "ɴᴏ ᴇʟᴏ ɪꜱ ᴇxᴄʜᴀɴɢᴇᴅ"),
                                  "",
-                                 HINT + "\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \u1d04\u029c\u1d00\u0274\u0262\u1d07")
+                                 Style.HINT + "ᴄʟɪᴄᴋ ᴛᴏ ᴄʜᴀɴɢᴇ")
                         .glow(this.ranked)
                         .hideTooltip()
                         .tag(this.plugin.keyButton(), "ranked")
                         .build();
             }
-            case "target": {
-                return Items.of(Material.PLAYER_HEAD)
-                        .skull(this.target)
-                        .rawName(VALUE + this.target.getName())
-                        .rawLore(this.targetLore())
-                        .hideTooltip()
-                        .tag(this.plugin.keyButton(), "target")
-                        .build();
-            }
             case "cancel": {
-                return Items.of(Material.BARRIER)
-                        .rawName("<gradient:#FF6B6B:#A01028>\u1d04\u1d00\u0274\u1d04\u1d07\u029f</gradient>")
-                        .rawLore("", LABEL + "\u1d04\u029f\u1d0f\ua731\u1d07 \u1d21\u026a\u1d1b\u029c\u1d0f\u1d1c\u1d1b \ua731\u1d07\u0274\u1d05\u026a\u0274\u0262")
-                        .hideTooltip()
-                        .tag(this.plugin.keyButton(), "cancel")
-                        .build();
+                return Style.cancel(this.plugin.keyButton(), "cancel",
+                        "ᴄᴀɴᴄᴇʟ",
+                        "",
+                        Style.LABEL + "ᴄʟᴏꜱᴇ ᴡɪᴛʜᴏᴜᴛ ꜱᴇɴᴅɪɴɢ");
             }
         }
-        boolean ready = this.selectedKit != null;
-        return Items.of(ready ? Material.LIME_DYE : Material.GRAY_DYE)
-                .rawName(ready ? "<gradient:#7CFF6B:#1FA32F>\ua731\u1d07\u0274\u1d05 \u0280\u1d07\ua7af\u1d1c\u1d07\ua731\u1d1b</gradient>" : MUTED + "\u1d18\u026a\u1d04\u1d0b \u1d00 \u1d0b\u026a\u1d1b \ua730\u026a\u0280\ua731\u1d1b")
-                .rawLore("",
-                         ready ? LABEL + "\u1d04\u029c\u1d00\u029f\u029f\u1d07\u0274\u0262\u026a\u0274\u0262 " + SEP + VALUE + this.target.getName()
-                               : "<#FF5C5C>\u0280\u1d07\ua7af\u1d1c\u026a\u0280\u1d07\u1d05 " + SEP + LABEL + "\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \u1d18\u026a\u1d04\u1d0b \u1d00 \u1d0b\u026a\u1d1b")
-                .glow(ready)
-                .hideTooltip()
-                .tag(this.plugin.keyButton(), "confirm")
-                .build();
+        return Style.confirm(this.plugin.keyButton(), "confirm", this.selectedKit != null,
+                "ꜱᴇɴᴅ ʀᴇꞯᴜᴇꜱᴛ",
+                "ᴘɪᴄᴋ ᴀ ᴋɪᴛ ꜰɪʀꜱᴛ",
+                this.summary());
     }
 
-    /** Everything the request will carry, in one place, under their face. */
-    private String[] targetLore() {
+    /**
+     * Everything the request will carry, on the button that sends it. This used
+     * to live under the target's head; it belongs on the thing you are about to
+     * press, where you are already looking.
+     */
+    private String[] summary() {
         StatsManager stats = this.plugin.getStatsManager();
         String rating = stats.isPlaced(this.target.getUniqueId())
-                ? Ranks.mini(stats, this.target.getUniqueId()) + " <dark_gray>\u00b7 <#FF8A93>"
+                ? Ranks.mini(stats, this.target.getUniqueId()) + " <dark_gray>· <#FF8A93>"
                   + stats.getElo(this.target.getUniqueId())
-                : MUTED + "\u1d1c\u0274\u1d18\u029f\u1d00\u1d04\u1d07\u1d05 " + SEP + VALUE + stats.placementsLeft(this.target.getUniqueId())
-                  + " " + LABEL + "\u1d18\u029f\u1d00\u1d04\u1d07\u1d0d\u1d07\u0274\u1d1b \u1d0d\u1d00\u1d1b\u1d04\u029c\u1d07\ua731 \u029f\u1d07\ua730\u1d1b";
-        return new String[]{
-            "",
-            LABEL + "\u1d0d\u1d00\u1d18 " + SEP + this.arenaLabel(),
-            LABEL + "\u1d0b\u026a\u1d1b " + SEP + this.kitLabel(),
-            LABEL + "\u0280\u1d0f\u1d1c\u0274\u1d05\ua731 " + SEP + VALUE + "\ua730\u026a\u0280\ua731\u1d1b \u1d1b\u1d0f " + this.currentRounds(),
-            LABEL + "\u1d0d\u1d0f\u1d05\u1d07 " + SEP + this.modeLabel(),
-            "",
-            LABEL + "\u0280\u1d00\u1d1b\u026a\u0274\u0262 " + SEP + rating
-        };
+                : Style.MUTED + "ᴜɴᴘʟᴀᴄᴇᴅ " + Style.SEP + Style.VALUE
+                  + stats.placementsLeft(this.target.getUniqueId()) + " " + Style.LABEL
+                  + "ᴛᴏ ɢᴏ";
+        List<String> lore = new ArrayList<String>();
+        lore.add("");
+        lore.add(Style.LABEL + "ᴏᴘᴘᴏɴᴇɴᴛ " + Style.SEP + Style.VALUE + this.target.getName());
+        lore.add(Style.LABEL + "ʀᴀᴛɪɴɢ " + Style.SEP + rating);
+        lore.add("");
+        lore.add(Style.LABEL + "ᴀʀᴇɴᴀ " + Style.SEP + this.arenaLabel());
+        lore.add(Style.LABEL + "ᴋɪᴛ " + Style.SEP + this.kitLabel());
+        lore.add(Style.LABEL + "ʀᴏᴜɴᴅꜱ " + Style.SEP + this.roundsLabel());
+        lore.add(Style.LABEL + "ᴍᴏᴅᴇ " + Style.SEP
+                + (this.ranked ? Style.VALUE + "ʀᴀɴᴋᴇᴅ"
+                               : Style.MUTED + "ᴜɴʀᴀɴᴋᴇᴅ"));
+        if (this.selectedKit == null) {
+            lore.add("");
+            lore.add(Style.BAD + Style.CROSS + "ᴘɪᴄᴋ ᴀ ᴋɪᴛ ʙᴇꜰᴏʀᴇ ꜱᴇɴᴅɪɴɢ");
+        }
+        return lore.toArray(new String[0]);
     }
 
     @Override
@@ -289,9 +271,6 @@ extends Menu {
             case "ranked": {
                 this.ranked = !this.ranked;
                 this.reopen(player);
-                break;
-            }
-            case "target": {
                 break;
             }
             case "cancel": {

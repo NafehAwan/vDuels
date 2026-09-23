@@ -36,11 +36,8 @@ extends Menu {
 
     @Override
     public void build() {
-        this.createRaw(ROWS, "<dark_gray>\u258f <gradient:#FF8AD0:#B04BD6>\u1d18\u1d00\u0280\u1d1b\u028f \ua731\u1d07\u1d1b\u1d1b\u026a\u0274\u0262\ua731</gradient>");
-        ItemStack filler = Items.of(Material.BLACK_STAINED_GLASS_PANE).rawName(" ").build();
-        for (int i = 0; i < ROWS * 9; ++i) {
-            this.inventory.setItem(i, filler);
-        }
+        this.createRaw(ROWS, Style.title("#FF8AD0", "#B04BD6", "\u1d18\u1d00\u0280\u1d1b\u028f \ua731\u1d07\u1d1b\u1d1b\u026a\u0274\u0262\ua731"));
+        Style.frame(this.inventory, ROWS);
     }
 
     @Override
@@ -60,18 +57,17 @@ extends Menu {
                 Material.ENDER_EYE, "\u1d0f\u1d18\u1d07\u0274 \u1d1b\u1d0f \u1d00\u029f\u029f", "\u1d00\u0274\u028f\u1d0f\u0274\u1d07 \u1d04\u1d00\u0274 \u1d0a\u1d0f\u026a\u0274 \u1d21\u026a\u1d1b\u029c\u1d0f\u1d1c\u1d1b \u1d00\u0274 \u026a\u0274\u1d20\u026a\u1d1b\u1d07", "party-set-open"));
         this.inventory.setItem(SLOT_FF, this.toggle(party.isFriendlyFire(),
                 Material.IRON_SWORD, "\ua730\u0280\u026a\u1d07\u0274\u1d05\u029f\u028f \ua730\u026a\u0280\u1d07", "\u1d0d\u1d07\u1d0d\u0299\u1d07\u0280\ua731 \u1d04\u1d00\u0274 \u029c\u1d1c\u0280\u1d1b \u1d07\u1d00\u1d04\u029c \u1d0f\u1d1b\u029c\u1d07\u0280 \u1d0f\u1d1c\u1d1b\ua731\u026a\u1d05\u1d07 \u1d00 \u1d0d\u1d00\u1d1b\u1d04\u029c", "party-set-ff"));
-        this.inventory.setItem(SLOT_BACK, Items.of(Material.ARROW)
-                .rawName("<#E6E8EB>\u0299\u1d00\u1d04\u1d0b")
-                .hideTooltip().tag(this.plugin.keyButton(), "party-back").build());
+        this.inventory.setItem(SLOT_BACK, Style.back(this.plugin.keyButton(), "party-back"));
         player.openInventory(this.inventory);
     }
 
+    /** Same shape as the player settings menu, so a toggle is a toggle. */
     private ItemStack toggle(boolean on, Material icon, String name, String why, String tag) {
         return Items.of(icon)
-                .rawName((on ? "<gradient:#7CFF6B:#1FA32F>" : "<gradient:#8E959D:#5A6069>") + name + "</gradient>")
-                .rawLore("", LABEL + why, "",
-                         (on ? "<#7CFF6B>\u25cf \u1d0f\u0274" : MUTED + "\u25cb \u1d0f\ua730\ua730"),
-                         "", HINT + "\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \u1d1b\u1d0f\u0262\u0262\u029f\u1d07")
+                .rawName(Style.VALUE + name)
+                .rawLore("", Style.LABEL + why, "",
+                         Style.state(on, "\u1d0f\u0274", "\u1d0f\ua730\ua730"),
+                         "", Style.HINT + "\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \u1d1b\u1d0f\u0262\u0262\u029f\u1d07")
                 .glow(on).hideTooltip().tag(this.plugin.keyButton(), tag).build();
     }
 

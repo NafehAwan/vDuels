@@ -24,13 +24,14 @@ import org.bukkit.inventory.ItemStack;
  */
 public class PartyDuelsConfirmMenu
 extends Menu {
-    private static final int ROWS = 5;
-    private static final int SIZE = ROWS * 9;
+    // Four rows, not five: the fifth was two empty interior rows padding a
+    // window that asks one question.
+    private static final int ROWS = 4;
     private static final int SLOT_INFO = 4;
-    private static final int[] ROUND_SLOTS = new int[]{20, 22, 24};
+    private static final int[] ROUND_SLOTS = new int[]{11, 13, 15};
     private static final int[] ROUND_VALUES = new int[]{1, 3, 5};
-    private static final int SLOT_BACK = 38;
-    private static final int SLOT_START = 42;
+    private static final int SLOT_BACK = 21;
+    private static final int SLOT_START = 23;
 
     private static final String VALUE = "<#E6E8EB>";
     private static final String LABEL = "<#8E959D>";
@@ -61,22 +62,17 @@ extends Menu {
             new PartyOpponentMenu(this.plugin).open(player);
             return;
         }
-        this.createRaw(ROWS, "<dark_gray>▏ " + PartyModeMenu.accent(
-                "ᴘᴀʀᴛʏ ᴅᴜᴇʟꜱ")
-                + " " + SEP + VALUE + this.nameOf(target.getLeader()));
-        ItemStack filler = Items.of(Material.BLACK_STAINED_GLASS_PANE).rawName(" ").build();
-        for (int i = 0; i < SIZE; ++i) {
-            this.inventory.setItem(i, filler);
-        }
+        this.createRaw(ROWS, Style.title("#7DE2FF", "#4B7BFF",
+                "ᴘᴀʀᴛʏ ᴅᴜᴇʟꜱ", this.nameOf(target.getLeader())));
+        Style.frame(this.inventory, ROWS);
         int ours = this.onlineCount(party);
         int theirs = this.onlineCount(target);
-        int pairs = Math.min(ours, theirs);
         this.inventory.setItem(SLOT_INFO, Items.of(Material.PLAYER_HEAD)
                 .skull(Bukkit.getOfflinePlayer((UUID)target.getLeader()))
                 .rawName(PartyModeMenu.accent(this.nameOf(target.getLeader())) + LABEL + "'ꜱ ᴘᴀʀᴛʏ")
                 .rawLore("",
                          LABEL + "ᴋɪᴛ " + SEP + this.kitLabel(party),
-                         LABEL + "ᴘᴀɪʀꜱ " + SEP + VALUE + pairs,
+                         LABEL + "ꜱɪᴅᴇꜱ " + SEP + VALUE + ours + " " + LABEL + "ᴠꜱ " + VALUE + theirs,
                          LABEL + "ʀᴏᴜɴᴅꜱ " + SEP + VALUE + "ꜰɪʀꜱᴛ ᴛᴏ " + party.getDuelRounds(),
                          "",
                          LABEL + PartyMode.DUELS.getDescription())
@@ -91,19 +87,16 @@ extends Menu {
                     .glow(on).hideTooltip()
                     .tag(this.plugin.keyButton(), "pd-rounds:" + value).build());
         }
-        this.inventory.setItem(SLOT_BACK, Items.of(Material.RED_DYE)
-                .rawName("<gradient:#FF8A8A:#C0392B>ɢᴏ ʙᴀᴄᴋ</gradient>")
-                .rawLore("", LABEL + "ᴄʜᴏᴏꜱᴇ ᴀ ᴅɪꜰꜰᴇʀᴇɴᴛ ᴋɪᴛ")
-                .hideTooltip().tag(this.plugin.keyButton(), "pd-back").build());
-        boolean ready = pairs > 0 && party.getKit() != null;
-        this.inventory.setItem(SLOT_START, Items.of(ready ? Material.LIME_DYE : Material.GRAY_DYE)
-                .rawName(ready ? "<gradient:#7CFF6B:#1FA32F>ꜱᴛᴀʀᴛ</gradient>"
-                        : MUTED + "ɴᴏᴛ ʀᴇᴀᴅʏ")
-                .rawLore("", ready
-                        ? LABEL + "ᴘᴀɪʀ ᴇᴠᴇʀʏᴏɴᴇ ᴏꜰꜰ ᴀɴᴅ ɢᴏ"
-                        : "<#FF8A93>ʙᴏᴛʜ ᴘᴀʀᴛɪᴇꜱ ɴᴇᴇᴅ ꜱᴏᴍᴇᴏɴᴇ ᴏɴʟɪɴᴇ")
-                .glow(ready).hideTooltip()
-                .tag(this.plugin.keyButton(), ready ? "pd-go" : "pd-none").build());
+        this.inventory.setItem(SLOT_BACK, Style.cancel(this.plugin.keyButton(), "pd-back",
+                "ɢᴏ ʙᴀᴄᴋ",
+                "", LABEL + "ᴄʜᴏᴏꜱᴇ ᴀ ᴅɪꜰꜰᴇʀᴇɴᴛ ᴋɪᴛ"));
+        boolean ready = ours > 0 && theirs > 0 && party.getKit() != null;
+        this.inventory.setItem(SLOT_START, Style.confirm(this.plugin.keyButton(),
+                ready ? "pd-go" : "pd-none", ready,
+                "ꜱᴛᴀʀᴛ", "ɴᴏᴛ ʀᴇᴀᴅʏ",
+                "", ready
+                        ? LABEL + "ᴛᴇᴀᴍ ᴠꜱ ᴛᴇᴀᴍ ᴜɴᴛɪʟ ᴏɴᴇ ꜱɪᴅᴇ ɪꜱ ᴏᴜᴛ"
+                        : Style.BAD + "ʙᴏᴛʜ ᴘᴀʀᴛɪᴇꜱ ɴᴇᴇᴅ ꜱᴏᴍᴇᴏɴᴇ ᴏɴʟɪɴᴇ"));
         player.openInventory(this.inventory);
     }
 

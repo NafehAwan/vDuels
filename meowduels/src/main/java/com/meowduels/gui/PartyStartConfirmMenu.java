@@ -22,9 +22,10 @@ import org.bukkit.inventory.ItemStack;
  */
 public class PartyStartConfirmMenu
 extends Menu {
-    private static final int SLOT_BACK = 1;
-    private static final int SLOT_WHAT = 2;
-    private static final int SLOT_START = 3;
+    private static final int ROWS = 3;
+    private static final int SLOT_BACK = 11;
+    private static final int SLOT_WHAT = 13;
+    private static final int SLOT_START = 15;
 
     private static final String VALUE = "<#E6E8EB>";
     private static final String LABEL = "<#8E959D>";
@@ -50,15 +51,14 @@ extends Menu {
             player.sendMessage(Text.prefixed("&cOnly the party leader can start a match."));
             return;
         }
-        this.createHopper("<dark_gray>\u258f " + PartyModeMenu.accent("\ua731\u1d1b\u1d00\u0280\u1d1b \u1d0d\u1d00\u1d1b\u1d04\u029c"));
-        ItemStack filler = Items.of(Material.BLACK_STAINED_GLASS_PANE).rawName(" ").build();
-        for (int i = 0; i < 5; ++i) {
-            this.inventory.setItem(i, filler);
-        }
-        this.inventory.setItem(SLOT_BACK, Items.of(Material.RED_DYE)
-                .rawName("<gradient:#FF8A8A:#C0392B>\u0262\u1d0f \u0299\u1d00\u1d04\u1d0b</gradient>")
-                .rawLore("", LABEL + "\u1d04\u029c\u1d0f\u1d0f\ua731\u1d07 \u1d00 \u1d05\u026a\ua730\ua730\u1d07\u0280\u1d07\u0274\u1d1b \u1d0b\u026a\u1d1b")
-                .hideTooltip().tag(this.plugin.keyButton(), "start-back").build());
+        // A chest rather than the hopper this used to be: five slots in a row
+        // cannot carry a border, and a window with no border next to one with
+        // a border reads as a different plugin.
+        this.createRaw(ROWS, Style.title("#7DE2FF", "#4B7BFF", "\ua731\u1d1b\u1d00\u0280\u1d1b \u1d0d\u1d00\u1d1b\u1d04\u029c"));
+        Style.frame(this.inventory, ROWS);
+        this.inventory.setItem(SLOT_BACK, Style.cancel(this.plugin.keyButton(), "start-back",
+                "\u0262\u1d0f \u0299\u1d00\u1d04\u1d0b",
+                "", LABEL + "\u1d04\u029c\u1d0f\u1d0f\ua731\u1d07 \u1d00 \u1d05\u026a\ua730\ua730\u1d07\u0280\u1d07\u0274\u1d1b \u1d0b\u026a\u1d1b"));
         this.inventory.setItem(SLOT_WHAT, Items.of(Material.PAPER)
                 .rawName(PartyModeMenu.accent(this.mode.getLabel()))
                 .rawLore("",
@@ -67,11 +67,9 @@ extends Menu {
                          "",
                          LABEL + this.mode.getDescription())
                 .hideTooltip().build());
-        this.inventory.setItem(SLOT_START, Items.of(Material.LIME_DYE)
-                .rawName("<gradient:#7CFF6B:#1FA32F>\ua731\u1d1b\u1d00\u0280\u1d1b</gradient>")
-                .rawLore("", LABEL + "\ua731\u1d07\u0274\u1d05 \u1d07\u1d20\u1d07\u0280\u028f\u1d0f\u0274\u1d07 \u026a\u0274 \u1d00\u0274\u1d05 \u0299\u1d07\u0262\u026a\u0274 \u1d1b\u029c\u1d07 \u1d04\u1d0f\u1d1c\u0274\u1d1b\u1d05\u1d0f\u1d21\u0274")
-                .glow(true).hideTooltip()
-                .tag(this.plugin.keyButton(), "start-go").build());
+        this.inventory.setItem(SLOT_START, Style.confirm(this.plugin.keyButton(), "start-go", true,
+                "\ua731\u1d1b\u1d00\u0280\u1d1b", "\ua731\u1d1b\u1d00\u0280\u1d1b",
+                "", LABEL + "\ua731\u1d07\u0274\u1d05 \u1d07\u1d20\u1d07\u0280\u028f\u1d0f\u0274\u1d07 \u026a\u0274 \u1d00\u0274\u1d05 \u0299\u1d07\u0262\u026a\u0274 \u1d1b\u029c\u1d07 \u1d04\u1d0f\u1d1c\u0274\u1d1b\u1d05\u1d0f\u1d21\u0274"));
         player.openInventory(this.inventory);
     }
 

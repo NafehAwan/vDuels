@@ -19,8 +19,11 @@ import org.bukkit.configuration.file.YamlConfiguration;
 public class PlayerSettingsManager {
     private final MeowDuels plugin;
     private final File file;
-    private final Map<UUID, Boolean> duelRequests = new HashMap<UUID, Boolean>();
-    private final Map<UUID, Boolean> scoreboard = new HashMap<UUID, Boolean>();
+    /** key -> (player -> value). Every toggle defaults to ON when absent, so a
+     *  new one needs no migration and an unknown player needs no row. */
+    private final Map<String, Map<UUID, Boolean>> flags = new HashMap<String, Map<UUID, Boolean>>();
+    private static final String[] KEYS = new String[]{
+        "duel-requests", "scoreboard", "party-invites", "spectators", "sounds"};
 
     public PlayerSettingsManager(MeowDuels plugin) {
         this.plugin = plugin;
@@ -33,8 +36,9 @@ public class PlayerSettingsManager {
             return;
         }
         YamlConfiguration cfg = YamlConfiguration.loadConfiguration((File)this.file);
-        this.loadSection(cfg.getConfigurationSection("duel-requests"), this.duelRequests);
-        this.loadSection(cfg.getConfigurationSection("scoreboard"), this.scoreboard);
+        for (String key : KEYS) {
+            this.loadSection(cfg.getConfigurationSection(key), this.map(key));
+        }
     }
 
     private void loadSection(ConfigurationSection root, Map<UUID, Boolean> into) {
@@ -51,11 +55,10 @@ public class PlayerSettingsManager {
 
     public void save() {
         YamlConfiguration cfg = new YamlConfiguration();
-        for (Map.Entry<UUID, Boolean> e : this.duelRequests.entrySet()) {
-            cfg.set("duel-requests." + String.valueOf(e.getKey()), (Object)e.getValue());
-        }
-        for (Map.Entry<UUID, Boolean> e : this.scoreboard.entrySet()) {
-            cfg.set("scoreboard." + String.valueOf(e.getKey()), (Object)e.getValue());
+        for (String key : KEYS) {
+            for (Map.Entry<UUID, Boolean> e : this.map(key).entrySet()) {
+                cfg.set(key + "." + String.valueOf(e.getKey()), (Object)e.getValue());
+            }
         }
         try {
             cfg.save(this.file);
@@ -65,24 +68,52 @@ public class PlayerSettingsManager {
         }
     }
 
+    private Map<UUID, Boolean> map(String key) {
+        Map<UUID, Boolean> found = this.flags.get(key);
+        if (found == null) {
+            found = new HashMap<UUID, Boolean>();
+            this.flags.put(key, found);
+        }
+        return found;
+    }
+
+    /** Every toggle is on unless the player turned it off. */
+    public boolean is(String key, UUID id) {
+        Boolean v = this.map(key).get(id);
+        return v == null || v.booleanValue();
+    }
+
+    public void toggle(String key, UUID id) {
+        this.map(key).put(id, !this.is(key, id));
+        this.save();
+    }
+
     public boolean isDuelRequests(UUID id) {
-        Boolean v = this.duelRequests.get(id);
-        return v == null || v != false;
+        return this.is("duel-requests", id);
     }
 
     public boolean isScoreboard(UUID id) {
-        Boolean v = this.scoreboard.get(id);
-        return v == null || v != false;
+        return this.is("scoreboard", id);
+    }
+
+    public boolean isPartyInvites(UUID id) {
+        return this.is("party-invites", id);
+    }
+
+    public boolean isSpectators(UUID id) {
+        return this.is("spectators", id);
+    }
+
+    public boolean isSounds(UUID id) {
+        return this.is("sounds", id);
     }
 
     public void toggleDuelRequests(UUID id) {
-        this.duelRequests.put(id, !this.isDuelRequests(id));
-        this.save();
+        this.toggle("duel-requests", id);
     }
 
     public void toggleScoreboard(UUID id) {
-        this.scoreboard.put(id, !this.isScoreboard(id));
-        this.save();
+        this.toggle("scoreboard", id);
     }
 }
 

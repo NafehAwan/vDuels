@@ -505,8 +505,17 @@ public class DuelManager {
         Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> this.countdownTick(duel, remainingTicks - 10), 10L);
     }
 
+    /**
+     * One number a second, fading out as the next one lands.
+     *
+     * <p>The three times add up to exactly one second on purpose: the digit
+     * appears on the beat with no fade-in, holds while it is the answer, then
+     * spends its last eight ticks dissolving under the next one. A hard cut
+     * every second flickers, and a title that outlives its second leaves two
+     * numbers on screen at once.
+     */
     private void showCountdownNumber(Player player, int seconds) {
-        this.sendTitle(player, this.msg("titles.countdown.title", "seconds", String.valueOf(seconds)), this.msg("titles.countdown.subtitle", "seconds", String.valueOf(seconds)), 0, 25, 0);
+        this.sendTitle(player, this.msg("titles.countdown.title", "seconds", String.valueOf(seconds)), this.msg("titles.countdown.subtitle", "seconds", String.valueOf(seconds)), 0, 12, 8);
     }
 
     private void finishCountdown(ActiveDuel duel, boolean forced) {
@@ -570,18 +579,15 @@ public class DuelManager {
     }
 
     /**
-     * The countdown meter, the same shape a party match uses.
+     * The one line the action bar carries during a duel countdown.
      *
-     * <p>Blocks draining left to right rather than a line of text, so the two
-     * modes read the same way, and the ready count rides along on the end
-     * instead of owning the whole bar.
+     * <p>It says what you can do and how many of you have done it. A block
+     * meter lived here for a while and was wrong: the countdown is already on
+     * screen in numbers a metre tall, so the bar only added a second thing
+     * moving in the corner of your eye.
      */
     private Component readyBar(ActiveDuel duel) {
-        String bar = Cooldowns.bar(duel.getCountdownRemainingMs(), duel.getCountdownTotalMs(), 20);
-        int ready = duel.getReadyCount();
-        String tail = ready >= 2 ? "<#7CFF6B>\u2714 \u0280\u1d07\u1d00\u1d05\u028f"
-                : "<#6B7079>\ua731\u0274\u1d07\u1d00\u1d0b \u1d1b\u1d0f \u0280\u1d07\u1d00\u1d05\u028f <#8E959D>" + ready + "<dark_gray>/<#8E959D>2";
-        return DuelManager.mm("<#6B7079>" + bar + " <dark_gray>\u2503 " + tail);
+        return DuelManager.mm("<gray>Sneak to get Ready <green>\u2714 <gray>(" + duel.getReadyCount() + "/2)");
     }
 
     private static Component mm(String miniMessage) {

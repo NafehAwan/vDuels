@@ -50,6 +50,7 @@ import com.meowduels.managers.TabService;
 import com.meowduels.managers.KitLayoutManager;
 import com.meowduels.managers.TrimPreferenceManager;
 import com.meowduels.util.Cooldowns;
+import com.meowduels.util.Sounds;
 import com.meowduels.util.SpawnItems;
 import java.io.File;
 import java.io.IOException;
@@ -141,6 +142,10 @@ extends JavaPlugin {
         this.trimPreferenceManager = new TrimPreferenceManager(this);
         this.kitLayoutManager = new KitLayoutManager(this);
         this.playerSettingsManager = new PlayerSettingsManager(this);
+        // Sounds is static and has no plugin to ask, so it is handed the one
+        // question it needs answered. Set after the manager exists and before
+        // any listener can fire a cue.
+        Sounds.mutedWhen(p -> !this.playerSettingsManager.isSounds(p.getUniqueId()));
         this.tabHook = new TabHook();
         if (this.tabHook.isAvailable()) {
             this.getLogger().info("Hooked into TAB - ranks hidden and health shown on nametags during duels.");

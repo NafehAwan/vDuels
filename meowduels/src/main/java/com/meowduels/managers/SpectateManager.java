@@ -78,6 +78,13 @@ public class SpectateManager {
             viewer.sendMessage(this.plugin.messages().get("spectate.not-allowed", new String[0]));
             return;
         }
+        // The fighter's own choice, from /settings. Same admin bypass as the
+        // arena flag above, and the same silence towards the fighter: they
+        // turned spectators off so they would stop hearing about them.
+        if (!this.plugin.getPlayerSettings().isSpectators(targetPlayer.getUniqueId()) && !viewer.hasPermission("meowduels.admin")) {
+            viewer.sendMessage(Text.prefixed("&c" + targetPlayer.getName() + " has spectators turned off."));
+            return;
+        }
         UUID previous = this.target.get(id);
         if (previous != null && !previous.equals(targetPlayer.getUniqueId())) {
             this.notify(previous, "spectate.stopped-watching", "name", viewer.getName());

@@ -127,11 +127,8 @@ extends Menu {
             this.step = 0;
         }
         Page page = pages.get(this.step);
-        this.createRaw(ROWS, this.mode.getLabel() + " \u2192 " + page.title);
-        ItemStack filler = Items.of(Material.BLACK_STAINED_GLASS_PANE).rawName(" ").build();
-        for (int i = 0; i < SIZE; ++i) {
-            this.inventory.setItem(i, filler);
-        }
+        this.createRaw(ROWS, "<dark_gray>\u258f " + this.mode.getLabel() + " " + Style.SEP + Style.VALUE + page.title);
+        Style.frame(this.inventory, ROWS);
         String chosen = party.getKit();
         for (int i = 0; i < KIT_SLOTS.length && i < page.kits.size(); ++i) {
             ItemStack icon = this.kitIcon(page.kits.get(i), chosen);
@@ -141,8 +138,9 @@ extends Menu {
         }
         if (pages.size() > 1) {
             this.inventory.setItem(SLOT_ARROW, Items.of(Material.ARROW)
-                    .name("&eNext Category")
-                    .lore("&f\u2192 another category")
+                    .rawName(Style.VALUE + "\u0274\u1d07x\u1d1b \u1d04\u1d00\u1d1b\u1d07\u0262\u1d0f\u0280\u028f")
+                    .rawLore("", Style.HINT + "\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \u1d04\u028f\u1d04\u029f\u1d07")
+                    .hideTooltip()
                     .tag(this.plugin.keyButton(), "next-cat").build());
         }
         player.openInventory(this.inventory);
