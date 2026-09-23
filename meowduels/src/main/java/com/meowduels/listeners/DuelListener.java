@@ -47,6 +47,8 @@ import com.meowduels.MeowDuels;
 import com.meowduels.model.ActiveDuel;
 import com.meowduels.model.Party;
 import com.meowduels.model.Arena;
+import com.meowduels.util.Sounds;
+import com.meowduels.util.Text;
 import com.meowduels.util.GameModeGuard;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import java.util.HashMap;
@@ -66,6 +68,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
+import org.bukkit.entity.ThrownPotion;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -177,31 +180,17 @@ implements Listener {
             }
             return;
         }
-        double effectiveHealth = player.getHealth();
-        try {
-            effectiveHealth += Math.max(0.0, player.getAbsorptionAmount());
-        }
-        catch (Throwable throwable) {
-            // empty catch block
-        }
-        if (event.getFinalDamage() >= effectiveHealth && !this.holdingTotem(player)) {
-            event.setCancelled(true);
-            try {
-                player.setHealth(player.getMaxHealth());
-            }
-            catch (Throwable t) {
-                player.setHealth(20.0);
-            }
-            UUID loserId = player.getUniqueId();
-            Location deathLoc = player.getLocation().clone();
-            this.plugin.getDuelManager().handleRoundLoss(loserId, deathLoc);
-        }
-    }
-
-    private boolean holdingTotem(Player player) {
-        ItemStack main = player.getInventory().getItemInMainHand();
-        ItemStack off = player.getInventory().getItemInOffHand();
-        return main != null && main.getType() == Material.TOTEM_OF_UNDYING || off != null && off.getType() == Material.TOTEM_OF_UNDYING;
+        // The killing blow used to be CANCELLED here and turned into a round
+        // loss by hand. That is why a duel kill felt wrong: cancelling the
+        // damage event takes the hit sound, the knockback, the hurt animation
+        // and the death sound with it, so the last hit of a fight was the one
+        // hit nobody could hear or feel.
+        //
+        // The hit lands now and the player dies for real. onDeath below turns
+        // that death into a round loss - which it already did, for the cases
+        // this interception never caught - with keepInventory and an immediate
+        // respawn, so there is still no drop and no death screen. Totems work
+        // because vanilla handles them, rather than because we checked.
     }
 
     @EventHandler
@@ -439,10 +428,33 @@ implements Listener {
         });
     }
 
+    /** In a duel whose countdown has not reached zero yet. */
+    private boolean countingDown(Player player) {
+        ActiveDuel duel = this.plugin.getDuelManager().getDuel(player.getUniqueId());
+        return duel != null && duel.getState() == ActiveDuel.State.STARTING;
+    }
+
+    /** Drinkable or throwable potions. Golden apples are food and stay legal -
+     *  eating during the countdown is part of setting up, drinking is not. */
+    private static boolean isPotion(ItemStack item) {
+        if (item == null) {
+            return false;
+        }
+        Material type = item.getType();
+        return type == Material.POTION || type == Material.SPLASH_POTION
+                || type == Material.LINGERING_POTION;
+    }
+
     @EventHandler(ignoreCancelled=true)
     public void onConsume(PlayerItemConsumeEvent event) {
         Player p = event.getPlayer();
         if (!this.plugin.getDuelManager().isInDuel(p.getUniqueId())) {
+            return;
+        }
+        if (this.countingDown(p) && DuelListener.isPotion(event.getItem())) {
+            event.setCancelled(true);
+            p.sendMessage(Text.prefixed("&cNo potions until the fight starts."));
+            Sounds.deny(p);
             return;
         }
         Bukkit.getScheduler().runTask((Plugin)this.plugin, () -> {
@@ -460,6 +472,12 @@ implements Listener {
         }
         Player p = (Player)src;
         if (!this.plugin.getDuelManager().isInDuel(p.getUniqueId())) {
+            return;
+        }
+        if (this.countingDown(p) && event.getEntity() instanceof ThrownPotion) {
+            event.setCancelled(true);
+            p.sendMessage(Text.prefixed("&cNo potions until the fight starts."));
+            Sounds.deny(p);
             return;
         }
         Bukkit.getScheduler().runTask((Plugin)this.plugin, () -> {

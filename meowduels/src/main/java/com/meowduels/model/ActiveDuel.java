@@ -129,6 +129,24 @@ public class ActiveDuel {
         this.gameNumber = gameNumber;
     }
 
+    /** The countdown window, so anything that wants to draw the meter can work
+     *  it out from the clock instead of being handed a tick count. */
+    private long countdownEndsAt;
+    private long countdownTotalMs;
+
+    public void startCountdown(long totalMs) {
+        this.countdownTotalMs = Math.max(1L, totalMs);
+        this.countdownEndsAt = System.currentTimeMillis() + this.countdownTotalMs;
+    }
+
+    public long getCountdownRemainingMs() {
+        return Math.max(0L, this.countdownEndsAt - System.currentTimeMillis());
+    }
+
+    public long getCountdownTotalMs() {
+        return Math.max(1L, this.countdownTotalMs);
+    }
+
     public boolean isArenaEntered() {
         return this.arenaEntered;
     }

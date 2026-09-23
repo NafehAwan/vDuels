@@ -53,4 +53,7 @@ public class Material {
     public org.bukkit.block.data.BlockData createBlockData() { return null; }
     public static org.bukkit.Material matchMaterial(java.lang.String a0) { return null; }
     public java.lang.String name() { return null; }
+    public static org.bukkit.Material SPLASH_POTION;
+    public static org.bukkit.Material LINGERING_POTION;
+    public static org.bukkit.Material ENCHANTED_GOLDEN_APPLE;
 }

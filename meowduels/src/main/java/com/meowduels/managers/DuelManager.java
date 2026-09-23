@@ -388,7 +388,9 @@ public class DuelManager {
         duel.clearReady();
         this.plugin.getSpectateManager().followRoundStart(duel.getPlayer1(), duel.getPlayer2());
         int countdown = duel.getArena().getCountdownOverride();
-        this.countdownTick(duel, (countdown > 0 ? countdown : this.countdownSeconds) * 20);
+        int totalTicks = (countdown > 0 ? countdown : this.countdownSeconds) * 20;
+        duel.startCountdown((long)totalTicks * 50L);
+        this.countdownTick(duel, totalTicks);
     }
 
     private void verifyArrival(Player player, Location spawn) {
@@ -519,19 +521,11 @@ public class DuelManager {
         duel.setState(ActiveDuel.State.FIGHTING);
         duel.markFightStart();
         this.giveStartEffects(duel, p1, p2);
-        Vector zero = new Vector(0.0, 0.0, 0.0);
-        if (duel.getArena().getSpawn1() != null) {
-            DuelManager.ground(p1);
-            p1.teleport(duel.getArena().getSpawn1());
-            p1.setVelocity(zero);
-            p1.setFallDistance(0.0f);
-        }
-        if (duel.getArena().getSpawn2() != null) {
-            DuelManager.ground(p2);
-            p2.teleport(duel.getArena().getSpawn2());
-            p2.setVelocity(zero);
-            p2.setFallDistance(0.0f);
-        }
+        // Deliberately no teleport here. startRound already put both players on
+        // their spawns when the countdown began; doing it again at FIGHT yanked
+        // them back from wherever they had walked, which made the countdown feel
+        // like a cage rather than a moment to get set. You can walk, jump,
+        // sprint and eat during it - you just cannot hit or drink.
         Component empty = DuelManager.mm("");
         p1.sendActionBar(empty);
         p2.sendActionBar(empty);
@@ -575,8 +569,19 @@ public class DuelManager {
         }
     }
 
+    /**
+     * The countdown meter, the same shape a party match uses.
+     *
+     * <p>Blocks draining left to right rather than a line of text, so the two
+     * modes read the same way, and the ready count rides along on the end
+     * instead of owning the whole bar.
+     */
     private Component readyBar(ActiveDuel duel) {
-        return DuelManager.mm("<gray>Sneak to get Ready <green>\u2714 <gray>(" + duel.getReadyCount() + "/2)");
+        String bar = Cooldowns.bar(duel.getCountdownRemainingMs(), duel.getCountdownTotalMs(), 20);
+        int ready = duel.getReadyCount();
+        String tail = ready >= 2 ? "<#7CFF6B>\u2714 \u0280\u1d07\u1d00\u1d05\u028f"
+                : "<#6B7079>\ua731\u0274\u1d07\u1d00\u1d0b \u1d1b\u1d0f \u0280\u1d07\u1d00\u1d05\u028f <#8E959D>" + ready + "<dark_gray>/<#8E959D>2";
+        return DuelManager.mm("<#6B7079>" + bar + " <dark_gray>\u2503 " + tail);
     }
 
     private static Component mm(String miniMessage) {
