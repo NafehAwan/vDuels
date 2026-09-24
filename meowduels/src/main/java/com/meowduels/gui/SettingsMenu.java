@@ -15,9 +15,10 @@ import org.bukkit.inventory.ItemStack;
 /**
  * Your own settings, four rows so the toggles have room to breathe.
  *
- * <p>One row of switches on a framed panel. Every switch says what it is, what
- * it currently is, and what happens if you flip it - in that order, because
- * that is the order you read them in when you are deciding.
+ * <p>One row of switches on a framed panel - seven of them, which is exactly
+ * how many fit between the frame's two columns. Every switch says what it is,
+ * what it currently is, and what happens if you flip it, in that order,
+ * because that is the order you read them in when you are deciding.
  */
 public class SettingsMenu
 extends Menu {
@@ -28,11 +29,13 @@ extends Menu {
     private static final String INVITES = "set-invites";
     private static final String SPECTATORS = "set-spectators";
     private static final String SOUNDS = "set-sounds";
+    private static final String CHAT = "set-chat";
     private static final String TRIMS = "set-trims";
 
     private static final int SLOT_DUEL = 10;
     private static final int SLOT_INVITES = 11;
     private static final int SLOT_SPECTATORS = 12;
+    private static final int SLOT_CHAT = 13;
     private static final int SLOT_BOARD = 14;
     private static final int SLOT_SOUNDS = 15;
     private static final int SLOT_TRIMS = 16;
@@ -68,6 +71,12 @@ extends Menu {
                 this.plugin.getPlayerSettings().isSpectators(this.owner),
                 "ᴏᴛʜᴇʀꜱ ᴄᴀɴ ᴡᴀᴛᴄʜ ʏᴏᴜʀ ᴅᴜᴇʟꜱ",
                 "ʏᴏᴜʀ ᴅᴜᴇʟꜱ ᴀʀᴇ ᴘʀɪᴠᴀᴛᴇ"));
+
+        this.inventory.setItem(SLOT_CHAT, this.toggle(Material.OAK_SIGN, CHAT,
+                "ɪꜱᴏʟᴀᴛᴇᴅ ᴄʜᴀᴛ",
+                this.plugin.getPlayerSettings().isIsolatedChat(this.owner),
+                "ɪɴ ᴀ ᴍᴀᴛᴄʜ, ᴏɴʟʏ ᴛʜᴇ ᴍᴀᴛᴄʜ ᴛᴀʟᴋꜱ",
+                "ʏᴏᴜ ꜱᴇᴇ ᴀɴᴅ ᴊᴏɪɴ ᴛʜᴇ ᴡʜᴏʟᴇ ꜱᴇʀᴠᴇʀ"));
 
         this.inventory.setItem(SLOT_BOARD, this.toggle(Material.PAPER, BOARD,
                 "ꜱᴄᴏʀᴇʙᴏᴀʀᴅ",
@@ -155,6 +164,9 @@ extends Menu {
         }
         if (SOUNDS.equals(button)) {
             return "sounds";
+        }
+        if (CHAT.equals(button)) {
+            return "isolated-chat";
         }
         return null;
     }

@@ -81,6 +81,28 @@ public class TabService {
     }
 
     /**
+     * The same thing for a party match.
+     *
+     * <p>No team colours: those are the duel's aqua-and-red pair, and a party
+     * already colours its own sides. The bubble is what matters - a party in a
+     * match hides its fighters from the world, so a spectator outside it would
+     * be standing in an arena watching nobody.
+     */
+    public void attachSpectator(Player spectator, Party party) {
+        if (party == null) {
+            return;
+        }
+        this.memberGroup.put(spectator.getUniqueId(), this.hostOf(party));
+        this.sendHeaderFooter(spectator);
+        this.reconcileAll();
+    }
+
+    /** The side a match's bubble is keyed on - see PartyManager.matchOf. */
+    private Party hostOf(Party party) {
+        return party.isMatchHost() || party.getOpponent() == null ? party : party.getOpponent();
+    }
+
+    /**
      * Gives a party its own tab list.
      *
      * <p>Exactly the duel arrangement, and one-directional for exactly the same

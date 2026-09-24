@@ -169,7 +169,7 @@ public class MessageManager {
             // the whole thing on screen as literal text.
             return value.indexOf(60) >= 0 ? Colors.toSection(value) : Text.color(value);
         }
-        if (key.startsWith("party.") || key.startsWith("event.")) {
+        if (key.startsWith("party.") || key.startsWith("event.") || key.startsWith("chat.")) {
             // Colors.toSection rather than colorNormal: these lines carry hex
             // and gradients, which the &-only translator leaves as literal text.
             return Colors.toSection(value);
@@ -243,6 +243,9 @@ public class MessageManager {
         DEFAULTS.put("menu.target-offline", "{prefix}&c{target} is no longer online.");
         DEFAULTS.put("menu.arena-incompatible", "{prefix}&cThat arena doesn't support the selected kit.");
         DEFAULTS.put("arena.cannot-edit", "{prefix}&cYou cannot edit an arena here.");
+        DEFAULTS.put("chat.isolated-notice", "<dark_gray>\u25b8 <#8E959D>{target} is in a <#E6E8EB>{kind}<#8E959D> - your chat can't reach them.");
+        DEFAULTS.put("chat.kind-duel", "duel");
+        DEFAULTS.put("chat.kind-party", "party match");
         DEFAULTS.put("titles.match-found.title", "&cMATCH FOUND!");
         DEFAULTS.put("titles.match-found.subtitle", "&7Preparing your arena...");
         DEFAULTS.put("titles.countdown.title", COUNTDOWN_TITLE);

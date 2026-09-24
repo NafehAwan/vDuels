@@ -12,6 +12,8 @@ package com.meowduels.managers;
 
 import com.meowduels.MeowDuels;
 import com.meowduels.model.ActiveDuel;
+import com.meowduels.model.Arena;
+import com.meowduels.model.Party;
 import com.meowduels.util.GameModeGuard;
 import com.meowduels.util.Text;
 import java.util.HashMap;
@@ -70,11 +72,22 @@ public class SpectateManager {
             return;
         }
         ActiveDuel duel = this.plugin.getDuelManager().getDuel(targetPlayer.getUniqueId());
-        if (duel == null) {
+        // A party match counts as a fight to watch. It has no ActiveDuel, so
+        // everything below that needs one is guarded rather than assumed.
+        Party party = duel != null ? null : this.plugin.getPartyManager().partyOf(targetPlayer.getUniqueId());
+        if (party != null && !this.plugin.getPartyManager().inPartyMatch(targetPlayer.getUniqueId())) {
+            party = null;
+        }
+        if (duel == null && party == null) {
             viewer.sendMessage(this.plugin.messages().get("spectate.target-not-in-fight", "target", targetPlayer.getName()));
             return;
         }
-        if (duel.getArena() != null && !duel.getArena().isAllowSpectators() && !viewer.hasPermission("meowduels.admin")) {
+        if (this.plugin.getPartyManager().inPartyMatch(id)) {
+            viewer.sendMessage(Text.prefixed("&cYou can't spectate while you're in a party match."));
+            return;
+        }
+        Arena arena = duel != null ? duel.getArena() : party.getArena();
+        if (arena != null && !arena.isAllowSpectators() && !viewer.hasPermission("meowduels.admin")) {
             viewer.sendMessage(this.plugin.messages().get("spectate.not-allowed", new String[0]));
             return;
         }
@@ -100,8 +113,15 @@ public class SpectateManager {
         this.target.put(id, targetPlayer.getUniqueId());
         viewer.sendMessage(this.plugin.messages().get("spectate.now", "target", targetPlayer.getName()));
         this.notify(targetPlayer.getUniqueId(), "spectate.started-watching", "name", viewer.getName());
-        this.plugin.getScoreboardService().attachSpectator(viewer, duel, targetPlayer.getUniqueId());
-        this.plugin.getTabService().attachSpectator(viewer, duel);
+        if (duel != null) {
+            this.plugin.getScoreboardService().attachSpectator(viewer, duel, targetPlayer.getUniqueId());
+            this.plugin.getTabService().attachSpectator(viewer, duel);
+        } else {
+            // Not optional: a party in a match hides its fighters from
+            // everyone else's world as well as their tab, so without joining
+            // the bubble the spectator arrives in an arena with nobody in it.
+            this.plugin.getTabService().attachSpectator(viewer, party);
+        }
         this.watchingFight.add(id);
     }
 
@@ -165,11 +185,26 @@ public class SpectateManager {
                 this.watchingFight.remove(id);
                 continue;
             }
-            if (watched != null && this.plugin.getDuelManager().isInDuel(watched)) continue;
+            if (watched != null && this.stillFighting(watched)) {
+                // Rounds move the fight; a party match can even move arena.
+                // Only follow across worlds, so a spectator flying around
+                // inside the arena is left where they put themselves.
+                Player subject = Bukkit.getPlayer((UUID)watched);
+                if (subject != null && subject.getLocation().getWorld() != viewer.getLocation().getWorld()) {
+                    viewer.teleport(subject.getLocation());
+                }
+                continue;
+            }
             this.restore(viewer);
             this.dropFightView(id);
             viewer.sendMessage(this.plugin.messages().get("spectate.fight-ended", new String[0]));
         }
+    }
+
+    /** In a duel or in a party match - either is something to watch. */
+    private boolean stillFighting(UUID id) {
+        return this.plugin.getDuelManager().isInDuel(id)
+                || this.plugin.getPartyManager().inPartyMatch(id);
     }
 
     private void dropFightView(UUID id) {

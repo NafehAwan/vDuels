@@ -23,7 +23,7 @@ public class PlayerSettingsManager {
      *  new one needs no migration and an unknown player needs no row. */
     private final Map<String, Map<UUID, Boolean>> flags = new HashMap<String, Map<UUID, Boolean>>();
     private static final String[] KEYS = new String[]{
-        "duel-requests", "scoreboard", "party-invites", "spectators", "sounds"};
+        "duel-requests", "scoreboard", "party-invites", "spectators", "sounds", "isolated-chat"};
 
     public PlayerSettingsManager(MeowDuels plugin) {
         this.plugin = plugin;
@@ -106,6 +106,10 @@ public class PlayerSettingsManager {
 
     public boolean isSounds(UUID id) {
         return this.is("sounds", id);
+    }
+
+    public boolean isIsolatedChat(UUID id) {
+        return this.is("isolated-chat", id);
     }
 
     public void toggleDuelRequests(UUID id) {

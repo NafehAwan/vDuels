@@ -35,8 +35,12 @@ public class Party {
      *  itself every time it is opened. */
     private final Set<UUID> members = new LinkedHashSet<UUID>();
     private final Set<UUID> invited = new HashSet<UUID>();
-    private final Set<UUID> alive = new HashSet<UUID>();
-    private final Set<UUID> watching = new HashSet<UUID>();
+    /** Concurrent, both of them: chat arrives on its own thread and has to ask
+     *  who is in this match while the main thread is moving people between
+     *  these two sets. A plain HashSet answers that question with a
+     *  ConcurrentModificationException about once a fight. */
+    private final Set<UUID> alive = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    private final Set<UUID> watching = java.util.concurrent.ConcurrentHashMap.newKeySet();
     private final Map<UUID, PlayerSnapshot> snapshots = new HashMap<UUID, PlayerSnapshot>();
     private final Map<UUID, Integer> kills = new HashMap<UUID, Integer>();
     /** Blocks this match changed, with what was there before - the fallback for

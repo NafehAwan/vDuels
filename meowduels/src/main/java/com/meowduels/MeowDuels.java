@@ -23,6 +23,7 @@ import com.meowduels.gui.QueuePickMenu;
 import com.meowduels.hook.MeowDuelsPlaceholders;
 import com.meowduels.hook.TabHook;
 import com.meowduels.listeners.ArenaProtectionListener;
+import com.meowduels.listeners.ChatListener;
 import com.meowduels.listeners.CommandGuardListener;
 import com.meowduels.listeners.DuelListener;
 import com.meowduels.listeners.EventListener;
@@ -279,6 +280,7 @@ extends JavaPlugin {
         this.getServer().getPluginManager().registerEvents((Listener)new EventListener(this), (Plugin)this);
         this.getServer().getPluginManager().registerEvents((Listener)new PvpOverrideListener(this), (Plugin)this);
         this.getServer().getPluginManager().registerEvents((Listener)new CommandGuardListener(this), (Plugin)this);
+        this.getServer().getPluginManager().registerEvents((Listener)new ChatListener(this), (Plugin)this);
         this.getServer().getPluginManager().registerEvents((Listener)new GoldenHeadListener(this), (Plugin)this);
         this.getServer().getPluginManager().registerEvents((Listener)new SpawnItemsListener(this), (Plugin)this);
     }

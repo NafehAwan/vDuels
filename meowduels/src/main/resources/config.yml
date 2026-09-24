@@ -114,6 +114,19 @@ party-marker: "\u2694"
 # ============================================================================
 #  Commands during a match
 # ============================================================================
+# Chat inside a match stays inside the match: the people fighting and anyone
+# watching them, nobody else, in both directions.
+#
+# Messages are not rewritten - viewers are removed - so a fighter keeps the
+# rank, prefix and colour your permissions or chat plugin gives them. Console
+# still receives everything, so the chat log has no holes in it.
+#
+# This is the server-wide switch. Each player also has their own toggle in
+# /settings, on by default; turning theirs off puts them back in the shared
+# room in both directions.
+chat:
+  isolated: true
+
 commands:
   # Block commands while in a duel, a party match or an FFA event. A command
   # mid-fight is either an escape hatch or an exploit - /home, /tp and /kit all

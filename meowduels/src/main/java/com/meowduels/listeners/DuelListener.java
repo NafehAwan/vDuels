@@ -50,16 +50,10 @@ import com.meowduels.model.Arena;
 import com.meowduels.util.Sounds;
 import com.meowduels.util.Text;
 import com.meowduels.util.GameModeGuard;
-import io.papermc.paper.event.player.AsyncChatEvent;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
-import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextColor;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -78,7 +72,6 @@ import org.bukkit.event.entity.EntityResurrectEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
@@ -587,47 +580,12 @@ implements Listener {
         }
     }
 
-    @EventHandler(priority=EventPriority.HIGHEST, ignoreCancelled=true)
-    public void onChat(AsyncPlayerChatEvent event) {
-        if (this.plugin.getDuelManager().isInDuel(event.getPlayer().getUniqueId())) {
-            event.setFormat("\u00a77" + event.getPlayer().getName() + "\u00a78: \u00a77%2$s");
-        }
-    }
-
-    @EventHandler(priority=EventPriority.HIGHEST, ignoreCancelled=true)
-    public void onModernChat(AsyncChatEvent event) {
-        UUID senderId = event.getPlayer().getUniqueId();
-        ActiveDuel duel = this.plugin.getDuelManager().getDuel(senderId);
-        if (duel == null) {
-            return;
-        }
-        String name = event.getPlayer().getName();
-        boolean blue = duel.isAqua(senderId);
-        String teamTag = blue ? "<green>" : "<red>";
-        NamedTextColor teamColor = blue ? NamedTextColor.GREEN : NamedTextColor.RED;
-        event.renderer((source, displayName, message, viewer) -> {
-            boolean inFight = this.seesDuelChat(viewer, duel);
-            String tag = inFight ? teamTag : "<gray>";
-            NamedTextColor msgColor = inFight ? teamColor : NamedTextColor.GRAY;
-            return DuelListener.mm(tag + name + "<dark_gray>: ").append(message.colorIfAbsent((TextColor)msgColor));
-        });
-    }
-
-    private boolean seesDuelChat(Audience viewer, ActiveDuel duel) {
-        if (!(viewer instanceof Player)) {
-            return false;
-        }
-        UUID vid = ((Player)viewer).getUniqueId();
-        if (this.plugin.getDuelManager().getDuel(vid) == duel) {
-            return true;
-        }
-        UUID watched = this.plugin.getSpectateManager().getWatchedTarget(vid);
-        return watched != null && (watched.equals(duel.getPlayer1()) || watched.equals(duel.getPlayer2()));
-    }
-
-    private static Component mm(String miniMessage) {
-        return MiniMessage.miniMessage().deserialize((Object)miniMessage);
-    }
+    // Duel chat used to be re-rendered here: green for one fighter, red for
+    // the other, grey for everybody else. Both of those are gone. A fighter's
+    // name should look in a duel exactly like it looks everywhere else - the
+    // rank and colour their permissions plugin gives them - and who may read
+    // the line is a question about viewers, not about colour, so it now lives
+    // in ChatListener where it can actually remove people from the audience.
 
     @EventHandler(ignoreCancelled=true)
     public void onSneak(PlayerToggleSneakEvent event) {

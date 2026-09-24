@@ -85,6 +85,23 @@ public class PartyManager {
         return party != null && party.isFighting() && party.involved().contains(id);
     }
 
+    /**
+     * The one object that identifies the match this player is in, or null.
+     *
+     * <p>Both sides of a Party Duels match mirror each other's state, so
+     * "which match is this" has to be answered by the host party - the side
+     * that owns the arena - or the two halves of one fight would come back as
+     * two different matches. Anything that needs to ask whether two people are
+     * in the same fight compares these by identity.
+     */
+    public Object matchOf(UUID id) {
+        Party party = this.partyOf(id);
+        if (party == null || !party.isFighting() || !party.involved().contains(id)) {
+            return null;
+        }
+        return this.matchHostOf(party);
+    }
+
     public boolean isWatching(UUID id) {
         Party party = this.partyOf(id);
         return party != null && party.getWatching().contains(id);
