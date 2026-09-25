@@ -120,6 +120,36 @@ party-marker: "\u2694"
 chat:
   isolated: true
 
+# ---- Tips ----
+# The occasional line in chat explaining how something works. Two lists,
+# because the useful thing to say depends on where you are standing: somebody
+# in the lobby wants the commands, somebody mid-fight wants to know why the
+# lobby went quiet. Each list is walked in order, one line per interval.
+#
+# MiniMessage, so <gray>, <#8E959D> and <gradient:..> all work. Anything else
+# in angle brackets is read as a tag and dropped, so write a placeholder as
+# [player], never <player>. Empty either list to say nothing to that audience;
+# set enabled to false for silence.
+tips:
+  enabled: true
+  # Seconds between tips. Floored at 30.
+  interval-seconds: 180
+  # Shown to everyone NOT in a duel or a party match.
+  global:
+    - "<dark_gray>\u25b8 <#8E959D>Chat inside a duel is isolated. Type someone's <#E6E8EB>full name<#8E959D> to reach them anyway."
+    - "<dark_gray>\u25b8 <#8E959D>Challenge somebody with <#E6E8EB>/duel [player]<#8E959D>."
+    - "<dark_gray>\u25b8 <#8E959D>Turn duel requests, party invites or isolated chat off in <#E6E8EB>/settings<#8E959D>."
+    - "<dark_gray>\u25b8 <#8E959D>Start a party with <#E6E8EB>/party create<#8E959D>, then <#E6E8EB>/party invite [player]<#8E959D>."
+    - "<dark_gray>\u25b8 <#8E959D>Watch a fight with <#E6E8EB>/spectate [player]<#8E959D> - duels and party matches both."
+    - "<dark_gray>\u25b8 <#8E959D>See the top duel winners with <#E6E8EB>/leaderboard<#8E959D>."
+  # Shown to everyone IN a duel or a party match, and to their spectators.
+  match:
+    - "<dark_gray>\u25b8 <#8E959D>Your chat is isolated - only this match reads it."
+    - "<dark_gray>\u25b8 <#8E959D>Type someone's <#E6E8EB>full name<#8E959D> to get one line to them outside the match."
+    - "<dark_gray>\u25b8 <#8E959D>Use <#E6E8EB>/msg [player]<#8E959D> for a conversation that reaches out of the arena."
+    - "<dark_gray>\u25b8 <#8E959D>Sneak during the countdown to ready up early."
+    - "<dark_gray>\u25b8 <#8E959D>Give the match up with <#E6E8EB>/ff<#8E959D>, or leave it with <#E6E8EB>/leave<#8E959D>."
+
 commands:
   # Block commands while in a duel, a party match or an FFA event. A command
   # mid-fight is either an escape hatch or an exploit - /home, /tp and /kit all

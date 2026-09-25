@@ -5,6 +5,7 @@ import com.meowduels.model.ActiveDuel;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -38,9 +39,15 @@ import org.bukkit.plugin.Plugin;
  * shared room in both directions, which is the whole point of it being theirs
  * to set.
  *
- * <p>Nobody is left wondering why they were ignored: an outsider who types a
- * fighter's name is told, once, that the fighter is in a match and cannot see
- * it.
+ * <p>A full name is a way through. Anyone whose name appears in the message,
+ * spelled out in full, is delivered it whichever room they are in - and only
+ * them, because everyone else on the far side of the wall is still removed. It
+ * is how you get one line to somebody mid-fight without shouting it at the
+ * lobby, and it works in both directions.
+ *
+ * <p>Nobody is left wondering. Type a fighter's name and you are told, once,
+ * that they are in a match, that they got this line because you named them,
+ * and that /msg is the way to have an actual conversation.
  */
 public class ChatListener
 implements Listener {
@@ -60,12 +67,15 @@ implements Listener {
         }
         Player sender = event.getPlayer();
         Object senderMatch = this.matchOf(sender.getUniqueId());
+        // Worked out before anything is removed, because being named is what
+        // decides whether a viewer survives the filter.
+        Set<UUID> named = this.namedIn(event.message(), sender);
         Set<Audience> viewers = event.viewers();
         if (viewers != null) {
             try {
                 Iterator<Audience> it = viewers.iterator();
                 while (it.hasNext()) {
-                    if (this.canRead(sender, senderMatch, it.next())) continue;
+                    if (this.canRead(sender, senderMatch, named, it.next())) continue;
                     it.remove();
                 }
             }
@@ -75,7 +85,7 @@ implements Listener {
                 return;
             }
         }
-        this.noticeMentions(sender, senderMatch, event.message());
+        this.noticeMentions(sender, senderMatch, named);
     }
 
     /**
@@ -84,7 +94,7 @@ implements Listener {
      * <p>Console and anything else that is not a player keeps everything: log
      * files and relays are not in a match and should not have holes in them.
      */
-    private boolean canRead(Player sender, Object senderMatch, Audience viewer) {
+    private boolean canRead(Player sender, Object senderMatch, Set<UUID> named, Audience viewer) {
         if (!(viewer instanceof Player)) {
             return true;
         }
@@ -92,6 +102,12 @@ implements Listener {
         if (reader.getUniqueId().equals(sender.getUniqueId())) {
             // You always hear yourself. Dropping the sender from their own
             // audience is how a message looks like it silently failed.
+            return true;
+        }
+        if (named.contains(reader.getUniqueId())) {
+            // Named in full, so the wall does not apply to them. Everyone else
+            // on the far side of it is still removed below, which is what
+            // makes this reach one person rather than broadcast past the wall.
             return true;
         }
         Object readerMatch = this.matchOf(reader.getUniqueId());
@@ -132,15 +148,15 @@ implements Listener {
     }
 
     /**
-     * Tells the sender about anyone they named who cannot read it.
+     * Everyone named in full in this message, sender excluded.
      *
-     * <p>Only for people in a different room, and only for people whose own
-     * setting is what is hiding the message - if they left isolation off, they
-     * saw it, and there is nothing to report.
+     * <p>Worked out once per message rather than per viewer: it is a scan of
+     * the online list, and the audience of a busy server is much longer than
+     * the online list is.
      */
-    private void noticeMentions(Player sender, Object senderMatch, net.kyori.adventure.text.Component message) {
+    private Set<UUID> namedIn(net.kyori.adventure.text.Component message, Player sender) {
         if (message == null) {
-            return;
+            return java.util.Collections.emptySet();
         }
         // MiniMessage rather than the plain-text serializer: this codebase
         // already proves MiniMessage's interface kind at runtime, and the only
@@ -149,19 +165,40 @@ implements Listener {
         // is what the matcher below wants anyway.
         String text = MiniMessage.miniMessage().serialize(message);
         if (text == null || text.isEmpty()) {
-            return;
+            return java.util.Collections.emptySet();
         }
         String lower = text.toLowerCase(Locale.ROOT);
-        ArrayList<String> lines = new ArrayList<String>();
+        HashSet<UUID> out = new HashSet<UUID>();
         for (Player other : Bukkit.getOnlinePlayers()) {
+            UUID id = other.getUniqueId();
+            if (id.equals(sender.getUniqueId())) continue;
+            if (!ChatListener.mentions(lower, other.getName().toLowerCase(Locale.ROOT))) continue;
+            out.add(id);
+        }
+        return out;
+    }
+
+    /**
+     * Tells the sender which of the people they named are mid-match.
+     *
+     * <p>They did receive the line - naming them is what got it through - so
+     * this is not an apology, it is a heads-up that a conversation will not
+     * work this way and that /msg is the thing that does. Nothing is said
+     * about someone who left isolation off, because for them nothing happened.
+     */
+    private void noticeMentions(Player sender, Object senderMatch, Set<UUID> named) {
+        if (named.isEmpty()) {
+            return;
+        }
+        ArrayList<String> lines = new ArrayList<String>();
+        for (UUID id : named) {
             if (lines.size() >= MAX_NOTICES) {
                 break;
             }
-            UUID id = other.getUniqueId();
-            if (id.equals(sender.getUniqueId()) || !this.isolated(id)) continue;
+            Player other = Bukkit.getPlayer(id);
+            if (other == null || !this.isolated(id)) continue;
             Object theirMatch = this.matchOf(id);
             if (theirMatch == null || theirMatch == senderMatch) continue;
-            if (!ChatListener.mentions(lower, other.getName().toLowerCase(Locale.ROOT))) continue;
             lines.add(this.plugin.messages().get("chat.isolated-notice",
                     "target", other.getName(),
                     "kind", this.plugin.messages().raw(theirMatch instanceof ActiveDuel

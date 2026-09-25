@@ -36,6 +36,15 @@ public class MessageManager {
     private static final String OLD_FIGHT_TITLE = "&eFIGHT \u2694 !";
     private static final String OLD_PARTY_COUNTDOWN = "&d{seconds}";
     private static final String OLD_PARTY_GO = "&a&lFIGHT!";
+
+    // The isolated-chat heads-up, and the wording it replaced. Naming someone
+    // now delivers the line to them, so the old "can't reach them" is simply
+    // untrue and has to be migrated rather than left to a stale messages.yml.
+    private static final String CHAT_NOTICE =
+            "<dark_gray>\u25b8 <#8E959D>{target} is in a <#E6E8EB>{kind}<#8E959D> - they only see lines that "
+            + "name them. <#E6E8EB>/msg {target}<#8E959D> to talk properly.";
+    private static final String OLD_CHAT_NOTICE =
+            "<dark_gray>\u25b8 <#8E959D>{target} is in a <#E6E8EB>{kind}<#8E959D> - your chat can't reach them.";
     private final MeowDuels plugin;
     private final File file;
     private YamlConfiguration config;
@@ -121,6 +130,7 @@ public class MessageManager {
         // can tell.
         changed |= MessageManager.replaceIfUntouched(this.config, "party.countdown-title", OLD_PARTY_COUNTDOWN, COUNTDOWN_TITLE);
         changed |= MessageManager.replaceIfUntouched(this.config, "party.countdown-go", OLD_PARTY_GO, FIGHT_TITLE);
+        changed |= MessageManager.replaceIfUntouched(this.config, "chat.isolated-notice", OLD_CHAT_NOTICE, CHAT_NOTICE);
         if (!changed) {
             return;
         }
@@ -241,7 +251,7 @@ public class MessageManager {
         DEFAULTS.put("menu.target-offline", "{prefix}&c{target} is no longer online.");
         DEFAULTS.put("menu.arena-incompatible", "{prefix}&cThat arena doesn't support the selected kit.");
         DEFAULTS.put("arena.cannot-edit", "{prefix}&cYou cannot edit an arena here.");
-        DEFAULTS.put("chat.isolated-notice", "<dark_gray>\u25b8 <#8E959D>{target} is in a <#E6E8EB>{kind}<#8E959D> - your chat can't reach them.");
+        DEFAULTS.put("chat.isolated-notice", CHAT_NOTICE);
         DEFAULTS.put("chat.kind-duel", "duel");
         DEFAULTS.put("chat.kind-party", "party match");
         DEFAULTS.put("titles.match-found.title", "&cMATCH FOUND!");

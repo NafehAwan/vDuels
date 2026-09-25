@@ -48,6 +48,7 @@ import com.meowduels.managers.SpectateManager;
 import com.meowduels.managers.StatsManager;
 import com.meowduels.managers.TabEditManager;
 import com.meowduels.managers.TabService;
+import com.meowduels.managers.TipService;
 import com.meowduels.managers.KitLayoutManager;
 import com.meowduels.managers.TrimPreferenceManager;
 import com.meowduels.util.Cooldowns;
@@ -93,6 +94,7 @@ extends JavaPlugin {
     private TrimPreferenceManager trimPreferenceManager;
     private KitLayoutManager kitLayoutManager;
     private PlayerSettingsManager playerSettingsManager;
+    private TipService tipService;
     private TabHook tabHook;
     private PartyManager partyManager;
     private NamespacedKey keyKit;
@@ -147,6 +149,7 @@ extends JavaPlugin {
         // question it needs answered. Set after the manager exists and before
         // any listener can fire a cue.
         Sounds.mutedWhen(p -> !this.playerSettingsManager.isSounds(p.getUniqueId()));
+        this.tipService = new TipService(this);
         this.tabHook = new TabHook();
         if (this.tabHook.isAvailable()) {
             this.getLogger().info("Hooked into TAB - ranks hidden and health shown on nametags during duels.");
@@ -173,6 +176,7 @@ extends JavaPlugin {
             for (Player online : this.getServer().getOnlinePlayers()) {
                 Cooldowns.tick(online);
             }
+            this.tipService.tick();
             QueuePickMenu.refreshAll();
         }, 20L, 20L);
         // Every 5 ticks, not every 20. TAB re-sends player-info on its own
@@ -305,6 +309,10 @@ extends JavaPlugin {
         return this.trimPreferenceManager;
     }
 
+    public TipService getTipService() {
+        return this.tipService;
+    }
+
     public PlayerSettingsManager getPlayerSettings() {
         return this.playerSettingsManager;
     }
@@ -411,6 +419,9 @@ extends JavaPlugin {
         }
         if (this.scoreboardService != null) {
             this.scoreboardService.reload();
+        }
+        if (this.tipService != null) {
+            this.tipService.reload();
         }
     }
 
