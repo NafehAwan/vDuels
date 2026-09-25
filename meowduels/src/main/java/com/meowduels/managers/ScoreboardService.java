@@ -27,6 +27,7 @@ import com.meowduels.managers.QueueManager;
 import com.meowduels.model.ActiveDuel;
 import com.meowduels.model.Kit;
 import com.meowduels.model.Party;
+import com.meowduels.util.Health;
 import com.meowduels.util.Ranks;
 import io.papermc.paper.scoreboard.numbers.NumberFormat;
 import java.time.LocalDate;
@@ -666,13 +667,7 @@ public class ScoreboardService {
     }
 
     private String hpText(double hp) {
-        if (hp < 0.0) {
-            hp = 0.0;
-        }
-        if (hp < 5.0) {
-            return String.format(Locale.US, "%.2f", hp);
-        }
-        return String.valueOf((int)Math.round(hp));
+        return Health.text(hp);
     }
 
     private String hpTextOf(UUID id) {

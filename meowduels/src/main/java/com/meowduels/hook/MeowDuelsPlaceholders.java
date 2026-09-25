@@ -14,6 +14,7 @@ import com.meowduels.MeowDuels;
 import com.meowduels.model.ActiveDuel;
 import com.meowduels.model.Kit;
 import com.meowduels.util.Colors;
+import com.meowduels.util.Health;
 import com.meowduels.util.Ranks;
 import com.meowduels.model.Party;
 import java.util.List;
@@ -162,9 +163,7 @@ implements Relational {
                 if (online == null) {
                     return "";
                 }
-                double hp = online.getHealth();
-                String n = hp < 5.0 ? String.format(Locale.US, "%.2f", hp) : String.valueOf((int)Math.round(hp));
-                return "\u00a7c" + n + " \u2764";
+                return "\u00a7c" + Health.text(online.getHealth()) + " \u2764";
             }
             case "in_fight": {
                 return this.plugin.getDuelManager().isInDuel(id) ? "true" : "false";

@@ -4,7 +4,6 @@ import com.meowduels.MeowDuels;
 import com.meowduels.gui.KitPickMenu;
 import com.meowduels.gui.MapSelectMenu;
 import com.meowduels.gui.Menu;
-import com.meowduels.gui.Style;
 import com.meowduels.managers.StatsManager;
 import com.meowduels.model.Arena;
 import com.meowduels.model.Kit;
@@ -20,33 +19,48 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 
 /**
- * The duel setup screen: what you are fighting on, with what, for how long, and
- * whether it counts.
+ * The duel setup screen.
  *
- * <p>Four rows inside {@link Style}'s frame. The first interior row is the four
- * things you can change; the second is the two things that end the decision.
- * There is no head: the person you are challenging is already in the window
- * title, and a second copy of their face only pushed the actual choices apart.
- * The whole request is summarised in the confirm button's tooltip, which is the
- * one place you look before you press it.
+ * <p>Deliberately not written in the plugin's own house style. Everything else
+ * here uses small caps, hex ramps and gradients; this one window uses the
+ * default font and the sixteen vanilla colours, because that is the language
+ * every other duels plugin speaks and it is the screen people arrive at
+ * already knowing how to read.
  *
- * <p>Colour does the work. Green with a tick means it will send, red with a
- * cross means it will not, and everything in between is printed plainly -
- * gradients are spent on the title and the two decision buttons, nowhere else.
- * Names, kit titles and numbers stay in the normal font, because small caps
- * turn "Steve" into "ᴛᴇᴠᴇ".
+ * <p>The grammar, once, so the buttons stop inventing their own:
+ *
+ * <ul>
+ * <li>A heading is a symbol, the name, and the same symbol again. The symbol
+ *     is the deeper shade of the heading's colour.
+ * <li>Aqua opens something or sends something, gold changes a number, red
+ *     stops.
+ * <li>In the body, yellow is the part that varies - a value, or the key you
+ *     press - and white is the words around it.
+ * <li>No bold, no gradients, no small caps.
+ * </ul>
  */
 public class DuelConfirmMenu
 extends Menu {
     private static final int[] ROUND_OPTIONS = new int[]{1, 2, 3, 5};
 
-    private static final int ROWS = 4;
-    private static final int SLOT_ARENA = 10;
-    private static final int SLOT_KIT = 12;
-    private static final int SLOT_ROUNDS = 14;
-    private static final int SLOT_RANKED = 16;
-    private static final int SLOT_CONFIRM = 21;
-    private static final int SLOT_CANCEL = 23;
+    private static final int ROWS = 3;
+    private static final int SLOT_INFO = 10;
+    private static final int SLOT_ROUNDS = 11;
+    private static final int SLOT_MAP = 12;
+    private static final int SLOT_KIT = 13;
+    private static final int SLOT_RANKED = 14;
+    private static final int SLOT_SEND = 16;
+    private static final int SLOT_BACK = 22;
+
+    // The five headings, spelled out rather than built, so the symbols and the
+    // two shades stay paired.
+    private static final String H_INFO = "<blue>◆ <aqua>Information <blue>◆";
+    private static final String H_ROUNDS = "<gold>✦ <yellow>Rounds <gold>✦";
+    private static final String H_MAP = "<aqua>⇄ Map Selection ⇄";
+    private static final String H_KIT = "<aqua>⇄ Kit Selection ⇄";
+    private static final String H_RANKED = "<gold>✦ <yellow>Ranked <gold>✦";
+    private static final String H_SEND = "<aqua>✔ Send Duel ✔";
+    private static final String H_BACK = "<red>✖ Go Back ✖";
 
     private final MeowDuels plugin;
     private final Player target;
@@ -95,11 +109,7 @@ extends Menu {
 
     @Override
     public void build() {
-        this.createRaw(ROWS, Style.title("#FF2E55", "#FF7FC4",
-                "ᴅᴜᴇʟ ʀᴇꞯᴜᴇꜱᴛ", this.target.getName()));
-        // Frame first and always. A layout saved back when this menu was a
-        // single row only covers slots 0-8, and without this the other three
-        // rows would open as holes.
+        this.createRaw(ROWS, "Duel Request");
         Style.frame(this.inventory, ROWS);
         HashMap<String, Integer> buttonSlots = new HashMap<String, Integer>();
         if (this.plugin.getGuiLayoutManager().has("duelconfirm")) {
@@ -113,43 +123,71 @@ extends Menu {
                 this.inventory.setItem(e.getKey().intValue(), e.getValue());
             }
         }
-        this.inventory.setItem(buttonSlots.getOrDefault("map", SLOT_ARENA).intValue(), this.renderButton("map"));
-        this.inventory.setItem(buttonSlots.getOrDefault("kit", SLOT_KIT).intValue(), this.renderButton("kit"));
+        this.inventory.setItem(buttonSlots.getOrDefault("info", SLOT_INFO).intValue(), this.renderButton("info"));
         this.inventory.setItem(buttonSlots.getOrDefault("clock", SLOT_ROUNDS).intValue(), this.renderButton("clock"));
+        this.inventory.setItem(buttonSlots.getOrDefault("map", SLOT_MAP).intValue(), this.renderButton("map"));
+        this.inventory.setItem(buttonSlots.getOrDefault("kit", SLOT_KIT).intValue(), this.renderButton("kit"));
         this.inventory.setItem(buttonSlots.getOrDefault("ranked", SLOT_RANKED).intValue(), this.renderButton("ranked"));
-        this.inventory.setItem(buttonSlots.getOrDefault("confirm", SLOT_CONFIRM).intValue(), this.renderButton("confirm"));
-        this.inventory.setItem(buttonSlots.getOrDefault("cancel", SLOT_CANCEL).intValue(), this.renderButton("cancel"));
+        this.inventory.setItem(buttonSlots.getOrDefault("confirm", SLOT_SEND).intValue(), this.renderButton("confirm"));
+        this.inventory.setItem(buttonSlots.getOrDefault("cancel", SLOT_BACK).intValue(), this.renderButton("cancel"));
+    }
+
+    /** A value that has been chosen, or the grey word for not yet. */
+    private static String value(String chosen, String whenEmpty) {
+        return chosen == null || chosen.isEmpty() ? "<gray>" + whenEmpty : "<yellow>" + chosen;
     }
 
     private String arenaLabel() {
-        if (this.selectedArena == null) {
-            return Style.MUTED + "ʀᴀɴᴅᴏᴍ";
-        }
-        return Style.VALUE + this.selectedArena;
+        return DuelConfirmMenu.value(this.selectedArena, "Random");
     }
 
     private String kitLabel() {
         Kit kit = this.selectedKit == null ? null : this.plugin.getKitManager().get(this.selectedKit);
         if (kit == null) {
-            return Style.BAD + "ɴᴏᴛ ᴄʜᴏꜱᴇɴ";
+            return "<gray>Not chosen";
         }
         String name = kit.getDisplayName();
-        return name == null || name.isEmpty() ? Style.VALUE + kit.getName() : name;
-    }
-
-    private String roundsLabel() {
-        return Style.VALUE + "ꜰɪʀꜱᴛ ᴛᴏ " + this.currentRounds();
+        return name == null || name.isEmpty() ? "<yellow>" + kit.getName() : name;
     }
 
     private ItemStack renderButton(String id) {
         switch (id) {
-            case "map": {
-                return Items.of(Material.FILLED_MAP)
-                        .rawName(Style.VALUE + "ᴀʀᴇɴᴀ")
+            case "info": {
+                // Everything the request will carry, in one item, so no button
+                // below has to repeat it and nothing is decided from memory.
+                return Items.of(Material.ITEM_FRAME)
+                        .rawName(H_INFO)
                         .rawLore("",
-                                 Style.LABEL + "ɴᴏᴡ " + Style.SEP + this.arenaLabel(),
+                                 "<white>Kit: " + this.kitLabel(),
+                                 "<white>Map: " + this.arenaLabel(),
+                                 "<white>Rounds: <yellow>" + this.currentRounds(),
+                                 "<white>Mode: " + (this.ranked ? "<yellow>Ranked" : "<gray>Unranked"),
                                  "",
-                                 Style.HINT + "ᴄʟɪᴄᴋ ᴛᴏ ᴘɪᴄᴋ ᴀ ᴍᴀᴘ")
+                                 "<white>Opponent: <yellow>" + this.target.getName(),
+                                 "<white>Rating: " + this.ratingLabel())
+                        .hideTooltip()
+                        .tag(this.plugin.keyButton(), "info")
+                        .build();
+            }
+            case "clock": {
+                return Items.of(Material.CLOCK)
+                        .rawName(H_ROUNDS)
+                        .rawLore("",
+                                 "<yellow>Current <white>" + this.currentRounds() + " Rounds",
+                                 "",
+                                 "<yellow>LMB <white>Increase Rounds",
+                                 "<yellow>RMB <white>Decrease Rounds")
+                        .hideTooltip()
+                        .tag(this.plugin.keyButton(), "clock")
+                        .build();
+            }
+            case "map": {
+                return Items.of(Material.PAPER)
+                        .rawName(H_MAP)
+                        .rawLore("",
+                                 "<white>Current: " + this.arenaLabel(),
+                                 "",
+                                 "<white>Click to Open Menu!")
                         .hideTooltip()
                         .tag(this.plugin.keyButton(), "map")
                         .build();
@@ -157,94 +195,65 @@ extends Menu {
             case "kit": {
                 Kit kit = this.selectedKit == null ? null : this.plugin.getKitManager().get(this.selectedKit);
                 return Items.of(kit != null ? kit.getIcon() : Material.IRON_SWORD)
-                        .rawName(Style.VALUE + "ᴋɪᴛ")
+                        .rawName(H_KIT)
                         .rawLore("",
-                                 Style.LABEL + "ɴᴏᴡ " + Style.SEP + this.kitLabel(),
+                                 "<white>Current: " + this.kitLabel(),
                                  "",
-                                 Style.HINT + "ᴄʟɪᴄᴋ ᴛᴏ ᴘɪᴄᴋ ᴀ ᴋɪᴛ")
+                                 "<white>Click to Open Menu!")
                         .glow(this.selectedKit != null)
                         .hideTooltip()
                         .tag(this.plugin.keyButton(), "kit")
                         .build();
             }
-            case "clock": {
-                // Every option listed, the live one marked. Cycling a hidden
-                // value is the part of the old menu that made people click four
-                // times to find out what the choices even were.
-                String[] lore = new String[ROUND_OPTIONS.length + 4];
-                lore[0] = "";
-                for (int i = 0; i < ROUND_OPTIONS.length; ++i) {
-                    boolean on = i == this.roundsIndex;
-                    lore[i + 1] = on
-                            ? Style.GOOD + Style.TICK + Style.VALUE + "ꜰɪʀꜱᴛ ᴛᴏ " + ROUND_OPTIONS[i]
-                            : "<dark_gray>  " + Style.MUTED + "ꜰɪʀꜱᴛ ᴛᴏ " + ROUND_OPTIONS[i];
-                }
-                lore[ROUND_OPTIONS.length + 1] = "";
-                lore[ROUND_OPTIONS.length + 2] = Style.HINT + "ᴄʟɪᴄᴋ ᴛᴏ ᴄʜᴀɴɢᴇ";
-                lore[ROUND_OPTIONS.length + 3] = Style.HINT + "ʀɪɢʜᴛ-ᴄʟɪᴄᴋ ᴛᴏ ɢᴏ ʙᴀᴄᴋ";
-                return Items.of(Material.CLOCK)
-                        .rawName(Style.VALUE + "ʀᴏᴜɴᴅꜱ")
-                        .rawLore(lore)
-                        .hideTooltip()
-                        .tag(this.plugin.keyButton(), "clock")
-                        .build();
-            }
             case "ranked": {
                 return Items.of(this.ranked ? Material.EXPERIENCE_BOTTLE : Material.GLASS_BOTTLE)
-                        .rawName(Style.VALUE + "ʀᴀɴᴋᴇᴅ")
+                        .rawName(H_RANKED)
                         .rawLore("",
-                                 Style.state(this.ranked,
-                                         "ᴡɪɴɴᴇʀ ɢᴀɪɴꜱ ᴇʟᴏ",
-                                         "ɴᴏ ᴇʟᴏ ɪꜱ ᴇxᴄʜᴀɴɢᴇᴅ"),
+                                 "<yellow>Current <white>" + (this.ranked ? "Ranked" : "Unranked"),
                                  "",
-                                 Style.HINT + "ᴄʟɪᴄᴋ ᴛᴏ ᴄʜᴀɴɢᴇ")
+                                 "<white>" + (this.ranked ? "Winner gains Elo" : "No Elo is exchanged"),
+                                 "",
+                                 "<yellow>LMB <white>Toggle Ranked")
                         .glow(this.ranked)
                         .hideTooltip()
                         .tag(this.plugin.keyButton(), "ranked")
                         .build();
             }
             case "cancel": {
-                return Style.cancel(this.plugin.keyButton(), "cancel",
-                        "ᴄᴀɴᴄᴇʟ",
-                        "",
-                        Style.LABEL + "ᴄʟᴏꜱᴇ ᴡɪᴛʜᴏᴜᴛ ꜱᴇɴᴅɪɴɢ");
+                return Items.of(Material.BARRIER)
+                        .rawName(H_BACK)
+                        .rawLore("<white>Go Back")
+                        .hideTooltip()
+                        .tag(this.plugin.keyButton(), "cancel")
+                        .build();
             }
         }
-        return Style.confirm(this.plugin.keyButton(), "confirm", this.selectedKit != null,
-                "ꜱᴇɴᴅ ʀᴇꞯᴜᴇꜱᴛ",
-                "ᴘɪᴄᴋ ᴀ ᴋɪᴛ ꜰɪʀꜱᴛ",
-                this.summary());
+        // Send. Grey and barrier-free when a kit is still missing: the button
+        // stays where it is and says what it wants, rather than vanishing.
+        boolean ready = this.selectedKit != null;
+        List<String> lore = new ArrayList<String>();
+        if (ready) {
+            lore.add("<white>Click to Send Duel!");
+        } else {
+            lore.add("<red>Pick a kit first!");
+        }
+        return Items.of(ready ? Material.LIME_DYE : Material.GRAY_DYE)
+                .rawName(ready ? H_SEND : "<gray>✖ Send Duel ✖")
+                .rawLore(lore.toArray(new String[0]))
+                .glow(ready)
+                .hideTooltip()
+                .tag(this.plugin.keyButton(), "confirm")
+                .build();
     }
 
-    /**
-     * Everything the request will carry, on the button that sends it. This used
-     * to live under the target's head; it belongs on the thing you are about to
-     * press, where you are already looking.
-     */
-    private String[] summary() {
+    private String ratingLabel() {
         StatsManager stats = this.plugin.getStatsManager();
-        String rating = stats.isPlaced(this.target.getUniqueId())
-                ? Ranks.mini(stats, this.target.getUniqueId()) + " <dark_gray>· <#FF8A93>"
-                  + stats.getElo(this.target.getUniqueId())
-                : Style.MUTED + "ᴜɴᴘʟᴀᴄᴇᴅ " + Style.SEP + Style.VALUE
-                  + stats.placementsLeft(this.target.getUniqueId()) + " " + Style.LABEL
-                  + "ᴛᴏ ɢᴏ";
-        List<String> lore = new ArrayList<String>();
-        lore.add("");
-        lore.add(Style.LABEL + "ᴏᴘᴘᴏɴᴇɴᴛ " + Style.SEP + Style.VALUE + this.target.getName());
-        lore.add(Style.LABEL + "ʀᴀᴛɪɴɢ " + Style.SEP + rating);
-        lore.add("");
-        lore.add(Style.LABEL + "ᴀʀᴇɴᴀ " + Style.SEP + this.arenaLabel());
-        lore.add(Style.LABEL + "ᴋɪᴛ " + Style.SEP + this.kitLabel());
-        lore.add(Style.LABEL + "ʀᴏᴜɴᴅꜱ " + Style.SEP + this.roundsLabel());
-        lore.add(Style.LABEL + "ᴍᴏᴅᴇ " + Style.SEP
-                + (this.ranked ? Style.VALUE + "ʀᴀɴᴋᴇᴅ"
-                               : Style.MUTED + "ᴜɴʀᴀɴᴋᴇᴅ"));
-        if (this.selectedKit == null) {
-            lore.add("");
-            lore.add(Style.BAD + Style.CROSS + "ᴘɪᴄᴋ ᴀ ᴋɪᴛ ʙᴇꜰᴏʀᴇ ꜱᴇɴᴅɪɴɢ");
+        if (stats.isPlaced(this.target.getUniqueId())) {
+            return Ranks.mini(stats, this.target.getUniqueId())
+                    + " <dark_gray>· <yellow>" + stats.getElo(this.target.getUniqueId());
         }
-        return lore.toArray(new String[0]);
+        return "<gray>Unplaced <dark_gray>· <yellow>"
+                + stats.placementsLeft(this.target.getUniqueId()) + " <white>to go";
     }
 
     @Override
@@ -254,6 +263,9 @@ extends Menu {
             return;
         }
         switch (id) {
+            case "info": {
+                break;
+            }
             case "map": {
                 new MapSelectMenu(this.plugin, this).open(player);
                 break;
@@ -263,6 +275,7 @@ extends Menu {
                 break;
             }
             case "clock": {
+                // Left goes up, right goes down, exactly as the button says.
                 int step = event.isRightClick() ? ROUND_OPTIONS.length - 1 : 1;
                 this.roundsIndex = (this.roundsIndex + step) % ROUND_OPTIONS.length;
                 this.reopen(player);

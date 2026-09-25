@@ -12,6 +12,7 @@ public class Material {
     public static org.bukkit.Material BOOK;
     public static org.bukkit.Material CHEST;
     public static org.bukkit.Material CLOCK;
+    public static org.bukkit.Material ITEM_FRAME;
     public static org.bukkit.Material COPPER_INGOT;
     public static org.bukkit.Material DIAMOND;
     public static org.bukkit.Material DIAMOND_SWORD;
