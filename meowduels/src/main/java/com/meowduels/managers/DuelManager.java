@@ -33,6 +33,7 @@ package com.meowduels.managers;
 
 import com.meowduels.MeowDuels;
 import com.meowduels.gui.DuelConfirmMenu;
+import com.meowduels.gui.KitPickMenu;
 import com.meowduels.gui.MatchSummaryMenu;
 import com.meowduels.managers.StatsManager;
 import com.meowduels.model.ActiveDuel;
@@ -45,7 +46,6 @@ import com.meowduels.util.Cooldowns;
 import com.meowduels.util.AntiCheatBypass;
 import com.meowduels.util.Colors;
 import com.meowduels.util.GameModeGuard;
-import com.meowduels.util.Ranks;
 import com.meowduels.util.Sounds;
 import com.meowduels.util.SpawnItems;
 import com.meowduels.util.Text;
@@ -103,7 +103,6 @@ public class DuelManager {
     private final Set<String> arenasInUse = new HashSet<String>();
     private final Map<UUID, UUID> lastOpponent = new HashMap<UUID, UUID>();
     private static final String REQUEST_COOLDOWN = "duel-request";
-    private final Map<String, Long> lastEloPair = new HashMap<String, Long>();
     private int gameCounter = 0;
 
     public DuelManager(MeowDuels plugin) {
@@ -118,10 +117,6 @@ public class DuelManager {
     }
 
     public void sendRequest(Player sender, Player target, String kit, int rounds, String arena) {
-        this.sendRequest(sender, target, kit, rounds, arena, false);
-    }
-
-    public void sendRequest(Player sender, Player target, String kit, int rounds, String arena, boolean ranked) {
         if (sender.equals((Object)target)) {
             sender.sendMessage(this.msg("duel.cannot-duel-self", new String[0]));
             return;
@@ -185,7 +180,6 @@ public class DuelManager {
             return;
         }
         DuelRequest request = new DuelRequest(sender.getUniqueId(), target.getUniqueId(), kit, rounds, arena);
-        request.setRanked(ranked);
         this.requests.computeIfAbsent(target.getUniqueId(), k -> new HashMap()).put(sender.getUniqueId(), request);
         sender.sendMessage(this.msg("duel.sent", "target", target.getName(), "kit", kit, "rounds", String.valueOf(rounds)));
         this.sendRequestCard(target, sender, kit, rounds);
@@ -197,7 +191,6 @@ public class DuelManager {
         target.sendMessage(this.msg("request.header", "sender", sender.getName()));
         target.sendMessage(this.msg("request.kit", "kit", kitLabel));
         target.sendMessage(this.msg("request.rounds", "rounds", String.valueOf(rounds)));
-        target.sendMessage(this.msg("request.ranked", new String[0]));
         target.sendMessage("");
         TextComponent click = new TextComponent(this.msg("request.click", new String[0]));
         click.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/duel accept " + sender.getName()));
@@ -245,7 +238,7 @@ public class DuelManager {
         targeted.remove(senderId);
         Sounds.accept(sender);
         Sounds.accept(target);
-        this.startDuel(sender, target, arena, request.getKit(), request.getRounds(), request.isRanked());
+        this.startDuel(sender, target, arena, request.getKit(), request.getRounds());
     }
 
     private Arena resolveArena(DuelRequest request) {
@@ -270,7 +263,7 @@ public class DuelManager {
     }
 
 
-    private void startDuel(Player p1, Player p2, Arena arena, String kit, int rounds, boolean ranked) {
+    private void startDuel(Player p1, Player p2, Arena arena, String kit, int rounds) {
         if (this.isArenaBusy(arena)) {
             String booked = this.msg("duel.arena-booked", new String[0]);
             p1.sendMessage(booked);
@@ -285,7 +278,6 @@ public class DuelManager {
         this.snapshots.put(p1.getUniqueId(), PlayerSnapshot.capture(p1));
         this.snapshots.put(p2.getUniqueId(), PlayerSnapshot.capture(p2));
         ActiveDuel duel = new ActiveDuel(p1.getUniqueId(), p2.getUniqueId(), arena, kit, rounds);
-        duel.setRanked(ranked);
         duel.setGameNumber(++this.gameCounter);
         this.playerDuels.put(p1.getUniqueId(), duel);
         this.playerDuels.put(p2.getUniqueId(), duel);
@@ -354,7 +346,6 @@ public class DuelManager {
         player.sendMessage(this.msg("duel.start.opponent", "opponent", opponentName));
         player.sendMessage(this.msg("duel.start.kit", "kit", kitLabel));
         player.sendMessage(this.msg("duel.start.rounds", "rounds", rounds));
-        player.sendMessage(this.msg("duel.start.ranked", "ranked", duel.isRanked() ? "Yes" : "No"));
         player.sendMessage("");
         player.sendMessage(this.msg("duel.start.leave", new String[0]));
     }
@@ -780,9 +771,8 @@ public class DuelManager {
         Player winner = Bukkit.getPlayer((UUID)winnerId);
         Player loser = Bukkit.getPlayer((UUID)loserId);
         String string = winnerName = winner != null ? winner.getName() : "A player";
-        if (duel.isRanked()) {
-            this.applyRankedElo(winnerId, loserId, winner, loser);
-        }
+        this.plugin.getStatsManager().addPlayed(winnerId);
+        this.plugin.getStatsManager().addPlayed(loserId);
         switch (reason.ordinal()) {
             case 1: {
                 if (winner != null) {
@@ -1060,72 +1050,9 @@ public class DuelManager {
         }
     }
 
-    private void applyRankedElo(UUID winnerId, UUID loserId, Player winner, Player loser) {
-        StatsManager stats = this.plugin.getStatsManager();
-        long cooldownMs = (long)Math.max(0, this.plugin.getConfig().getInt("ranked.elo-cooldown-minutes", 30)) * 60000L;
-        String key = String.valueOf(winnerId) + ":" + String.valueOf(loserId);
-        long now = System.currentTimeMillis();
-        Long last = this.lastEloPair.get(key);
-        boolean grinding = cooldownMs > 0L && last != null && now - last < cooldownMs;
-        int beforeWinner = Ranks.order(stats, winnerId);
-        int beforeLoser = Ranks.order(stats, loserId);
-        stats.addPlayed(winnerId);
-        stats.addPlayed(loserId);
-        int gain = 0;
-        if (grinding) {
-            if (winner != null) {
-                winner.sendMessage(DuelManager.mmc("<gray>\u0280\u1d00\u0274\u1d0b\u1d07\u1d05 <dark_gray>\u00b7 <#FF6B6B>\u0274\u1d0f \u1d07\u029f\u1d0f <gray>- same opponent too recently."));
-            }
-        } else {
-            gain = stats.applyElo(winnerId, loserId);
-            this.lastEloPair.put(key, now);
-        }
-        stats.save();
-        this.sendRankResult(winner, winnerId, gain, true, beforeWinner);
-        this.sendRankResult(loser, loserId, gain, false, beforeLoser);
-    }
-
-    private void sendRankResult(Player player, UUID id, int delta, boolean won, int beforeOrder) {
-        if (player == null) {
-            return;
-        }
-        StatsManager stats = this.plugin.getStatsManager();
-        int elo = stats.getElo(id);
-        int afterOrder = Ranks.order(stats, id);
-        String rankTag = Ranks.mini(stats, id);
-        if (delta > 0) {
-            String sign = won ? "<#5CE08A>+" + delta : "<#FF6B6B>-" + delta;
-            player.sendMessage(DuelManager.mmc("<gray>\u0280\u1d00\u0274\u1d0b\u1d07\u1d05 <dark_gray>\u00b7 " + sign + " <gray>\u1d07\u029f\u1d0f <dark_gray>\u00b7 <white>" + elo));
-        }
-        if (!stats.isPlaced(id)) {
-            int left = stats.placementsLeft(id);
-            player.sendMessage(DuelManager.mmc("<gray>\u1d18\u029f\u1d00\u1d04\u1d07\u1d0d\u1d07\u0274\u1d1b\ua731 <dark_gray>\u00b7 <white>" + left + " <gray>more ranked " + (left == 1 ? "match" : "matches") + " to get your rank."));
-            return;
-        }
-        if (beforeOrder < 0) {
-            this.rankTitle(player, "<gradient:#FF2E55:#FF7FC4>\u0280\u1d00\u0274\u1d0b \u1d1c\u0274\u029f\u1d0f\u1d04\u1d0b\u1d07\u1d05</gradient>", rankTag);
-            player.sendMessage("");
-            player.sendMessage(DuelManager.mmc("  <gradient:#FF2E55:#FF7FC4>\u0280\u1d00\u0274\u1d0b \u1d1c\u0274\u029f\u1d0f\u1d04\u1d0b\u1d07\u1d05</gradient> <dark_gray>\u00b7 " + rankTag));
-            player.sendMessage("");
-            Sounds.victory(player);
-        } else if (afterOrder > beforeOrder) {
-            this.rankTitle(player, "<gradient:#5CE08A:#2FBF71>\u1d18\u0280\u1d0f\u1d0d\u1d0f\u1d1b\u1d07\u1d05</gradient>", rankTag);
-            player.sendMessage("");
-            player.sendMessage(DuelManager.mmc("  <gradient:#5CE08A:#2FBF71>\u2b06 \u1d18\u0280\u1d0f\u1d0d\u1d0f\u1d1b\u1d07\u1d05</gradient> <dark_gray>\u00b7 " + rankTag));
-            player.sendMessage("");
-            Sounds.victory(player);
-        } else if (afterOrder < beforeOrder) {
-            this.rankTitle(player, "<gradient:#FF6B6B:#B3121C>\u1d05\u1d07\u1d0d\u1d0f\u1d1b\u1d07\u1d05</gradient>", rankTag);
-            player.sendMessage("");
-            player.sendMessage(DuelManager.mmc("  <gradient:#FF6B6B:#B3121C>\u2b07 \u1d05\u1d07\u1d0d\u1d0f\u1d1b\u1d07\u1d05</gradient> <dark_gray>\u00b7 " + rankTag));
-            player.sendMessage("");
-            Sounds.defeat(player);
-        }
-    }
-
-    private void rankTitle(Player player, String miniTitle, String miniSubtitle) {
-        this.sendTitle(player, DuelManager.mmc(miniTitle), DuelManager.mmc(miniSubtitle), 5, 45, 12);
-    }
+    // Elo, ranks, placement matches and the promote/demote titles used to
+    // live here. All of it is gone: a duel is a duel, and the only numbers
+    // kept about one are the wins, losses and streak the summary shows.
 
     private static String mmc(String miniMessage) {
         return Colors.toSection(miniMessage);
@@ -1175,7 +1102,9 @@ public class DuelManager {
             player.sendMessage(Text.prefixed("&cThey're already in a duel."));
             return;
         }
-        new DuelConfirmMenu(this.plugin, opponent).open(player);
+        // Through the kit picker, same as /duel: Round Selection has no kit
+        // button, so opening it directly would leave the request kitless.
+        new KitPickMenu(this.plugin, new DuelConfirmMenu(this.plugin, player, opponent)).open(player);
     }
 
     private void applyDuelBorder(Player player, Arena arena) {
@@ -1322,7 +1251,7 @@ public class DuelManager {
         if (arena == null) {
             return false;
         }
-        this.startDuel(p1, p2, arena, kit, 1, true);
+        this.startDuel(p1, p2, arena, kit, 1);
         return true;
     }
 

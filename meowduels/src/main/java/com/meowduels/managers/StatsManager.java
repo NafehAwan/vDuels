@@ -26,11 +26,8 @@ public class StatsManager {
     private final Map<UUID, Integer> streak = new java.util.concurrent.ConcurrentHashMap<UUID, Integer>();
     private final Map<UUID, Integer> wins = new java.util.concurrent.ConcurrentHashMap<UUID, Integer>();
     private final Map<UUID, Integer> losses = new java.util.concurrent.ConcurrentHashMap<UUID, Integer>();
-    // Concurrent: the rank placeholders are resolved on TAB's thread while
-    // matches on the main thread are writing new ratings.
-    private final Map<UUID, Integer> elo = new java.util.concurrent.ConcurrentHashMap<UUID, Integer>();
+    // Concurrent: read on TAB's thread while matches on the main thread write.
     private final Map<UUID, Integer> played = new java.util.concurrent.ConcurrentHashMap<UUID, Integer>();
-    public static final int DEFAULT_ELO = 1000;
 
     public StatsManager(MeowDuels plugin) {
         this.plugin = plugin;
@@ -46,7 +43,6 @@ public class StatsManager {
         this.loadSection(cfg.getConfigurationSection("streak"), this.streak);
         this.loadSection(cfg.getConfigurationSection("wins"), this.wins);
         this.loadSection(cfg.getConfigurationSection("losses"), this.losses);
-        this.loadSection(cfg.getConfigurationSection("elo"), this.elo);
         this.loadSection(cfg.getConfigurationSection("played"), this.played);
     }
 
@@ -72,9 +68,6 @@ public class StatsManager {
         }
         for (Map.Entry<UUID, Integer> e : this.losses.entrySet()) {
             cfg.set("losses." + String.valueOf(e.getKey()), (Object)e.getValue());
-        }
-        for (Map.Entry<UUID, Integer> e : this.elo.entrySet()) {
-            cfg.set("elo." + String.valueOf(e.getKey()), (Object)e.getValue());
         }
         for (Map.Entry<UUID, Integer> e : this.played.entrySet()) {
             cfg.set("played." + String.valueOf(e.getKey()), (Object)e.getValue());
@@ -118,39 +111,26 @@ public class StatsManager {
         return v == null ? 0 : v;
     }
 
-    public int getElo(UUID id) {
-        Integer v = this.elo.get(id);
-        return v == null ? 1000 : v;
-    }
-
-    public int placementMatches() {
-        return Math.max(0, this.plugin.getConfig().getInt("ranked.placement-matches", 5));
-    }
-
     public int getPlayed(UUID id) {
         Integer v = this.played.get(id);
         return v == null ? 0 : v;
     }
 
-    public boolean addPlayed(UUID id) {
-        int before = this.getPlayed(id);
-        this.played.put(id, before + 1);
-        int need = this.placementMatches();
-        return before < need && before + 1 >= need;
+    public void addPlayed(UUID id) {
+        this.played.merge(id, 1, Integer::sum);
     }
 
-    public int placementsLeft(UUID id) {
-        return Math.max(0, this.placementMatches() - this.getPlayed(id));
-    }
-
-    public boolean isPlaced(UUID id) {
-        return this.getPlayed(id) >= this.placementMatches();
-    }
-
-    public List<Map.Entry<UUID, Integer>> topElo(int limit) {
+    /**
+     * The leaderboard, ranked on duels won.
+     *
+     * <p>It used to be ranked on Elo. With Elo gone there is no hidden number
+     * left to sort by, which is arguably the honest version: the board now
+     * says what it counts.
+     */
+    public List<Map.Entry<UUID, Integer>> topWins(int limit) {
         ArrayList<Map.Entry<UUID, Integer>> out = new ArrayList<Map.Entry<UUID, Integer>>();
-        for (Map.Entry<UUID, Integer> e : this.elo.entrySet()) {
-            if (!this.isPlaced(e.getKey())) continue;
+        for (Map.Entry<UUID, Integer> e : this.wins.entrySet()) {
+            if (e.getValue() == null || e.getValue() <= 0) continue;
             out.add(e);
         }
         Collections.sort(out, new Comparator<Map.Entry<UUID, Integer>>(){
@@ -162,23 +142,4 @@ public class StatsManager {
         });
         return out.size() > limit ? out.subList(0, limit) : out;
     }
-
-    public void setElo(UUID id, int rating) {
-        this.elo.put(id, Math.max(0, rating));
-    }
-
-    public int applyElo(UUID winner, UUID loser) {
-        int rw = this.getElo(winner);
-        int k = 32;
-        int rl = this.getElo(loser);
-        double expectedW = 1.0 / (1.0 + Math.pow(10.0, (double)(rl - rw) / 400.0));
-        int gain = (int)Math.round((double)k * (1.0 - expectedW));
-        if (gain < 1) {
-            gain = 1;
-        }
-        this.setElo(winner, rw + gain);
-        this.setElo(loser, rl - gain);
-        return gain;
-    }
 }
-

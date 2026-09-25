@@ -17,7 +17,6 @@ import com.meowduels.MeowDuels;
 import com.meowduels.model.ActiveDuel;
 import org.bukkit.OfflinePlayer;
 import java.util.List;
-import com.meowduels.util.Ranks;
 import com.meowduels.model.Kit;
 import com.meowduels.model.Party;
 import java.util.HashMap;
@@ -411,8 +410,10 @@ public class TabService {
         Player self = Bukkit.getPlayer((UUID)id);
         out = out.replace("{player}", self == null ? "" : self.getName());
         out = out.replace("{ping}", self == null ? "0" : String.valueOf(self.getPing()));
-        out = out.replace("{rank}", Ranks.tab(this.plugin.getStatsManager(), id));
-        out = out.replace("{elo}", String.valueOf(this.plugin.getStatsManager().getElo(id)));
+        // Both resolve to nothing now that Elo is gone; kept as tokens so an
+        // existing header/footer shows a gap instead of literal braces.
+        out = out.replace("{rank}", "");
+        out = out.replace("{elo}", "");
         out = this.fillDuelTokens(out, id);
         out = this.fillPartyTokens(out, id);
         return out;

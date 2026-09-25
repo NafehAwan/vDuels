@@ -585,7 +585,7 @@ TabCompleter {
             this.plugin.getDuelManager().sendRequest(player, target, kit.getName(), rounds, null);
             return;
         }
-        DuelConfirmMenu confirm = new DuelConfirmMenu(this.plugin, target);
+        DuelConfirmMenu confirm = new DuelConfirmMenu(this.plugin, player, target);
         new KitPickMenu(this.plugin, confirm).open(player);
     }
 

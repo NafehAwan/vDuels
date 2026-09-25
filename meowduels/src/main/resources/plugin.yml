@@ -66,9 +66,9 @@ commands:
     usage: /meowduelssetspawn
     permission: meowduels.admin
   leaderboard:
-    description: Show the ranked ELO leaderboard.
+    description: Show the duel wins leaderboard.
     usage: /leaderboard [size]
-    aliases: [lb, elotop]
+    aliases: [lb, wintop]
   duel:
     description: Challenge a player to a duel.
     usage: /duel <player> [kit] [rounds]

@@ -83,13 +83,11 @@ extends Menu {
                 for (int i = 0; i < this.editableSize; ++i) {
                     this.inventory.setItem(i, gray);
                 }
-                this.inventory.setItem(10, this.buttonMarker("map", Material.FILLED_MAP, "&dArena button"));
-                this.inventory.setItem(12, this.buttonMarker("kit", Material.GOLDEN_APPLE, "&6Kit button"));
-                this.inventory.setItem(14, this.buttonMarker("clock", Material.CLOCK, "&eRounds button"));
-                this.inventory.setItem(16, this.buttonMarker("ranked", Material.LIME_DYE, "&bRanked toggle"));
-                this.inventory.setItem(22, this.buttonMarker("target", Material.PLAYER_HEAD, "&fOpponent head"));
-                this.inventory.setItem(29, this.buttonMarker("confirm", Material.LIME_DYE, "&aConfirm button"));
-                this.inventory.setItem(33, this.buttonMarker("cancel", Material.BARRIER, "&cCancel button"));
+                this.inventory.setItem(10, this.buttonMarker("info", Material.ITEM_FRAME, "&bInformation"));
+                this.inventory.setItem(11, this.buttonMarker("clock", Material.CLOCK, "&eRounds button"));
+                this.inventory.setItem(12, this.buttonMarker("map", Material.PAPER, "&bMap Selection"));
+                this.inventory.setItem(14, this.buttonMarker("confirm", Material.LIME_DYE, "&aSend Duel"));
+                this.inventory.setItem(22, this.buttonMarker("cancel", Material.BARRIER, "&cGo Back"));
                 break;
             }
             case "mapselect": {
@@ -164,13 +162,11 @@ extends Menu {
         }
         switch (this.menuId) {
             case "duelconfirm": {
-                this.ensureButton(layout, "map", Material.FILLED_MAP, "&dArena button", 10);
-                this.ensureButton(layout, "kit", Material.GOLDEN_APPLE, "&6Kit button", 12);
-                this.ensureButton(layout, "clock", Material.CLOCK, "&eRounds button", 14);
-                this.ensureButton(layout, "ranked", Material.LIME_DYE, "&bRanked toggle", 16);
-                this.ensureButton(layout, "target", Material.PLAYER_HEAD, "&fOpponent head", 22);
-                this.ensureButton(layout, "confirm", Material.LIME_DYE, "&aConfirm button", 29);
-                this.ensureButton(layout, "cancel", Material.BARRIER, "&cCancel button", 33);
+                this.ensureButton(layout, "info", Material.ITEM_FRAME, "&bInformation", 10);
+                this.ensureButton(layout, "clock", Material.CLOCK, "&eRounds button", 11);
+                this.ensureButton(layout, "map", Material.PAPER, "&bMap Selection", 12);
+                this.ensureButton(layout, "confirm", Material.LIME_DYE, "&aSend Duel", 14);
+                this.ensureButton(layout, "cancel", Material.BARRIER, "&cGo Back", 22);
                 break;
             }
             case "mapselect": {

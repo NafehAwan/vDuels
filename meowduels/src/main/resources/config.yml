@@ -13,13 +13,6 @@ duel:
   request-cooldown-seconds: 5.0
   default-rounds: 1
 
-# ---- Ranked / ELO ----
-ranked:
-  # Anti alt-grinding: after you gain ELO off a player, beating that SAME player
-  # again within this many minutes awards no ELO (stats/streak still count).
-  # Set 0 to disable. Queue matches are always ranked; /duel has a toggle.
-  elo-cooldown-minutes: 30
-
 # ---- Rounds / pacing (seconds, decimals allowed) ----
 rounds:
   match-found-seconds: 4.0
@@ -184,7 +177,9 @@ server-name: "server"
 #    party  - in a party (whether or not it is mid-match)
 #
 #  MiniMessage. "" is a blank line; delete a line to shorten a layout.
-#  Tokens: {player} {ping} {rank} {elo} {online} {in_duels}
+#  Tokens: {player} {ping} {online} {in_duels}
+#  ({rank} and {elo} are gone with ELO; they still resolve, to nothing, so an
+#   older layout renders a gap rather than the literal braces.)
 #          {server_ip} {server_name} {discord} {store}
 #    duel:  {opponent} {score} {opponent_score} {kit} {arena} {round}
 #           {rounds_to_win} {time} {team_color}

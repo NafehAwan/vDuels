@@ -15,7 +15,6 @@ import com.meowduels.model.ActiveDuel;
 import com.meowduels.model.Kit;
 import com.meowduels.util.Colors;
 import com.meowduels.util.Health;
-import com.meowduels.util.Ranks;
 import com.meowduels.model.Party;
 import java.util.List;
 import java.util.Locale;
@@ -101,15 +100,6 @@ implements Relational {
         }
         ActiveDuel duel = this.plugin.getDuelManager().getDuel(subject);
         switch (key) {
-            case "elo": {
-                return String.valueOf(this.plugin.getStatsManager().getElo(id));
-            }
-            case "rank": {
-                return Ranks.tab(this.plugin.getStatsManager(), id);
-            }
-            case "rank_mini": {
-                return Ranks.mini(this.plugin.getStatsManager(), id);
-            }
             case "tabprefix": {
                 // The party fight marker used to be prepended here as well.
                 // It is a suffix now, so both places agree and a party member
@@ -141,7 +131,7 @@ implements Relational {
                 if (!suffix.trim().isEmpty()) {
                     return Colors.toSection(suffix);
                 }
-                return Ranks.tab(this.plugin.getStatsManager(), id);
+                return "";
             }
             case "tabsuffix": {
                 return this.suffixFor(player, id, true);
@@ -151,12 +141,6 @@ implements Relational {
                     return "";
                 }
                 return Colors.toSection(this.papi(player, "%luckperms_suffix%"));
-            }
-            case "placements_left": {
-                return String.valueOf(this.plugin.getStatsManager().placementsLeft(id));
-            }
-            case "rank_name": {
-                return "[" + Ranks.tier(this.plugin.getStatsManager(), id)[0] + "]";
             }
             case "health": {
                 Player online = Bukkit.getPlayer((UUID)id);

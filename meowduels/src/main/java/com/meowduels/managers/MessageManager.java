@@ -204,7 +204,6 @@ public class MessageManager {
         DEFAULTS.put("duel.start.opponent", "&a\u2694 &7Opponent: &f{opponent}");
         DEFAULTS.put("duel.start.kit", "&a\u270e &7Kit: &d{kit}");
         DEFAULTS.put("duel.start.rounds", "&a\u2605 &7Rounds: &f{rounds}");
-        DEFAULTS.put("duel.start.ranked", "&a\u263e &7Ranked: &f{ranked}");
         DEFAULTS.put("duel.start.leave", "{prefix}&7Use &a/leave &7to leave the duel.");
         DEFAULTS.put("leave.not-in-duel", "{prefix}&cYou are not in a duel.");
         DEFAULTS.put("spectate.not-found", "{prefix}&cPlayer {name} is not online.");
@@ -236,7 +235,6 @@ public class MessageManager {
         DEFAULTS.put("request.header", "&6DUEL REQUEST FROM &e&l{sender}");
         DEFAULTS.put("request.kit", "&eKit: &e&l{kit}");
         DEFAULTS.put("request.rounds", "&eRounds: &f{rounds}");
-        DEFAULTS.put("request.ranked", "&eRanked: &c&lDISABLED");
         DEFAULTS.put("request.click", "&6&l[CLICK HERE]");
         DEFAULTS.put("request.click-hover", "&aClick to accept the duel from &f{sender}");
         DEFAULTS.put("menu.select-kit-first", "{prefix}&cSelect a kit first.");

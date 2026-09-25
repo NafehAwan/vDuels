@@ -27,7 +27,6 @@ public class ActiveDuel {
     private int currentRound = 1;
     private int gameNumber = 0;
     private boolean arenaEntered = false;
-    private boolean ranked = false;
     private boolean finished = false;
     private long fightStartedAt = 0L;
     private final Set<UUID> ready = new HashSet<UUID>();
@@ -91,14 +90,6 @@ public class ActiveDuel {
 
     public int getRoundsToWin() {
         return this.roundsToWin;
-    }
-
-    public boolean isRanked() {
-        return this.ranked;
-    }
-
-    public void setRanked(boolean ranked) {
-        this.ranked = ranked;
     }
 
     public int getScore1() {

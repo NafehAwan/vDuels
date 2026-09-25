@@ -12,7 +12,6 @@ public class DuelRequest {
     private final int rounds;
     private final String arena;
     private final long createdAt;
-    private boolean ranked = false;
 
     public DuelRequest(UUID sender, UUID target, String kit, int rounds, String arena) {
         this.sender = sender;
@@ -45,14 +44,6 @@ public class DuelRequest {
 
     public long getCreatedAt() {
         return this.createdAt;
-    }
-
-    public boolean isRanked() {
-        return this.ranked;
-    }
-
-    public void setRanked(boolean ranked) {
-        this.ranked = ranked;
     }
 
     public boolean isExpired(long ttlMillis) {

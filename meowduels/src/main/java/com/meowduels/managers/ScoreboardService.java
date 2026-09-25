@@ -28,7 +28,6 @@ import com.meowduels.model.ActiveDuel;
 import com.meowduels.model.Kit;
 import com.meowduels.model.Party;
 import com.meowduels.util.Health;
-import com.meowduels.util.Ranks;
 import io.papermc.paper.scoreboard.numbers.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -100,7 +99,10 @@ public class ScoreboardService {
             return;
         }
         this.masterEnabled = sb.getBoolean("enabled", true);
-        this.rankNametags = sb.getBoolean("rank-above-head", false);
+        // Also deliberately not read from config any more, same reason as
+        // rank-below-name below: the prefix it drew was the Elo rank, and
+        // there is no longer one to draw.
+        this.rankNametags = false;
         // Defaults to TRUE now. When MeowDuels draws nametags it does it by
         // giving the viewer its own scoreboard, which fights TAB for ownership
         // of scoreboard teams - and TAB sorts the tab list with those teams.
@@ -234,7 +236,7 @@ public class ScoreboardService {
             for (Player p : Bukkit.getOnlinePlayers()) {
                 String name = p.getName();
                 String teamName = "mdr" + this.rankTeamFor(p.getUniqueId());
-                Component prefix = this.deserialize(Ranks.mini(this.plugin.getStatsManager(), p.getUniqueId()) + " ");
+                Component prefix = this.deserialize("");
                 for (int i = 0; i < targets.size(); ++i) {
                     if (((Set)skips.get(i)).contains(name)) continue;
                     Scoreboard sb = (Scoreboard)targets.get(i);
@@ -404,11 +406,11 @@ public class ScoreboardService {
         try {
             for (Player p : Bukkit.getOnlinePlayers()) {
                 UUID id = p.getUniqueId();
-                String mini = Ranks.mini(this.plugin.getStatsManager(), id);
-                if (mini.equals(this.lastRank.get(id))) continue;
-                this.lastRank.put(id, mini);
-                NumberFormat fmt = NumberFormat.fixed((ComponentLike)this.deserialize(mini));
-                this.applyBelowRank(p.getName(), fmt, this.plugin.getStatsManager().getElo(id));
+                String wins = String.valueOf(this.plugin.getStatsManager().getWins(id));
+                if (wins.equals(this.lastRank.get(id))) continue;
+                this.lastRank.put(id, wins);
+                NumberFormat fmt = NumberFormat.fixed((ComponentLike)this.deserialize(""));
+                this.applyBelowRank(p.getName(), fmt, this.plugin.getStatsManager().getWins(id));
             }
         }
         catch (Throwable throwable) {
@@ -541,8 +543,11 @@ public class ScoreboardService {
         UUID recordId = spectator ? self : id;
         t.put("wins", String.valueOf(this.plugin.getStatsManager().getWins(recordId)));
         t.put("losses", String.valueOf(this.plugin.getStatsManager().getLosses(recordId)));
-        t.put("elo", String.valueOf(this.plugin.getStatsManager().getElo(recordId)));
-        t.put("rank", Ranks.mini(this.plugin.getStatsManager(), recordId));
+        // {elo} and {rank} are kept as tokens, resolving to nothing, so a
+        // layout written before Elo was removed renders a gap rather than the
+        // literal braces.
+        t.put("elo", "");
+        t.put("rank", "");
         t.put("server_name", this.plugin.getServerName());
         t.put("date", this.date());
         t.put("server_ip_sc", ScoreboardService.smallCaps(this.plugin.getScoreboardIp()));

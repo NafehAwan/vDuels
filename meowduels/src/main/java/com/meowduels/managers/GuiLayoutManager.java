@@ -37,8 +37,14 @@ public class GuiLayoutManager {
         return 4;
     }
 
+    /**
+     * How many slots of a menu the editor may place things in.
+     *
+     * <p>Round Selection is three rows now, so editing thirty-six would let
+     * someone drop a button into a slot the menu never renders.
+     */
     public static int editableSize(String menuId) {
-        return 36;
+        return DUEL_CONFIRM.equals(menuId) ? 27 : 36;
     }
 
     public static boolean isValidMenu(String menuId) {
