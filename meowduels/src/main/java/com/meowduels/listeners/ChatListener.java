@@ -54,6 +54,10 @@ implements Listener {
     /** At most this many "they can't see you" lines for one message. */
     private static final int MAX_NOTICES = 3;
 
+    /** So a broken serializer complains once, not once per chat message. */
+    private static final java.util.concurrent.atomic.AtomicBoolean FLATTEN_FAILED =
+            new java.util.concurrent.atomic.AtomicBoolean(false);
+
     private final MeowDuels plugin;
 
     public ChatListener(MeowDuels plugin) {
@@ -158,12 +162,7 @@ implements Listener {
         if (message == null) {
             return java.util.Collections.emptySet();
         }
-        // MiniMessage rather than the plain-text serializer: this codebase
-        // already proves MiniMessage's interface kind at runtime, and the only
-        // difference here is that styling arrives as <tags>. A tag cannot
-        // appear inside a player name, and it reads as a word boundary, which
-        // is what the matcher below wants anyway.
-        String text = MiniMessage.miniMessage().serialize(message);
+        String text = this.flatten(message);
         if (text == null || text.isEmpty()) {
             return java.util.Collections.emptySet();
         }
@@ -219,6 +218,41 @@ implements Listener {
                 sender.sendMessage(line);
             }
         });
+    }
+
+    /**
+     * The message as text, or null if it could not be read.
+     *
+     * <p>MiniMessage rather than the plain-text serializer, because this
+     * codebase already proves MiniMessage at runtime. Styling arrives as
+     * &lt;tags&gt;, which does not matter here: a tag cannot appear inside a
+     * player name, and it reads as a word boundary, which is what the matcher
+     * wants anyway.
+     *
+     * <p>The result is Object, not String. Both of ComponentSerializer's
+     * methods exist at runtime only in their erased form, and R is unbounded,
+     * so serialize returns Object however the generics read in the source.
+     *
+     * <p>Guarded, and deliberately so. This is one optional feature - whether
+     * naming somebody reaches them - sitting in the middle of the chat
+     * pipeline, and the first version of it threw NoSuchMethodError here and
+     * took the whole isolation filter down with it on every message. Losing
+     * mention detection is a small thing; losing chat is not. The complaint
+     * is logged once rather than once per message.
+     */
+    private String flatten(net.kyori.adventure.text.Component message) {
+        try {
+            Object text = MiniMessage.miniMessage().serialize(message);
+            return text instanceof String ? (String)text : null;
+        }
+        catch (Throwable t) {
+            if (FLATTEN_FAILED.compareAndSet(false, true)) {
+                this.plugin.getLogger().warning("Could not read chat text for mention detection ("
+                        + t.getClass().getSimpleName() + ": " + t.getMessage()
+                        + "). Isolated chat still works; naming someone will not reach them.");
+            }
+            return null;
+        }
     }
 
     /**
