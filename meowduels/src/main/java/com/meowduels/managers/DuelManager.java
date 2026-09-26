@@ -1102,6 +1102,23 @@ public class DuelManager {
             player.sendMessage(Text.prefixed("&cThey're already in a duel."));
             return;
         }
+        // The clicker, not just the opponent. The summary window outlives the
+        // match that opened it, so you can be queued into a new fight and
+        // still have Rematch on screen - and every other door into the duel
+        // menus is guarded but this one was not, so it opened a kit picker
+        // mid-fight that could only ever fail at the end.
+        if (this.isInDuel(player.getUniqueId())) {
+            player.sendMessage(this.msg("duel.already-in-duel", new String[0]));
+            return;
+        }
+        if (this.plugin.getPartyManager().inParty(player.getUniqueId())) {
+            player.sendMessage(Text.prefixed("&cYou're in a party - leave it first, or start a party match."));
+            return;
+        }
+        if (this.plugin.getEventManager().isInvolved(player.getUniqueId())) {
+            player.sendMessage(Text.prefixed("&cYou can't duel while you're in the event."));
+            return;
+        }
         // Through the kit picker, same as /duel: Round Selection has no kit
         // button, so opening it directly would leave the request kitless.
         new KitPickMenu(this.plugin, new DuelConfirmMenu(this.plugin, player, opponent)).open(player);

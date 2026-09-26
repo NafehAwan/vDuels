@@ -1438,7 +1438,16 @@ public class PartyManager {
         party.remove(id);
         this.byPlayer.remove(id);
         this.plugin.getTabService().detach(id);
-        this.plugin.getTabService().attachParty(party);
+        // Mid-match the bubble is BOTH parties keyed on the host. attachParty
+        // re-keys this side onto itself, which splits the fight in two and
+        // leaves the teams unable to see each other with the match still
+        // running - so rebuild the whole match instead.
+        Party host = this.matchHostOf(party);
+        if (party.isFighting() && host != null && host.getOpponent() != null) {
+            this.plugin.getTabService().attachMatch(host, host.getOpponent());
+        } else {
+            this.plugin.getTabService().attachParty(party);
+        }
         this.broadcast(party, "&f" + this.nameOf(id) + "&7 left the server.");
         this.checkWin(party);
     }

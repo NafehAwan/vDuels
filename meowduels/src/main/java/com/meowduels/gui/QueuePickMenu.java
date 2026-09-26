@@ -63,12 +63,12 @@ extends Menu {
     public void build() {
         List<CategoryManager.Category> categories = this.plugin.getQueueCategoryManager().all();
         if (categories.isEmpty()) {
-            this.create(4, "&7Ranked Queue");
+            this.create(4, "&7Queue");
         } else {
             if (this.categoryIndex >= categories.size()) {
                 this.categoryIndex = 0;
             }
-            this.create(4, "&7Ranked Queue \u2192 &7" + categories.get(this.categoryIndex).getHeader());
+            this.create(4, "&7Queue \u2192 &7" + categories.get(this.categoryIndex).getHeader());
         }
         this.populate();
     }

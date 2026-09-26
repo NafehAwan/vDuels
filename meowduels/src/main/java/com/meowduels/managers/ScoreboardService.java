@@ -323,6 +323,14 @@ public class ScoreboardService {
         // colouring is more specific and wins.
         boolean ffaTags = !active && inEvent && !this.externalNametags;
         if (sidebar == null && !nametags && !ffaTags) {
+            // The queue bar first, because this return is the ONLY path for a
+            // player who has the sidebar switched off in /settings, and it was
+            // swallowing the one thing that tells them they are in a queue.
+            // It also swallowed the clear, so a bar left on screen when they
+            // turned the board off stayed there until they relogged.
+            if (!inFight) {
+                this.sendQueueBar(player);
+            }
             this.removeBoard(id, player);
             return;
         }
