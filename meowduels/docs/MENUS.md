@@ -10,129 +10,229 @@ always carrying a symbol. Twelve menus use it.
 
 `DuelConfirmMenu` is a **verbatim copy** of another server's Round Selection
 screen — its title, its five slots, its `◆ Information ◆` headings, its
-yellow-on-white lore. It was built that way on request, from screenshots. It
-has to go, and it is the single most-seen screen in the plugin.
+yellow-on-white lore. It was built that way from screenshots, on request. It
+is the most-seen screen in the plugin and it has to go.
 
 Fourteen more menus use neither: raw `&7&l` titles, black filler, ad-hoc
 colours. They are not stolen, they are just old.
 
-So: one language, ours, everywhere. Below is what that language is, and the
-order to apply it in.
+One language, ours, everywhere. Below is what it is, what the duel confirm
+screen becomes, and the order to do it in.
+
+---
+
+## Which symbols are allowed
+
+**Minecraft draws the Basic Multilingual Plane and nothing else.** The game
+bundles GNU Unifont as a fallback for everything its own font misses, and
+that fallback covers U+0000–U+FFFF. Miscellaneous Symbols, Dingbats, Arrows,
+Box Drawing, Misc Technical — all fine.
+
+Emoji proper live above U+FFFF and do **not** render. 🗡 🏆 🎯 🔥 ⚙️-with-a-
+variation-selector: every one of those is a white box without a resource
+pack. This is not theoretical — `MeowDuels.migrateDuelMarker()` exists
+because `duel-marker` shipped as 🗡 (U+1F5E1) and had to be swapped for ⚔.
+
+So the vocabulary below is emoji in spirit and BMP in fact. Every glyph is
+one meaning, used in exactly that meaning, everywhere.
+
+### Verbs — what a click does
+
+| glyph | code | meaning |
+|---|---|---|
+| ✔ | U+2714 | confirm, send, yes, a toggle that is on |
+| ✖ | U+2716 | cancel, no, a toggle that is off |
+| ◀ | U+25C0 | back |
+| ▶ | U+25B6 | next page, next category |
+| ♻ | U+267B | shuffle, reroll, reset |
+| ✎ | U+270E | edit |
+| ▸ | U+25B8 | the hint line, and the marker on a live option |
+
+### Nouns — what a thing is
+
+| glyph | code | meaning |
+|---|---|---|
+| ❖ | U+2756 | the summary card — what this window is about |
+| ⚔ | U+2694 | a kit, or a fight |
+| ⚑ | U+2691 | a fighter (already the tab and sidebar marker) |
+| ⛰ | U+26F0 | an arena / map |
+| ⌛ | U+231B | rounds, duration |
+| ⌚ | U+231A | elapsed time |
+| ★ | U+2605 | party leader |
+| ◆ | U+25C6 | party member |
+| ☠ | U+2620 | knocked out |
+| ❤ | U+2764 | health |
+| ⚙ | U+2699 | settings |
+| ✉ | U+2709 | chat |
+| ◉ | U+25C9 | spectators |
+| ⓘ | U+24D8 | the chat prefix |
+
+Eleven of those already ship. **⛰, ⌛, ❖ and ✉ are the new ones — eyeball
+them in game before committing to them.** They are all in blocks Unifont
+covers, but ⛰ is the most pictographic of the four and so the most likely to
+look wrong at 8px even if it draws.
+
+If you ever do want real colour emoji, the route is a resource pack with a
+`bitmap` font provider, and then the astral-plane characters work. That is a
+server decision, not a plugin one — the plugin should keep shipping glyphs
+that work on a vanilla client.
 
 ---
 
 ## The language
 
-Three structural signatures. These are the part that makes a window
-recognisable before you read a word of it — and none of them is a thing the
-copied menu does.
+Three structural signatures. This is the part that makes a window
+recognisable before you read a word of it, and none of the three is
+something the copied menu does.
 
 ### 1. The header notch
 
 Slot 4, in the **top border row**, holds one item: the thing this window is
-about. The party card, the kit being edited, the arena being configured, the
-request being built. It is never clickable.
+about. The party card, the kit being edited, the request being built. Marked
+`❖`. Never clickable.
 
 A window with no state to report leaves the notch as a pane. A window that
 needs a summary never puts it in the interior, where it would compete with
 the choices.
 
-`PartyMenu` already does this. It becomes the rule.
-
 ### 2. The action rail
 
-The **bottom border row** has fixed meanings, in every menu, forever:
+The **bottom border row** has fixed meanings in every menu, forever:
 
-| col | slot (3 rows / 4 / 6) | meaning |
-|-----|----------------------|---------|
-| 0   | 18 / 27 / 45         | back — always an arrow, never a coloured dye |
-| 3   | 21 / 30 / 48         | cancel / discard — red, with `✖` |
-| 5   | 23 / 32 / 50         | confirm / commit — green, with `✔` |
-| 8   | 26 / 35 / 53         | next page, next category, cycle |
+| col | slot (3 rows / 4 / 6) | glyph | meaning |
+|-----|----------------------|-------|---------|
+| 0   | 18 / 27 / 45         | ◀ | back |
+| 3   | 21 / 30 / 48         | ✖ | cancel, discard |
+| 5   | 23 / 32 / 50         | ✔ | confirm, commit |
+| 8   | 26 / 35 / 53         | ▶ | next page, next category |
 
-Empty slots stay panes. A menu that only goes back uses col 0 and nothing
-else. Nobody ever has to hunt for the way out, and muscle memory transfers
-between screens.
+Unused rail slots stay panes. Nobody hunts for the way out, and muscle
+memory transfers between screens.
 
 ### 3. The interior is only choices
 
 Rows 1..n-2, columns 1..7. Everything in there is a thing you are picking
-between. No decoration, no summary, no button that ends the flow — those live
-in the notch and the rail. This is what keeps a menu readable at a glance:
-the middle of the window is the list of options and nothing else.
+between. No decoration, no summary, no button that ends the flow — those
+live in the notch and on the rail.
 
 ### Item grammar
 
-Every item's lore, in this order, nothing else:
-
 ```
+❖ ɴᴀᴍᴇ          glyph, space, small caps, in the area's accent
 (blank)
-<state>          what this is right now
+<state>          what this is right now, in normal font
 (blank)
-▸ <verb>         what clicking does, dark grey
+▸ <verb>         what a click does, dark grey
 ```
 
-A summary item (the notch) is the one exception: it is `label › value` rows,
-no verb line, because it is not a button.
+The notch is the one exception: `ʟᴀʙᴇʟ › value` rows, no verb line, because
+it is not a button.
 
 ### Colour
 
-- Accent per area, on the window title only: duels `#FF2E55 → #FF7FC4`,
-  party `#7DE2FF → #4B7BFF`, events `#FFD65C → #FF8A2E`, admin `#B04BD6`.
-- `Style.VALUE` `#E6E8EB` for content, `Style.LABEL` `#8E959D` for labels,
-  `Style.MUTED` `#6B7079` for hints.
-- Green `#7CFF6B` and red `#FF6B6B` **only** on the rail's confirm/cancel, and
-  on a toggle's state line. Never as a label colour.
+- Accent per area, on the window title and the notch only: duels
+  `#FF2E55 → #FF7FC4`, party `#7DE2FF → #4B7BFF`, events
+  `#FFD65C → #FF8A2E`, admin `#B04BD6`.
+- `#E6E8EB` content, `#8E959D` labels, `#6B7079` hints.
+- Green `#7CFF6B` and red `#FF6B6B` **only** on the rail and on a toggle's
+  state line. Never as a label colour.
 - Gradient on the window title and the rail's two decision buttons. Nowhere
   else. Five gradients in a window is no gradient at all.
 
 ### Typography
 
-Small caps for the plugin's own words — `ᴀʀᴇɴᴀ`, `ʀᴏᴜɴᴅꜱ`, `ꜱᴇɴᴅ`. Normal
-font for anything that came from a player or an admin: names, kit titles,
-arena names, numbers. Re-casing somebody's name is a bug, not a style. No
-bold anywhere.
+Small caps for the plugin's own words. Normal font for anything that came
+from a player or an admin: names, kit titles, arena names, numbers.
+Re-casing somebody's name is a bug, not a style. No bold anywhere.
 
 ---
 
-## What each menu becomes
+## Sketch: the duel confirm screen
 
-### Phase 1 — the stolen one
+Three rows. `▒` is a dark grey pane.
 
-**`DuelConfirmMenu`** — 4 rows. Notch: the request summary (opponent, kit,
-map, rounds). Interior row 1: `ᴍᴀᴘ`, `ʀᴏᴜɴᴅꜱ`. Rail: back, cancel, `ꜱᴇɴᴅ
-ʀᴇǫᴜᴇꜱᴛ`. The `◆ ✦ ⇄` headings, the `Gamemode:` wording and the yellow body go.
-Keep what was genuinely a good idea and is nobody's property: the rounds
-button listing every option with the live one marked, and LMB/RMB to step it.
+```
+        c0    c1    c2    c3    c4    c5    c6    c7    c8
+  r0    ▒     ▒     ▒     ▒     ❖     ▒     ▒     ▒     ▒
+  r1    ▒     ▒     ⚔     ▒     ⛰     ▒     ⌛    ▒     ▒
+  r2    ◀     ▒     ▒     ✖     ▒     ✔     ▒     ▒     ▒
+```
 
-This is the one to do first and alone, so it can be looked at in game before
-anything else moves.
+Title: `▏ ᴅᴜᴇʟ ʀᴇǫᴜᴇꜱᴛ` in the duel gradient. Not the opponent's name — that
+is the notch's job, and a title cannot be re-read once the window is open.
 
-### Phase 2 — the duel flow around it
+**❖ slot 4 — the request.** `PAPER`, not clickable.
 
-- **`KitPickMenu`** — framed, notch shows the opponent, rail col 8 cycles
-  category. It is the first screen of `/duel`, so it sets the tone.
-- **`MapSelectMenu`** — same grid, notch shows the chosen kit (maps are
-  filtered by it), rail back.
-- **`MatchSummaryMenu`** — notch is the result. Interior is the two players'
-  cards. No rail but back.
+```
+❖ ʀᴇǫᴜᴇꜱᴛ
+(blank)
+ᴏᴘᴘᴏɴᴇɴᴛ  › Nafeh
+ᴋɪᴛ       › Netherite OP
+ᴀʀᴇɴᴀ     › Colosseum
+ʀᴏᴜɴᴅꜱ    › ꜰɪʀꜱᴛ ᴛᴏ 3
+```
 
-### Phase 3 — the fourteen that never got `Style`
+**⚔ slot 11 — kit.** The kit's own icon, glowing once chosen.
 
-Mechanical, one commit each, no design decisions left to make:
+```
+⚔ ᴋɪᴛ
+(blank)
+Netherite OP
+(blank)
+▸ ᴄʟɪᴄᴋ ᴛᴏ ᴄʜᴀɴɢᴇ
+```
 
-`QueuePickMenu`, `TrimKitMenu`, `TrimMenu`, `EventMapMenu`, `ArenaMenu`,
-`KitSelectMenu`, `EditKitListMenu`, `KitEditorMenu`, `KitItemsEditMenu`,
-`EditKitEffectsMenu`, `GuiEditorMenu`, `TabConfigMenu`.
+**⛰ slot 13 — arena.** `FILLED_MAP`. Shows `ʀᴀɴᴅᴏᴍ` in grey when unset,
+because random is a real choice and not a missing one.
 
-Admin screens get the same frame and rail but stay wordier — an admin needs
-to know what a button will do to their config, and brevity there is a trap.
+**⌛ slot 15 — rounds.** `CLOCK`. Every option listed with the live one
+marked — clicking a hidden value is the thing that made the old menu take
+four clicks to find out what the choices even were.
 
-### Phase 4 — the party set, already close
+```
+⌛ ʀᴏᴜɴᴅꜱ
+(blank)
+  ꜰɪʀꜱᴛ ᴛᴏ 1
+▸ ꜰɪʀꜱᴛ ᴛᴏ 3
+  ꜰɪʀꜱᴛ ᴛᴏ 5
+(blank)
+▸ ʟᴇꜰᴛ ᴜᴘ · ʀɪɢʜᴛ ᴅᴏᴡɴ
+```
 
-The eleven party menus use `Style` but predate the notch and the rail. They
-need slots moved, not rewriting: summary items into slot 4, confirm/cancel
-onto cols 3 and 5, page arrows onto col 8.
+**◀ 18** back to the kit picker · **✖ 21** close · **✔ 23** send.
+
+Why this is not the screen it replaces: three rows instead of three-with-a-
+gap, choices centred in the interior instead of strung along one row, the
+summary in the border instead of the middle, state-then-verb lore instead of
+`Label: value`, small caps instead of vanilla yellow-on-white, and a kit
+button — which that menu could not have, because its gamemode was fixed
+before the window opened and ours is not.
+
+What is worth keeping from it, and is nobody's property: listing every round
+option with the live one marked, and LMB/RMB to step through them.
+
+---
+
+## Order of work
+
+**Phase 1 — the stolen one.** `DuelConfirmMenu`, alone, so it can be looked
+at in game before anything else moves.
+
+**Phase 2 — the duel flow around it.** `KitPickMenu` (first screen of
+`/duel`, sets the tone; notch shows the opponent, rail col 8 cycles
+category), `MapSelectMenu` (notch shows the kit, since maps are filtered by
+it), `MatchSummaryMenu` (notch is the result, interior is the two cards).
+
+**Phase 3 — the fourteen that never got `Style`.** Mechanical, one commit
+each, no design decisions left: `QueuePickMenu`, `TrimKitMenu`, `TrimMenu`,
+`EventMapMenu`, `ArenaMenu`, `KitSelectMenu`, `EditKitListMenu`,
+`KitEditorMenu`, `KitItemsEditMenu`, `EditKitEffectsMenu`, `GuiEditorMenu`,
+`TabConfigMenu`. Admin screens get the same frame and rail but stay wordier
+— an admin needs to know what a button will do to their config, and brevity
+there is a trap.
+
+**Phase 4 — the party set.** Eleven menus that already use `Style` but
+predate the notch and the rail. Slots move; nothing is rewritten.
 
 ---
 
@@ -140,18 +240,18 @@ onto cols 3 and 5, page arrows onto col 8.
 
 Learned the hard way in this repo. Read before starting.
 
-1. **`Items.rawName` / `rawLore` use `Colors.toSection`, which drops any
+1. **`Items.rawName` / `rawLore` run `Colors.toSection`, which drops any
    `<tag>` it does not know.** A lore line containing `<player>` loses it
    silently. Write placeholders as `[player]`.
 
 2. **`Text.color` small-caps every letter** — including inside a MiniMessage
-   tag, which turns `<gradient:…>` into literal text on screen. Use
-   `createRaw` / `rawName` for anything carrying tags or a player's name.
+   tag, which puts `<gradient:…>` on screen as literal text. Use `createRaw`
+   / `rawName` for anything carrying tags or a player's name.
 
 3. **Config values are never overwritten on update.** Changing a shipped
-   default changes nothing on a live server. If a menu's text or a layout
-   moves to config, it needs a migration that replaces only the exact old
-   shipped string — see `MeowDuels.replaceLine`.
+   default changes nothing on a live server. Text or layout that moves to
+   config needs a migration replacing only the exact old shipped string —
+   see `MeowDuels.replaceLine`.
 
 4. **`GuiLayoutManager` lets admins move buttons.** Changing a menu's row
    count without changing `GuiLayoutManager.editableSize` lets someone place
@@ -165,4 +265,6 @@ Learned the hard way in this repo. Read before starting.
    interface exists only in its erased form.
 
 6. **A multi-edit script that asserts late writes nothing.** Verify with
-   `grep` afterwards; do not trust an "ok".
+   `grep` afterwards; never trust an "ok".
+
+7. **Any glyph above U+FFFF is a white box.** See the symbol table.
