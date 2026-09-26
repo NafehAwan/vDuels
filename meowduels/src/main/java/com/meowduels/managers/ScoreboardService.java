@@ -28,6 +28,7 @@ import com.meowduels.model.ActiveDuel;
 import com.meowduels.model.Kit;
 import com.meowduels.model.Party;
 import com.meowduels.util.Health;
+import com.meowduels.util.Marks;
 import io.papermc.paper.scoreboard.numbers.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -72,7 +73,6 @@ public class ScoreboardService {
     private Layout global = new Layout();
     private Layout ffa = new Layout();
     private Layout duel = new Layout();
-    private Layout queue = new Layout();
     private final Map<UUID, Integer> rankTeamIndex = new HashMap<UUID, Integer>();
     private int rankTeamCounter = 0;
     private boolean rankNametags = false;
@@ -95,7 +95,6 @@ public class ScoreboardService {
             this.global = new Layout();
             this.ffa = new Layout();
             this.duel = new Layout();
-            this.queue = new Layout();
             return;
         }
         this.masterEnabled = sb.getBoolean("enabled", true);
@@ -125,13 +124,11 @@ public class ScoreboardService {
         this.global = this.loadLayout(sb.getConfigurationSection("global"));
         this.ffa = this.loadLayout(sb.getConfigurationSection("ffa"));
         this.duel = this.loadLayout(sb.getConfigurationSection("duel"));
-        this.queue = this.loadLayout(sb.getConfigurationSection("queue"));
         // Say so at startup rather than leaving a missing board to be reported
         // as a bug. An empty line list is a valid way to switch a board off -
         // but it is also what a stale config looks like, and the two are
         // indistinguishable from the outside.
         this.warnIfEmpty("duel", this.duel, "duellists and spectators");
-        this.warnIfEmpty("queue", this.queue, "players searching for a match");
         this.warnIfEmpty("global", this.global, "everyone else");
     }
 
@@ -287,7 +284,6 @@ public class ScoreboardService {
         boolean boardOn = this.plugin.getPlayerSettings().isScoreboard(id);
         boolean inEvent = this.plugin.getEventManager().isInvolved(id);
         boolean inParty = this.plugin.getPartyManager().inParty(id);
-        boolean queued = !inFight && !inEvent && this.plugin.getQueueManager().isQueued(id);
         // A party member IN A DUEL is in a real duel - Party Duels pairs the two
         // rosters off into ordinary 1v1s - so the duel board wins over the
         // party's no-sidebar rule. Without this they fight with a blank side.
@@ -304,14 +300,18 @@ public class ScoreboardService {
             // through to the next one down. FFA keeps its flag because nobody
             // reported a problem with it and changing it would be a behaviour
             // change nobody asked for.
+            //
+            // There used to be a fourth board, for people in a queue. Queueing
+            // is waiting, not playing, and swapping the whole sidebar out for
+            // the wait made the lobby look like it had changed state. The
+            // queue's own numbers are on the action bar, where a count that
+            // ticks belongs.
             if (inFight && !this.duel.lines.isEmpty()) {
                 // Spectators land here too, through `context`, so someone
                 // watching a fight reads the fight's board rather than their own.
                 sidebar = this.duel;
             } else if (inEvent && this.ffa.enabled && !this.ffa.lines.isEmpty()) {
                 sidebar = this.ffa;
-            } else if (queued && !this.queue.lines.isEmpty()) {
-                sidebar = this.queue;
             } else if (!this.global.lines.isEmpty()) {
                 sidebar = this.global;
             }
@@ -610,8 +610,8 @@ public class ScoreboardService {
         long seconds = Math.max(0L, (System.currentTimeMillis() - ctx.getStartedAt()) / 1000L);
         t.put("time", String.format("%02d:%02d", seconds / 60L, seconds % 60L));
         t.put("team", spectator ? "SPEC" : (aqua ? "AQUA" : "RED"));
-        t.put("team_color", spectator ? "<gray>" : (aqua ? "<aqua>" : "<red>"));
-        t.put("opponent_color", spectator ? "<gray>" : (aqua ? "<red>" : "<aqua>"));
+        t.put("team_color", spectator ? "<gray>" : (aqua ? "<blue>" : "<red>"));
+        t.put("opponent_color", spectator ? "<gray>" : (aqua ? "<red>" : "<blue>"));
         return t;
     }
 
@@ -751,7 +751,7 @@ public class ScoreboardService {
             if (nametags) {
                 this.allyTeam = this.scoreboard.registerNewTeam("md_ally");
                 this.enemyTeam = this.scoreboard.registerNewTeam("md_enemy");
-                this.allyTeam.setColor(ChatColor.AQUA);
+                this.allyTeam.setColor(ChatColor.BLUE);
                 this.enemyTeam.setColor(ChatColor.RED);
             } else {
                 this.allyTeam = null;
@@ -760,7 +760,7 @@ public class ScoreboardService {
             if (ffaTeam) {
                 this.ffaTeam = this.scoreboard.registerNewTeam("md_ffa");
                 this.ffaTeam.setColor(ChatColor.YELLOW);
-                this.ffaTeam.prefix(ScoreboardService.this.deserialize("<yellow>\u26a1 "));
+                this.ffaTeam.prefix(ScoreboardService.this.deserialize("<yellow>" + Marks.FLAG + " "));
             } else {
                 this.ffaTeam = null;
             }
@@ -780,7 +780,7 @@ public class ScoreboardService {
         }
 
         /**
-         * Puts everyone in the event on one yellow team, shown as "\u26a1 Name".
+         * Puts everyone in the event on one yellow team, shown as "\u2691 Name".
          *
          * <p>Only the difference is applied. Re-adding an entry every tick
          * resends the team packet to everyone on the board for no reason, and
@@ -833,10 +833,10 @@ public class ScoreboardService {
                 this.enemyTeam.addEntry(enemyName);
                 this.enemyEntry = enemyName;
             }
-            this.allyTeam.setColor(allyAqua ? ChatColor.AQUA : ChatColor.RED);
-            this.enemyTeam.setColor(allyAqua ? ChatColor.RED : ChatColor.AQUA);
-            this.allyTeam.prefix(ScoreboardService.this.deserialize(allyAqua ? "<aqua>\u26a1 " : "<red>\u26a1 "));
-            this.enemyTeam.prefix(ScoreboardService.this.deserialize(allyAqua ? "<red>\u26a1 " : "<aqua>\u26a1 "));
+            this.allyTeam.setColor(allyAqua ? ChatColor.BLUE : ChatColor.RED);
+            this.enemyTeam.setColor(allyAqua ? ChatColor.RED : ChatColor.BLUE);
+            this.allyTeam.prefix(ScoreboardService.this.deserialize((allyAqua ? "<blue>" : "<red>") + Marks.FLAG + " "));
+            this.enemyTeam.prefix(ScoreboardService.this.deserialize((allyAqua ? "<red>" : "<blue>") + Marks.FLAG + " "));
             this.refreshHealth();
         }
 

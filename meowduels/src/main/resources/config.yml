@@ -330,7 +330,7 @@ scoreboard:
     enabled: true
     title: "<bold><gradient:#FFD65C:#FF8A2E>ғғᴀ</gradient></bold>"
     lines:
-    - "<yellow>⚡ <white>{player}"
+    - "<yellow>⚑ <white>{player}"
     - ""
     - "<#FFC53D>☠ <gray>ᴋɪʟʟꜱ <dark_gray>» <white>{ffa_kills}"
     - "<#FFC53D>♦ <gray>ᴀʟɪᴠᴇ <dark_gray>» <white>{alive}<dark_gray>/<gray>{ffa_players}"
@@ -352,7 +352,7 @@ scoreboard:
     title: "<bold><gradient:#FF2D95:#FF8AD0>\u1d05\u1d1c\u1d07\u029f</gradient></bold>"
     lines:
     - "<gray><strikethrough>                    </strikethrough>"
-    - "{team_color}\u2694 <white>{player}"
+    - "{team_color}\u2691 <white>{player}"
     - "<#FF5FB0>\u25c6 <white>{score} <dark_gray>-</dark_gray> <white>{opponent_score}  <dark_gray>\u00bb <red>{opponent}"
     - ""
     - "<#FF5FB0>\u2726 <gray>\u1d0b\u026a\u1d1b <dark_gray>\u00bb <white>{kit}"
@@ -362,20 +362,9 @@ scoreboard:
     - "<gray><strikethrough>                    </strikethrough>"
     - "{ip_color}{server_ip}"
 
-  # Shown while searching for a match and not already in a duel, an event or a
-  # party. {queue_list} is up to three of your queued kits then "+N";
-  # {queue_searching} is the most anyone is waiting on one of those kits.
-  queue:
-    title: "<bold><gradient:#FF2E55:#FF7FC4>\u01eb\u1d1c\u1d07\u1d1c\u1d07</gradient></bold>"
-    lines:
-    - "<gray><strikethrough>                    </strikethrough>"
-    - "<#FF7FC4>\u2694 <gray>\u1d0b\u026a\u1d1b\ua731 <dark_gray>\u00bb <white>{queue_list}"
-    - "<#FF7FC4>\u25c6 <gray>\ua731\u1d07\u1d00\u0280\u1d04\u029c\u026a\u0274\u0262 <dark_gray>\u00bb <white>{queue_searching}"
-    - "<#FF7FC4>\u231a <gray>\u1d21\u1d00\u026a\u1d1b\u026a\u0274\u0262 <dark_gray>\u00bb <white>{queue_time}"
-    - ""
-    - "<#FF7FC4>\u2666 <gray>\u026a\u0274 \u1d05\u1d1c\u1d07\u029f\ua731 <dark_gray>\u00bb <white>{in_duels}"
-    - "<gray><strikethrough>                    </strikethrough>"
-    - "{ip_color}{server_ip}"
+# There is no queue board. Queueing is waiting, not playing, so the sidebar
+# stays on `global` and the wait is reported on the action bar instead. An
+# older config may still carry a `queue:` block here; nothing reads it.
 
 # PvP inside a match.
 #

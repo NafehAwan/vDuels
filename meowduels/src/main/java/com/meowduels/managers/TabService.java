@@ -19,6 +19,7 @@ import org.bukkit.OfflinePlayer;
 import java.util.List;
 import com.meowduels.model.Kit;
 import com.meowduels.model.Party;
+import com.meowduels.util.Marks;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -328,8 +329,8 @@ public class TabService {
         if (sb == null) {
             return;
         }
-        Team aqua = this.team(sb, AQUA_TEAM, ChatColor.AQUA, "\u00a7b\u26a1 ");
-        Team red = this.team(sb, RED_TEAM, ChatColor.RED, "\u00a7c\u26a1 ");
+        Team aqua = this.team(sb, AQUA_TEAM, ChatColor.BLUE, Marks.tab(Marks.BLUE));
+        Team red = this.team(sb, RED_TEAM, ChatColor.RED, Marks.tab(Marks.RED));
         for (UUID id : new UUID[]{duel.getPlayer1(), duel.getPlayer2()}) {
             Player p = Bukkit.getPlayer((UUID)id);
             if (p == null) continue;

@@ -111,6 +111,7 @@ extends JavaPlugin {
         this.saveDefaultConfig();
         this.mergeConfigDefaults();
         this.migrateDuelMarker();
+        this.migrateBoardMarker();
         if (!this.getDataFolder().exists()) {
             this.getDataFolder().mkdirs();
         }
@@ -334,6 +335,43 @@ extends JavaPlugin {
      * never overwritten, so this rewrites the value ONLY when it is still
      * exactly that old default. Anyone who picked their own marker keeps it.
      */
+    /**
+     * Moves the two "this is you" scoreboard lines onto the flag.
+     *
+     * <p>Only when the line is still exactly what the plugin shipped. The tab
+     * and nametag markers are in code and change for everybody on this build;
+     * these two live in config.yml, which is never overwritten, so without
+     * this a live server would get flags in tab and keep a bolt on its
+     * sidebar. A line somebody has worded themselves is left alone.
+     */
+    private void migrateBoardMarker() {
+        boolean changed = MeowDuels.replaceLine(this.getConfig(), "scoreboard.ffa.lines",
+                "<yellow>\u26a1 <white>{player}", "<yellow>\u2691 <white>{player}");
+        changed |= MeowDuels.replaceLine(this.getConfig(), "scoreboard.duel.lines",
+                "{team_color}\u2694 <white>{player}", "{team_color}\u2691 <white>{player}");
+        if (!changed) {
+            return;
+        }
+        this.saveConfig();
+        this.getLogger().info("Scoreboard player line switched from the old bolt to the flag, to match tab. "
+                + "Edit scoreboard.*.lines in config.yml to change it back.");
+    }
+
+    private static boolean replaceLine(org.bukkit.configuration.file.FileConfiguration config,
+                                       String path, String old, String now) {
+        java.util.List<String> lines = config.getStringList(path);
+        boolean hit = false;
+        for (int i = 0; i < lines.size(); ++i) {
+            if (!old.equals(lines.get(i))) continue;
+            lines.set(i, now);
+            hit = true;
+        }
+        if (hit) {
+            config.set(path, lines);
+        }
+        return hit;
+    }
+
     private void migrateDuelMarker() {
         if (!"\ud83d\udde1".equals(this.getConfig().getString("duel-marker"))) {
             return;

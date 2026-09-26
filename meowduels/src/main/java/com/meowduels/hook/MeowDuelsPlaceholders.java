@@ -15,6 +15,7 @@ import com.meowduels.model.ActiveDuel;
 import com.meowduels.model.Kit;
 import com.meowduels.util.Colors;
 import com.meowduels.util.Health;
+import com.meowduels.util.Marks;
 import com.meowduels.model.Party;
 import java.util.List;
 import java.util.Locale;
@@ -116,7 +117,7 @@ implements Relational {
                 // Viewer-independent fallback, for a TAB build that does not
                 // resolve relational placeholders in tagprefix.
                 if (this.plugin.getEventManager().isPlaying(id)) {
-                    return "\u00a7e\u26a1 \u00a7e";
+                    return Marks.tag(Marks.EVENT);
                 }
                 return this.lpPrefix(player);
             }
@@ -241,10 +242,10 @@ implements Relational {
                 return aqua ? "AQUA" : "RED";
             }
             case "team_color": {
-                return aqua ? "&b" : "&c";
+                return aqua ? "&9" : "&c";
             }
             case "team_prefix": {
-                return aqua ? "\u00a7b\u26a1 \u00a7b" : "\u00a7c\u26a1 \u00a7c";
+                return Marks.tab(aqua ? Marks.BLUE : Marks.RED);
             }
             case "state": {
                 return duel.getState().name();
@@ -331,9 +332,9 @@ implements Relational {
         if ("tabprefix".equals(key)) {
             ActiveDuel fight = this.plugin.getDuelManager().getDuel(id);
             if (watchingAFight && fight != null) {
-                return fight.isAqua(id) ? "\u00a7b\u26a1 \u00a7b" : "\u00a7c\u26a1 \u00a7c";
+                return Marks.tab(fight.isAqua(id) ? Marks.BLUE : Marks.RED);
             }
-            String party = this.partyPrefix(viewer, target);
+            String party = this.partyPrefix(viewer, target, true);
             if (party != null) {
                 return party;
             }
@@ -355,12 +356,12 @@ implements Relational {
             // one owner for teams.
             ActiveDuel fight = this.plugin.getDuelManager().getDuel(id);
             if (watchingAFight && fight != null) {
-                return fight.isAqua(id) ? "\u00a7b\u26a1 \u00a7b" : "\u00a7c\u26a1 \u00a7c";
+                return Marks.tag(fight.isAqua(id) ? Marks.BLUE : Marks.RED);
             }
             if (this.plugin.getEventManager().isPlaying(id)) {
-                return "\u00a7e\u26a1 \u00a7e";
+                return Marks.tag(Marks.EVENT);
             }
-            String partyTag = this.partyPrefix(viewer, target);
+            String partyTag = this.partyPrefix(viewer, target, false);
             if (partyTag != null) {
                 return partyTag;
             }
@@ -407,7 +408,7 @@ implements Relational {
      *
      * @return null when the two players are not in the same party
      */
-    private String partyPrefix(Player viewer, Player target) {
+    private String partyPrefix(Player viewer, Player target, boolean tabList) {
         if (viewer == null) {
             return null;
         }
@@ -421,18 +422,17 @@ implements Relational {
             // which side someone is on is the thing you need at a glance, and
             // the aqua/red pair is the one the whole plugin already uses.
             if (party.isTeamMode() && party.teamOf(id) != null) {
-                boolean out = party.getWatching().contains(id);
-                boolean aqua = party.teamOf(id) == Party.Team.AQUA;
-                if (out) {
-                    return "\u00a78\u2620 \u00a78";
+                if (party.getWatching().contains(id)) {
+                    return tabList ? Marks.tabOut() : Marks.tagOut();
                 }
-                return aqua ? "\u00a7b\u26a1 \u00a7b" : "\u00a7c\u26a1 \u00a7c";
+                char side = party.teamOf(id) == Party.Team.AQUA ? Marks.BLUE : Marks.RED;
+                return tabList ? Marks.tab(side) : Marks.tag(side);
             }
             if (party.getAlive().contains(id)) {
-                return "\u00a7a\u26a1 \u00a7a";
+                return tabList ? Marks.tab(Marks.ALIVE) : Marks.tag(Marks.ALIVE);
             }
             if (party.getWatching().contains(id)) {
-                return "\u00a78\u2620 \u00a78";
+                return tabList ? Marks.tabOut() : Marks.tagOut();
             }
         }
         return party.isLeader(id) ? "\u00a76\u2605 \u00a76" : "\u00a7d\u25c6 \u00a7d";
