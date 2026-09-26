@@ -114,9 +114,11 @@ party-marker: "\u2694"
 # rank, prefix and colour your permissions or chat plugin gives them. Console
 # still receives everything, so the chat log has no holes in it.
 #
-# This is the server-wide switch. Each player also has their own toggle in
-# /settings, on by default; turning theirs off puts them back in the shared
-# room in both directions.
+# This is the server-wide switch: it decides whether the feature exists at
+# all. Each player then has their own toggle in /settings, and that one starts
+# OFF - isolation takes something away, and a player who has never opened
+# /settings should not silently stop seeing half the server. The tips tell
+# them it is there.
 chat:
   isolated: true
 
@@ -136,16 +138,16 @@ tips:
   interval-seconds: 180
   # Shown to everyone NOT in a duel or a party match.
   global:
-    - "<dark_gray>\u25b8 <#8E959D>Chat inside a duel is isolated. Type someone's <#E6E8EB>full name<#8E959D> to reach them anyway."
+    - "<dark_gray>\u25b8 <#8E959D>Turn on <#E6E8EB>isolated chat<#8E959D> in <#E6E8EB>/settings<#8E959D> to keep the lobby out of your fights."
     - "<dark_gray>\u25b8 <#8E959D>Challenge somebody with <#E6E8EB>/duel [player]<#8E959D>."
-    - "<dark_gray>\u25b8 <#8E959D>Turn duel requests, party invites or isolated chat off in <#E6E8EB>/settings<#8E959D>."
+    - "<dark_gray>\u25b8 <#8E959D>Duel requests, party invites, spectators and sounds are all yours to set in <#E6E8EB>/settings<#8E959D>."
     - "<dark_gray>\u25b8 <#8E959D>Start a party with <#E6E8EB>/party create<#8E959D>, then <#E6E8EB>/party invite [player]<#8E959D>."
     - "<dark_gray>\u25b8 <#8E959D>Watch a fight with <#E6E8EB>/spectate [player]<#8E959D> - duels and party matches both."
     - "<dark_gray>\u25b8 <#8E959D>See the top duel winners with <#E6E8EB>/leaderboard<#8E959D>."
   # Shown to everyone IN a duel or a party match, and to their spectators.
   match:
-    - "<dark_gray>\u25b8 <#8E959D>Your chat is isolated - only this match reads it."
-    - "<dark_gray>\u25b8 <#8E959D>Type someone's <#E6E8EB>full name<#8E959D> to get one line to them outside the match."
+    - "<dark_gray>\u25b8 <#8E959D>With <#E6E8EB>isolated chat<#8E959D> on, only this match reads what you type here."
+    - "<dark_gray>\u25b8 <#8E959D>Isolated and still need somebody outside? Type their <#E6E8EB>full name<#8E959D> and the line reaches them."
     - "<dark_gray>\u25b8 <#8E959D>Use <#E6E8EB>/msg [player]<#8E959D> for a conversation that reaches out of the arena."
     - "<dark_gray>\u25b8 <#8E959D>Sneak during the countdown to ready up early."
     - "<dark_gray>\u25b8 <#8E959D>Give the match up with <#E6E8EB>/ff<#8E959D>, or leave it with <#E6E8EB>/leave<#8E959D>."

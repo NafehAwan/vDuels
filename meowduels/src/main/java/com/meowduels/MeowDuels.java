@@ -112,6 +112,7 @@ extends JavaPlugin {
         this.mergeConfigDefaults();
         this.migrateDuelMarker();
         this.migrateBoardMarker();
+        this.migrateTips();
         if (!this.getDataFolder().exists()) {
             this.getDataFolder().mkdirs();
         }
@@ -355,6 +356,28 @@ extends JavaPlugin {
         this.saveConfig();
         this.getLogger().info("Scoreboard player line switched from the old bolt to the flag, to match tab. "
                 + "Edit scoreboard.*.lines in config.yml to change it back.");
+    }
+
+    /**
+     * Rewords the tips that said isolated chat was already on.
+     *
+     * <p>It is opt-in now, so two of the shipped lines were telling most of
+     * the server about a state it is not in. Same rule as every other
+     * migration here: only a line still exactly as shipped is touched.
+     */
+    private void migrateTips() {
+        boolean changed = MeowDuels.replaceLine(this.getConfig(), "tips.global",
+                "<dark_gray>\u25b8 <#8E959D>Chat inside a duel is isolated. Type someone's <#E6E8EB>full name<#8E959D> to reach them anyway.",
+                "<dark_gray>\u25b8 <#8E959D>Turn on <#E6E8EB>isolated chat<#8E959D> in <#E6E8EB>/settings<#8E959D> to keep the lobby out of your fights.");
+        changed |= MeowDuels.replaceLine(this.getConfig(), "tips.match",
+                "<dark_gray>\u25b8 <#8E959D>Your chat is isolated - only this match reads it.",
+                "<dark_gray>\u25b8 <#8E959D>With <#E6E8EB>isolated chat<#8E959D> on, only this match reads what you type here.");
+        if (!changed) {
+            return;
+        }
+        this.saveConfig();
+        this.getLogger().info("Reworded the isolated-chat tips: the setting is opt-in, so they no longer "
+                + "tell everyone it is already on. Edit tips.* in config.yml to change them.");
     }
 
     private static boolean replaceLine(org.bukkit.configuration.file.FileConfiguration config,

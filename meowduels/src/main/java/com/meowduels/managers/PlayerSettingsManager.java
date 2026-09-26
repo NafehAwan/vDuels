@@ -19,11 +19,22 @@ import org.bukkit.configuration.file.YamlConfiguration;
 public class PlayerSettingsManager {
     private final MeowDuels plugin;
     private final File file;
-    /** key -> (player -> value). Every toggle defaults to ON when absent, so a
-     *  new one needs no migration and an unknown player needs no row. */
+    /** key -> (player -> value). A row exists only once somebody has changed
+     *  that toggle, so the default below is what everyone else gets and a new
+     *  toggle needs no migration. */
     private final Map<String, Map<UUID, Boolean>> flags = new HashMap<String, Map<UUID, Boolean>>();
     private static final String[] KEYS = new String[]{
         "duel-requests", "scoreboard", "party-invites", "spectators", "sounds", "isolated-chat"};
+
+    /**
+     * The toggles that start OFF. Everything else starts on.
+     *
+     * <p>Isolated chat is here because it takes something away: a player who
+     * has never opened /settings should not silently stop seeing half the
+     * server. It is opt-in, and the tips say it exists.
+     */
+    private static final java.util.Set<String> OFF_BY_DEFAULT =
+            new java.util.HashSet<String>(java.util.Arrays.asList("isolated-chat"));
 
     public PlayerSettingsManager(MeowDuels plugin) {
         this.plugin = plugin;
@@ -77,10 +88,14 @@ public class PlayerSettingsManager {
         return found;
     }
 
-    /** Every toggle is on unless the player turned it off. */
+    /** What this toggle is for a player who has never touched it. */
+    public static boolean defaultOf(String key) {
+        return !OFF_BY_DEFAULT.contains(key);
+    }
+
     public boolean is(String key, UUID id) {
         Boolean v = this.map(key).get(id);
-        return v == null || v.booleanValue();
+        return v == null ? PlayerSettingsManager.defaultOf(key) : v.booleanValue();
     }
 
     public void toggle(String key, UUID id) {
