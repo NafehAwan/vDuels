@@ -406,12 +406,13 @@ public class ScoreboardService {
     }
 
     /**
-     * Health under the name, for anyone currently in a fight.
+     * Health under every name, everywhere.
      *
-     * <p>Fighters only. The objective's own number format is blank, so a
-     * player who has never been in a match shows nothing at all, and one who
-     * just finished is blanked again rather than left wearing the health he
-     * had when it ended.
+     * <p>Writes are gated on the rendered string changing, which is what
+     * makes this affordable: applyBelowRank touches one scoreboard per
+     * online player, so a naive refresh would be quadratic. A lobby full of
+     * people sitting at 20.0 costs nothing; the cost tracks how many people
+     * are actually taking damage, which even in a full event is small.
      */
     public void updateHealthBelowName() {
         if (!this.healthBelowName) {
@@ -420,26 +421,19 @@ public class ScoreboardService {
         try {
             for (Player p : Bukkit.getOnlinePlayers()) {
                 UUID id = p.getUniqueId();
-                String want = this.fighting(id) ? Health.text(p.getHealth()) : "";
+                // Everyone, everywhere - in the lobby as much as in an arena.
+                // Only the NAME changes between the two: white and bare in a
+                // fight, rank and colours outside one.
+                String want = Health.nametag(p.getHealth());
                 if (want.equals(this.lastBelow.get(id))) continue;
                 this.lastBelow.put(id, want);
-                NumberFormat fmt = want.isEmpty()
-                        ? NumberFormat.blank()
-                        : NumberFormat.fixed((ComponentLike)this.deserialize("<red>\u2764 " + want));
-                this.applyBelowRank(p.getName(), fmt, 0);
+                this.applyBelowRank(p.getName(),
+                        NumberFormat.fixed((ComponentLike)this.deserialize("<red>\u2764 " + want)), 0);
             }
         }
         catch (Throwable throwable) {
             // empty catch block
         }
-    }
-
-    /** In a duel, in a party match, or in the event - the three states the
-     *  plain-white nametag and the health line belong to. */
-    private boolean fighting(UUID id) {
-        return this.plugin.getDuelManager().isInDuel(id)
-                || this.plugin.getPartyManager().inPartyMatch(id)
-                || this.plugin.getEventManager().isInvolved(id);
     }
 
     private void applyBelowRank(String entry, NumberFormat fmt, int score) {

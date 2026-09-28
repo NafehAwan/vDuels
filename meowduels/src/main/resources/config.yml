@@ -306,9 +306,12 @@ scoreboard:
   # over them and fighters lose their place in the sort order. The duel and FFA
   # nametags come through %rel_meowduels_tagprefix% instead.
   external-nametags: true
-  # The line UNDER a fighter's name: their health, in red, like a practice
-  # server. Only while they are in a duel, a party match or the event -
-  # everyone else shows nothing there.
+  # The line UNDER every name: that player's health, in red, like a practice
+  # server. Everywhere - lobby included, not just in a match.
+  #
+  # The NAME above it is what changes: plain white and bare in a duel, a
+  # party match or the event, and their ordinary rank and colours anywhere
+  # else.
   #
   # This is a BELOW_NAME scoreboard objective, and a scoreboard can only have
   # one. If TAB's own "belowname" feature is switched on it will fight this

@@ -23,6 +23,23 @@ public final class Health {
     private Health() {
     }
 
+    /**
+     * How the number reads above a head: always one decimal, 20.0 included.
+     *
+     * <p>Different from {@link #text} on purpose. The sidebar prints a round
+     * 20 because a full bar is not information; a nametag is read mid-combo,
+     * where a fixed width matters more - a number that grows and shrinks a
+     * character as you hit somebody is harder to read than one that does not.
+     * Two decimals would be that same fixed width and still too much to take
+     * in at a glance.
+     */
+    public static String nametag(double hp) {
+        if (hp < 0.0) {
+            hp = 0.0;
+        }
+        return String.format(Locale.US, "%.1f", hp);
+    }
+
     public static String text(double hp) {
         if (hp < 0.0) {
             hp = 0.0;
