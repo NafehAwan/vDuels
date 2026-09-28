@@ -116,8 +116,8 @@ implements Relational {
             case "tagprefix": {
                 // Viewer-independent fallback, for a TAB build that does not
                 // resolve relational placeholders in tagprefix.
-                if (this.plugin.getEventManager().isPlaying(id)) {
-                    return Marks.tag(Marks.EVENT);
+                if (this.inAFight(id)) {
+                    return PLAIN_TAG;
                 }
                 return this.lpPrefix(player);
             }
@@ -317,6 +317,18 @@ implements Relational {
      * fighting, and their tab list holds nothing but each other, so a dagger on
      * both rows is just noise.
      */
+    /** An explicit white reset, so the name after it is white whatever the
+     *  previous colour in the line was. */
+    private static final String PLAIN_TAG = "\u00a7f";
+
+    /** A duel, a party match or the event: the three states where the nametag
+     *  drops to a plain white name with health underneath. */
+    private boolean inAFight(java.util.UUID id) {
+        return this.plugin.getDuelManager().isInDuel(id)
+                || this.plugin.getPartyManager().inPartyMatch(id)
+                || this.plugin.getEventManager().isInvolved(id);
+    }
+
     public String onPlaceholderRequest(Player viewer, Player target, String params) {
         if (params == null || target == null) {
             return "";
@@ -354,12 +366,12 @@ implements Relational {
             // sort team and the client floated them to the top of the list.
             // Drawing the nametag through TAB instead costs nothing and keeps
             // one owner for teams.
-            ActiveDuel fight = this.plugin.getDuelManager().getDuel(id);
-            if (watchingAFight && fight != null) {
-                return Marks.tag(fight.isAqua(id) ? Marks.BLUE : Marks.RED);
-            }
-            if (this.plugin.getEventManager().isPlaying(id)) {
-                return Marks.tag(Marks.EVENT);
+            // Above the head, a fighter is a name and a health bar and
+            // nothing else - no rank, no side colour, no marker. Not per
+            // viewer either: a spectator needs to read health off both of
+            // them just as much as they need to read it off each other.
+            if (this.inAFight(id)) {
+                return PLAIN_TAG;
             }
             String partyTag = this.partyPrefix(viewer, target, false);
             if (partyTag != null) {

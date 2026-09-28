@@ -186,8 +186,9 @@ extends JavaPlugin {
         // once-a-second re-assert left the list visibly full between beats.
         // It returns immediately while nobody is in a bubble.
         this.getServer().getScheduler().runTaskTimer((Plugin)this, () -> this.tabService.reassertBubbles(), 5L, 5L);
-        this.getServer().getScheduler().runTaskTimer((Plugin)this, () -> this.scoreboardService.updateDuelHealthTags(), 2L, 2L);
-        this.getServer().getScheduler().runTaskTimer((Plugin)this, () -> this.scoreboardService.updateRankBelowName(), 20L, 20L);
+        // Every 2 ticks, because it tracks health: once a second it lags a
+        // combo badly enough to be worse than not showing it.
+        this.getServer().getScheduler().runTaskTimer((Plugin)this, () -> this.scoreboardService.updateHealthBelowName(), 2L, 2L);
         this.getLogger().info("MeowDuels enabled.");
     }
 

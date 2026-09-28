@@ -66,7 +66,7 @@ public class ScoreboardService {
     private final Map<UUID, UUID> spectatorOf = new HashMap<UUID, UUID>();
     private final Set<UUID> tabOverridden = new HashSet<UUID>();
     private final Set<UUID> tabReleased = new HashSet<UUID>();
-    private final Map<UUID, String> lastRank = new HashMap<UUID, String>();
+    private final Map<UUID, String> lastBelow = new HashMap<UUID, String>();
     private final Set<UUID> queueBarShown = new HashSet<UUID>();
     private static final long SCORE_BAR_MS = 10000L;
     private boolean masterEnabled = true;
@@ -77,14 +77,14 @@ public class ScoreboardService {
     private int rankTeamCounter = 0;
     private boolean rankNametags = false;
     private boolean externalNametags = false;
-    private boolean rankBelowName = false;
+    private boolean healthBelowName = true;
     private static final char[] SMALL = new char[]{'\u1d00', '\u0299', '\u1d04', '\u1d05', '\u1d07', '\ua730', '\u0262', '\u029c', '\u026a', '\u1d0a', '\u1d0b', '\u029f', '\u1d0d', '\u0274', '\u1d0f', '\u1d18', '\ua7af', '\u0280', '\ua731', '\u1d1b', '\u1d1c', '\u1d20', '\u1d21', 'x', '\u028f', '\u1d22'};
 
     public ScoreboardService(MeowDuels plugin) {
         this.plugin = plugin;
         this.reload();
         if (Bukkit.getScoreboardManager() != null) {
-            this.setupRankBelowName(Bukkit.getScoreboardManager().getMainScoreboard());
+            this.setupHealthBelowName(Bukkit.getScoreboardManager().getMainScoreboard());
         }
     }
 
@@ -108,18 +108,16 @@ public class ScoreboardService {
         // The duel/FFA nametag comes through %rel_meowduels_tagprefix% instead,
         // which TAB renders itself, so there is only ever one owner.
         this.externalNametags = sb.getBoolean("external-nametags", true);
-        // Deliberately NOT read from config any more. The ELO rank under the
-        // nametag is gone, and a server that already has rank-below-name: true
-        // in its config would otherwise keep it - existing values are never
-        // overwritten, so flipping the default would have changed nothing where
-        // it mattered. The objective is still actively torn off any board that
-        // carries one, so removing it takes effect the moment this loads.
-        this.rankBelowName = false;
+        // The line under a fighter's name. It used to be their ELO rank,
+        // which is gone; it is their health now, which is the thing you
+        // actually need to read off somebody you are hitting. A new key, so
+        // the default reaches servers that already have a config.
+        this.healthBelowName = sb.getBoolean("health-below-name", true);
         // Re-run against the main scoreboard: it is never rebuilt, so turning
         // rank-below-name off in config and reloading would otherwise leave the
         // objective drawing there forever.
         if (Bukkit.getScoreboardManager() != null) {
-            this.setupRankBelowName(Bukkit.getScoreboardManager().getMainScoreboard());
+            this.setupHealthBelowName(Bukkit.getScoreboardManager().getMainScoreboard());
         }
         this.global = this.loadLayout(sb.getConfigurationSection("global"));
         this.ffa = this.loadLayout(sb.getConfigurationSection("ffa"));
@@ -190,7 +188,7 @@ public class ScoreboardService {
     }
 
     public void handleJoin(Player player) {
-        this.lastRank.clear();
+        this.lastBelow.clear();
         this.refresh(player);
     }
 
@@ -340,7 +338,7 @@ public class ScoreboardService {
             board = new Board(lineCount, nametags, ffaTags);
             this.boards.put(id, board);
             player.setScoreboard(board.scoreboard);
-            this.lastRank.clear();
+            this.lastBelow.clear();
         } else if (player.getScoreboard() != board.scoreboard) {
             // The board is built once and handed over once, so anything that
             // gives the player a different scoreboard - another plugin, a
@@ -372,17 +370,17 @@ public class ScoreboardService {
         }
     }
 
-    private void setupRankBelowName(Scoreboard board) {
-        if (this.externalNametags || !this.rankBelowName) {
+    private void setupHealthBelowName(Scoreboard board) {
+        if (!this.healthBelowName) {
             // Not enough to skip creating it. A board that already carries the
             // objective keeps drawing it until something takes it away, so
             // turning the setting off would do nothing until a restart - and on
             // the MAIN scoreboard, which is never rebuilt, nothing at all.
-            ScoreboardService.removeRankBelowName(board);
+            ScoreboardService.removeHealthBelowName(board);
             return;
         }
         try {
-            Objective o = board.registerNewObjective("mdrank", Criteria.DUMMY, "");
+            Objective o = board.registerNewObjective("mdhealth", Criteria.DUMMY, "");
             o.displayName(this.deserialize(""));
             o.setDisplaySlot(DisplaySlot.BELOW_NAME);
             try {
@@ -395,9 +393,9 @@ public class ScoreboardService {
         }
     }
 
-    private static void removeRankBelowName(Scoreboard board) {
+    private static void removeHealthBelowName(Scoreboard board) {
         try {
-            Objective existing = board.getObjective("mdrank");
+            Objective existing = board.getObjective("mdhealth");
             if (existing != null) {
                 existing.unregister();
             }
@@ -407,23 +405,41 @@ public class ScoreboardService {
         }
     }
 
-    public void updateRankBelowName() {
-        if (this.externalNametags || !this.rankBelowName) {
+    /**
+     * Health under the name, for anyone currently in a fight.
+     *
+     * <p>Fighters only. The objective's own number format is blank, so a
+     * player who has never been in a match shows nothing at all, and one who
+     * just finished is blanked again rather than left wearing the health he
+     * had when it ended.
+     */
+    public void updateHealthBelowName() {
+        if (!this.healthBelowName) {
             return;
         }
         try {
             for (Player p : Bukkit.getOnlinePlayers()) {
                 UUID id = p.getUniqueId();
-                String wins = String.valueOf(this.plugin.getStatsManager().getWins(id));
-                if (wins.equals(this.lastRank.get(id))) continue;
-                this.lastRank.put(id, wins);
-                NumberFormat fmt = NumberFormat.fixed((ComponentLike)this.deserialize(""));
-                this.applyBelowRank(p.getName(), fmt, this.plugin.getStatsManager().getWins(id));
+                String want = this.fighting(id) ? Health.text(p.getHealth()) : "";
+                if (want.equals(this.lastBelow.get(id))) continue;
+                this.lastBelow.put(id, want);
+                NumberFormat fmt = want.isEmpty()
+                        ? NumberFormat.blank()
+                        : NumberFormat.fixed((ComponentLike)this.deserialize("<red>\u2764 " + want));
+                this.applyBelowRank(p.getName(), fmt, 0);
             }
         }
         catch (Throwable throwable) {
             // empty catch block
         }
+    }
+
+    /** In a duel, in a party match, or in the event - the three states the
+     *  plain-white nametag and the health line belong to. */
+    private boolean fighting(UUID id) {
+        return this.plugin.getDuelManager().isInDuel(id)
+                || this.plugin.getPartyManager().inPartyMatch(id)
+                || this.plugin.getEventManager().isInvolved(id);
     }
 
     private void applyBelowRank(String entry, NumberFormat fmt, int score) {
@@ -437,7 +453,7 @@ public class ScoreboardService {
 
     private void setBelowRank(Scoreboard board, String entry, NumberFormat fmt, int score) {
         try {
-            Objective o = board.getObjective("mdrank");
+            Objective o = board.getObjective("mdhealth");
             if (o == null) {
                 return;
             }
@@ -450,20 +466,10 @@ public class ScoreboardService {
         }
     }
 
-    public void updateDuelHealthTags() {
-        if (this.externalNametags) {
-            return;
-        }
-        try {
-            for (Board b : this.boards.values()) {
-                if (!b.hasNametags) continue;
-                b.refreshHealth();
-            }
-        }
-        catch (Throwable throwable) {
-            // empty catch block
-        }
-    }
+    // Health used to be a SUFFIX on the nametag team, drawn only when
+    // MeowDuels owned nametags - so with TAB installed, which is the normal
+    // setup, nobody ever saw it. It is the mdhealth objective now: under the
+    // name, in red, and independent of who owns the teams.
 
     private void sendQueueBar(Player player) {
         UUID id = player.getUniqueId();
@@ -717,8 +723,6 @@ public class ScoreboardService {
         private final Team enemyTeam;
         private UUID allyId;
         private UUID enemyId;
-        private String allyHp;
-        private String enemyHp;
         private String allyEntry;
         private String enemyEntry;
         private final boolean hasFfaTeam;
@@ -759,20 +763,19 @@ public class ScoreboardService {
             if (nametags) {
                 this.allyTeam = this.scoreboard.registerNewTeam("md_ally");
                 this.enemyTeam = this.scoreboard.registerNewTeam("md_enemy");
-                this.allyTeam.setColor(ChatColor.BLUE);
-                this.enemyTeam.setColor(ChatColor.RED);
+                this.allyTeam.setColor(ChatColor.WHITE);
+                this.enemyTeam.setColor(ChatColor.WHITE);
             } else {
                 this.allyTeam = null;
                 this.enemyTeam = null;
             }
             if (ffaTeam) {
                 this.ffaTeam = this.scoreboard.registerNewTeam("md_ffa");
-                this.ffaTeam.setColor(ChatColor.YELLOW);
-                this.ffaTeam.prefix(ScoreboardService.this.deserialize("<yellow>" + Marks.FLAG + " "));
+                this.ffaTeam.setColor(ChatColor.WHITE);
             } else {
                 this.ffaTeam = null;
             }
-            ScoreboardService.this.setupRankBelowName(this.scoreboard);
+            ScoreboardService.this.setupHealthBelowName(this.scoreboard);
         }
 
         private void setTitle(Component c) {
@@ -841,34 +844,17 @@ public class ScoreboardService {
                 this.enemyTeam.addEntry(enemyName);
                 this.enemyEntry = enemyName;
             }
-            this.allyTeam.setColor(allyAqua ? ChatColor.BLUE : ChatColor.RED);
-            this.enemyTeam.setColor(allyAqua ? ChatColor.RED : ChatColor.BLUE);
-            this.allyTeam.prefix(ScoreboardService.this.deserialize((allyAqua ? "<blue>" : "<red>") + Marks.FLAG + " "));
-            this.enemyTeam.prefix(ScoreboardService.this.deserialize((allyAqua ? "<red>" : "<blue>") + Marks.FLAG + " "));
-            this.refreshHealth();
+            // Plain white, both of them, and no marker. Above a head the
+            // only thing worth reading mid-fight is who it is and how much
+            // they have left - a side colour tells you something you already
+            // know, and a rank tells you something that does not matter here.
+            // The health goes UNDER the name, from the mdhealth objective.
+            this.allyTeam.setColor(ChatColor.WHITE);
+            this.enemyTeam.setColor(ChatColor.WHITE);
+            this.allyTeam.prefix(ScoreboardService.this.deserialize(""));
+            this.enemyTeam.prefix(ScoreboardService.this.deserialize(""));
         }
 
-        private void refreshHealth() {
-            if (this.allyTeam == null) {
-                return;
-            }
-            this.allyHp = this.applyHealth(this.allyTeam, this.allyId, this.allyHp);
-            this.enemyHp = this.applyHealth(this.enemyTeam, this.enemyId, this.enemyHp);
-        }
-
-        private String applyHealth(Team team, UUID id, String shown) {
-            Player p;
-            Player player = p = id == null ? null : Bukkit.getPlayer((UUID)id);
-            if (p == null) {
-                return shown;
-            }
-            String txt = ScoreboardService.this.hpText(p.getHealth());
-            if (txt.equals(shown)) {
-                return shown;
-            }
-            team.suffix(ScoreboardService.this.deserialize(" <#FF5C5C>\u2764 " + txt));
-            return txt;
-        }
     }
 }
 

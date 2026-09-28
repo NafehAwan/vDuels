@@ -306,6 +306,14 @@ scoreboard:
   # over them and fighters lose their place in the sort order. The duel and FFA
   # nametags come through %rel_meowduels_tagprefix% instead.
   external-nametags: true
+  # The line UNDER a fighter's name: their health, in red, like a practice
+  # server. Only while they are in a duel, a party match or the event -
+  # everyone else shows nothing there.
+  #
+  # This is a BELOW_NAME scoreboard objective, and a scoreboard can only have
+  # one. If TAB's own "belowname" feature is switched on it will fight this
+  # one and whichever wrote last wins, so turn one of the two off.
+  health-below-name: true
   # Master switch. The sidebar only shows while in a duel or spectating one.
   enabled: true
   date-format: "dd/MM/yyyy"
