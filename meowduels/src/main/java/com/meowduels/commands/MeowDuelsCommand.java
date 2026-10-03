@@ -1133,7 +1133,7 @@ TabCompleter {
                 return;
             }
             this.plugin.reloadAll();
-            sender.sendMessage(Text.prefixed("&aMeowDuels config reloaded."));
+            sender.sendMessage(this.msg("general.reloaded", new String[0]));
             return;
         }
         if (args.length >= 1 && args[0].equalsIgnoreCase("scoreboardip")) {

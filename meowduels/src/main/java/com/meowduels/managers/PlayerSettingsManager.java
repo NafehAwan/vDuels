@@ -22,7 +22,8 @@ public class PlayerSettingsManager {
     /** key -> (player -> value). A row exists only once somebody has changed
      *  that toggle, so the default below is what everyone else gets and a new
      *  toggle needs no migration. */
-    private final Map<String, Map<UUID, Boolean>> flags = new HashMap<String, Map<UUID, Boolean>>();
+    private final Map<String, Map<UUID, Boolean>> flags =
+            new java.util.concurrent.ConcurrentHashMap<String, Map<UUID, Boolean>>();
     private static final String[] KEYS = new String[]{
         "duel-requests", "scoreboard", "party-invites", "spectators", "sounds", "isolated-chat"};
 
@@ -79,13 +80,18 @@ public class PlayerSettingsManager {
         }
     }
 
+    /**
+     * Concurrent, and note that the READ path writes.
+     *
+     * <p>ChatListener asks isIsolatedChat() from inside AsyncChatEvent, off
+     * the main thread, while the settings menu is toggling on it - and on a
+     * fresh install flags starts empty, so the first async chat message is
+     * the one that inserts. A plain HashMap resized under that read returns
+     * wrong answers and can corrupt a bin chain.
+     */
     private Map<UUID, Boolean> map(String key) {
-        Map<UUID, Boolean> found = this.flags.get(key);
-        if (found == null) {
-            found = new HashMap<UUID, Boolean>();
-            this.flags.put(key, found);
-        }
-        return found;
+        return this.flags.computeIfAbsent(key,
+                k -> new java.util.concurrent.ConcurrentHashMap<UUID, Boolean>());
     }
 
     /** What this toggle is for a player who has never touched it. */

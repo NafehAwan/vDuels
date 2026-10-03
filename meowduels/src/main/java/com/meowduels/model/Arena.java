@@ -188,7 +188,13 @@ public class Arena {
         if (aMin == null || aMax == null || bMin == null || bMax == null) {
             return false;
         }
-        return aMin.getBlockX() < bMax.getBlockX() && aMax.getBlockX() > bMin.getBlockX() && aMin.getBlockY() < bMax.getBlockY() && aMax.getBlockY() > bMin.getBlockY() && aMin.getBlockZ() < bMax.getBlockZ() && aMax.getBlockZ() > bMin.getBlockZ();
+        // Inclusive on both ends, because these are BLOCK coordinates, not
+        // real ones. With strict < and >, arenas spanning x 0..10 and x 10..20
+        // share the block plane at x=10 and still reported no overlap - so
+        // isArenaBusy let both be booked and two fights ran into each other.
+        return aMin.getBlockX() <= bMax.getBlockX() && aMax.getBlockX() >= bMin.getBlockX()
+                && aMin.getBlockY() <= bMax.getBlockY() && aMax.getBlockY() >= bMin.getBlockY()
+                && aMin.getBlockZ() <= bMax.getBlockZ() && aMax.getBlockZ() >= bMin.getBlockZ();
     }
 
     public Location getCorner1() {

@@ -115,18 +115,35 @@ public class KitLayoutManager {
      *  whatever they liked. Rearranging is personal; the contents are not.
      */
     public boolean matchesKit(Kit kit, ItemStack[] contents, ItemStack[] armor, ItemStack offhand) {
-        java.util.Map<org.bukkit.Material, Integer> expected = new java.util.HashMap<org.bukkit.Material, Integer>();
+        java.util.Map<ItemStack, Integer> expected = new java.util.HashMap<ItemStack, Integer>();
         tally(expected, kit.getContents());
         tally(expected, kit.getArmor());
         tally(expected, new ItemStack[] {kit.getOffhand()});
-        java.util.Map<org.bukkit.Material, Integer> actual = new java.util.HashMap<org.bukkit.Material, Integer>();
+        java.util.Map<ItemStack, Integer> actual = new java.util.HashMap<ItemStack, Integer>();
         tally(actual, contents);
         tally(actual, armor);
         tally(actual, new ItemStack[] {offhand});
         return expected.equals(actual);
     }
 
-    private static void tally(java.util.Map<org.bukkit.Material, Integer> into, ItemStack[] items) {
+    /**
+     * Counts items by WHAT THEY ARE, not by material.
+     *
+     * <p>This used to key on Material alone, which made the check above
+     * worthless as a guard: the editor lets a player drag out of their own
+     * inventory, and a Sharpness V diamond sword tallies identically to the
+     * kit's plain one. So did Protection IV armour, a Power bow, and - with
+     * no enchanting at all - any potion, because every potion shares one
+     * Material. Saving that layout wrote it to disk and every later duel
+     * handed it straight back.
+     *
+     * <p>The key is the item with its amount normalised away, so ItemStack's
+     * own equals compares type, enchantments, display name, lore, durability
+     * and potion data. Failing closed is safe: a layout that no longer
+     * matches is simply retired, which is what already happens when an admin
+     * edits the kit.
+     */
+    private static void tally(java.util.Map<ItemStack, Integer> into, ItemStack[] items) {
         if (items == null) {
             return;
         }
@@ -134,8 +151,10 @@ public class KitLayoutManager {
             if (item == null || item.getType() == org.bukkit.Material.AIR) {
                 continue;
             }
-            Integer had = into.get(item.getType());
-            into.put(item.getType(), (had == null ? 0 : had) + Math.max(1, item.getAmount()));
+            ItemStack key = item.clone();
+            key.setAmount(1);
+            Integer had = into.get(key);
+            into.put(key, (had == null ? 0 : had) + Math.max(1, item.getAmount()));
         }
     }
 

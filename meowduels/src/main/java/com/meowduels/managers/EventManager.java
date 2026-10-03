@@ -55,14 +55,19 @@ public class EventManager {
     private Arena arena;
     private long startAtMs;
     private int maxSlots = 0;
-    private final Set<UUID> players = new HashSet<UUID>();
-    private final Set<UUID> alive = new HashSet<UUID>();
-    private final Set<UUID> spectators = new HashSet<UUID>();
+    /** Concurrent, all three: isInvolved() is reached from the TAB and
+     *  PlaceholderAPI threads through MeowDuelsPlaceholders.inAFight while
+     *  the main thread is adding and removing players, and involved()
+     *  iterates two of them - a CME waiting to happen on somebody else's
+     *  thread. Same reasoning as DuelManager.playerDuels and Party.alive. */
+    private final Set<UUID> players = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    private final Set<UUID> alive = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    private final Set<UUID> spectators = java.util.concurrent.ConcurrentHashMap.newKeySet();
     private final Map<UUID, PlayerSnapshot> snapshots = new HashMap<UUID, PlayerSnapshot>();
     private final Map<Location, BlockData> changedBlocks = new HashMap<Location, BlockData>();
     /** Kills this event, per player. Reset when an event starts - a leaderboard
      *  that carried over from the last one would be nonsense. */
-    private final Map<UUID, Integer> kills = new HashMap<UUID, Integer>();
+    private final Map<UUID, Integer> kills = new java.util.concurrent.ConcurrentHashMap<UUID, Integer>();
     private long runningSinceMs = 0L;
     private int borderGen = 0;
     /** How many consecutive seconds a fighter has been outside the border. */
@@ -723,6 +728,12 @@ public class EventManager {
             if (written < 0 && !this.changedBlocks.isEmpty()) {
                 this.plugin.getArenaManager().restoreBlocks(this.changedBlocks);
             }
+            // The duel and party teardowns both do this and the event did
+            // not, so every arena that ever hosted an event stayed in
+            // arenas-dirty.yml and was re-pasted on every single boot -
+            // silently reverting any rebuild an admin did without taking a
+            // fresh snapshot afterwards.
+            this.plugin.getArenaManager().clearDirty(this.arena.getName());
             this.plugin.getDuelManager().freeArena(this.arena.getName());
         }
         this.changedBlocks.clear();

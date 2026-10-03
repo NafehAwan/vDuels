@@ -361,7 +361,10 @@ implements Listener {
             return;
         }
         if (breaking ? arena.canBreak(loc) : arena.canPlace(loc)) {
-            party.recordChange(loc, original);
+            // On the HOST. finishMatch only ever replays the host's list, so
+            // anything recorded on the guest is dropped when resetMatch
+            // clears it - permanent damage to an arena with no snapshot.
+            this.plugin.getPartyManager().recordPartyChange(party, loc, original);
         } else {
             cancel.accept(true);
         }

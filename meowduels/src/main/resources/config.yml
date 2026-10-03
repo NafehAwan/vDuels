@@ -328,12 +328,12 @@ scoreboard:
   # master switch above is the only switch. Empty `lines` also means no board.
   global:
     enabled: true
-    title: "<bold><red>ʙʟᴏᴏᴅᴛʜɪʀꜱᴛ"
+    title: "<bold>{server_name}"
     lines:
     - "<gray><strikethrough>                    </strikethrough>"
-    - "<#D90707>⚔ ᴋɪʟʟꜱ <dark_gray>: <red>{kills}"
-    - "<#D90707>☠ ᴅᴇᴀᴛʜꜱ <dark_gray>: <red>{deaths}"
-    - "<#D90707>⌚ ᴘʟᴀʏᴛɪᴍᴇ <dark_gray>: <red>{playtime}"
+    - "<#FF2E55>⚔ ᴋɪʟʟꜱ <dark_gray>: <red>{kills}"
+    - "<#FF2E55>☠ ᴅᴇᴀᴛʜꜱ <dark_gray>: <red>{deaths}"
+    - "<#FF2E55>⌚ ᴘʟᴀʏᴛɪᴍᴇ <dark_gray>: <red>{playtime}"
     - "<gray><strikethrough>                    </strikethrough>"
     - "{ip_color}{server_ip}"
   # Shown to everyone in an FFA event - fighters and knocked-out spectators

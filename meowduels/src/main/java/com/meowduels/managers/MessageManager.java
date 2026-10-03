@@ -196,6 +196,7 @@ public class MessageManager {
     static {
         DEFAULTS.put("prefix", "&d\u24d8 ");
         DEFAULTS.put("general.no-permission", "{prefix}&cYou don't have permission to do that.");
+        DEFAULTS.put("general.reloaded", "{prefix}&aConfig reloaded.");
         DEFAULTS.put("general.players-only", "{prefix}&cThis command can only be used by a player.");
         DEFAULTS.put("duel.usage", "{prefix}&cUsage: /duel <player>");
         DEFAULTS.put("duel.cannot-duel-self", "{prefix}&cYou cannot duel yourself.");

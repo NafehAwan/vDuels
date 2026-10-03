@@ -140,6 +140,25 @@ public class SpectateManager {
         viewer.sendMessage(this.plugin.messages().get("spectate.stopped", new String[0]));
     }
 
+    /**
+     * Puts every live spectator back before the server stops.
+     *
+     * <p>returnLocation and returnMode are memory only. Without this a
+     * /reload or a stop left every spectator pinned in SPECTATOR with their
+     * return point gone - and on a plain /reload, with the player still
+     * connected, even the join-time rescue in DuelListener never runs.
+     */
+    public void shutdown() {
+        for (UUID id : new java.util.ArrayList<UUID>(this.returnLocation.keySet())) {
+            Player viewer = Bukkit.getPlayer((UUID)id);
+            if (viewer == null) {
+                continue;
+            }
+            this.dropFightView(id);
+            this.restore(viewer);
+        }
+    }
+
     public void clearOnQuit(Player viewer) {
         UUID id = viewer.getUniqueId();
         if (!this.returnLocation.containsKey(id)) {

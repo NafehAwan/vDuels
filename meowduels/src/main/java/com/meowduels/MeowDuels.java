@@ -113,6 +113,7 @@ extends JavaPlugin {
         this.migrateDuelMarker();
         this.migrateBoardMarker();
         this.migrateTips();
+        this.migrateBrandTitle();
         if (!this.getDataFolder().exists()) {
             this.getDataFolder().mkdirs();
         }
@@ -198,6 +199,9 @@ extends JavaPlugin {
         }
         if (this.partyManager != null) {
             this.partyManager.shutdown();
+        }
+        if (this.spectateManager != null) {
+            this.spectateManager.shutdown();
         }
         if (this.duelManager != null) {
             this.duelManager.shutdown();
@@ -366,6 +370,29 @@ extends JavaPlugin {
      * the server about a state it is not in. Same rule as every other
      * migration here: only a line still exactly as shipped is touched.
      */
+    /**
+     * Takes the previous owner's server name off the sidebar.
+     *
+     * <p>The shipped default was that server's brand, written in unicode
+     * small caps - which is why no search for it ever turned it up. The
+     * default is now {server_name}, so a buyer sets one key and the sidebar
+     * follows, but a config written before today still carries the old
+     * literal and mergeConfigDefaults never overwrites. Only the exact old
+     * string is replaced; anybody who chose their own title keeps it.
+     */
+    private void migrateBrandTitle() {
+        String current = this.getConfig().getString("scoreboard.global.title");
+        if (current == null || !current.equals(OLD_BRAND_TITLE)) {
+            return;
+        }
+        this.getConfig().set("scoreboard.global.title", (Object)"<bold>{server_name}");
+        this.saveConfig();
+        this.getLogger().info("The sidebar title was still the old shipped default, which was another "
+                + "server's name. It now follows server-name in config.yml.");
+    }
+
+    private static final String OLD_BRAND_TITLE = "<bold><red>\u0299\u029f\u1d0f\u1d0f\u1d05\u1d1b\u029c\u026a\u0280\ua731\u1d1b";
+
     private void migrateTips() {
         boolean changed = MeowDuels.replaceLine(this.getConfig(), "tips.global",
                 "<dark_gray>\u25b8 <#8E959D>Chat inside a duel is isolated. Type someone's <#E6E8EB>full name<#8E959D> to reach them anyway.",

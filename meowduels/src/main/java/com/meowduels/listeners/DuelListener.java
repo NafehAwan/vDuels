@@ -49,6 +49,7 @@ import com.meowduels.model.Party;
 import com.meowduels.model.Arena;
 import com.meowduels.util.Sounds;
 import com.meowduels.util.Text;
+import com.meowduels.util.AntiCheatBypass;
 import com.meowduels.util.GameModeGuard;
 import java.util.HashMap;
 import java.util.Map;
@@ -708,6 +709,12 @@ implements Listener {
             this.plugin.getDuelManager().handleDisconnect(player.getUniqueId());
         }
         GameModeGuard.release(player.getUniqueId());
+        // Unconditionally, and last. Only the duel teardown released this;
+        // a party or event player who disconnected kept their anticheat
+        // exemption forever, the commands-on-end hooks never ran, and the
+        // static ACTIVE map held a PermissionAttachment - and through it the
+        // dead CraftPlayer - for the rest of the server's life.
+        AntiCheatBypass.release(this.plugin, player);
     }
 }
 

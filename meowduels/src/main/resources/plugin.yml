@@ -3,7 +3,7 @@ version: 1.0.0
 main: com.meowduels.MeowDuels
 api-version: '1.21'
 author: nafehawan
-description: GUI-based Duels and Party plugin - pink edition, with cloneable arenas and a full item kit editor.
+description: GUI-based duels, parties and FFA events - arenas, kits and menus all configured in game.
 softdepend:
   - FastAsyncWorldEdit
   - PlaceholderAPI
@@ -13,7 +13,7 @@ commands:
   meowduels:
     description: MeowDuels root command (copy/paste, help).
     usage: /meowduels <arena> <copy|paste> | /meowduels help
-    aliases: [vduels, md]
+    aliases: [md]
   createarena:
     description: Create a new arena.
     usage: /createarena <name>
@@ -101,7 +101,7 @@ commands:
     description: Configure the per-fight tab (title, discord, store).
     usage: /meowduelstab
     permission: meowduels.admin
-    aliases: [vduelstab]
+    aliases: [mdtab]
   editkit:
     description: Admin kit editor - start effects, items, and Change Kit.
     usage: /editkit [kit]
@@ -126,7 +126,7 @@ commands:
     description: Open the armor-trim editor for a kit.
     usage: /meowduelstrims [kit]
     permission: meowduels.trims
-    aliases: [trims, vduelstrims]
+    aliases: [trims, mdtrims]
 
 permissions:
   meowduels.admin:

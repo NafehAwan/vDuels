@@ -268,8 +268,12 @@ public class DuelManager {
             String booked = this.msg("duel.arena-booked", new String[0]);
             p1.sendMessage(booked);
             p2.sendMessage(booked);
-            this.plugin.getQueueManager().remove(p1.getUniqueId());
-            this.plugin.getQueueManager().remove(p2.getUniqueId());
+            // Deliberately NOT removing them from the queue. This branch is
+            // "we lost the race for an arena", and dropping the pair here is
+            // what made the queue's own retry loop a lie: it breaks, says
+            // "they stay queued and we retry later", and they had already
+            // been taken out. A player who is not queued was never in a
+            // queue, so leaving them alone costs nothing.
             return;
         }
         this.plugin.getQueueManager().remove(p1.getUniqueId());
@@ -1190,6 +1194,21 @@ public class DuelManager {
         String booked = this.msg("duel.arena-booked", new String[0]);
         Player p1 = Bukkit.getPlayer((UUID)duel.getPlayer1());
         Player p2 = Bukkit.getPlayer((UUID)duel.getPlayer2());
+        // Regenerate BEFORE the arena is freed. endMatch does this and this
+        // path did not: the next duel booked the arena with the last fight's
+        // holes still in it, and because getChangedBlocks() went out with the
+        // duel, an arena with no saved snapshot was damaged permanently. It
+        // also left the arena in arenas-dirty.yml forever.
+        this.regenArena(duel);
+        // Glowing comes from the arena flag and was only ever cleared in
+        // endMatch, so both fighters stayed visible through walls to the
+        // whole server until they relogged.
+        if (p1 != null) {
+            p1.setGlowing(false);
+        }
+        if (p2 != null) {
+            p2.setGlowing(false);
+        }
         this.restorePlayer(duel.getPlayer1(), true);
         this.restorePlayer(duel.getPlayer2(), true);
         this.giveSpawnItemsTo(duel.getPlayer1());
@@ -1268,8 +1287,13 @@ public class DuelManager {
         if (arena == null) {
             return false;
         }
+        // startDuel re-checks isArenaBusy - findFreeArena only knows about
+        // names, not overlapping boxes or the running event - and bails if it
+        // loses that race. Reporting success anyway is what dropped the pair
+        // out of the queue entirely instead of leaving them in it for the
+        // next sweep a second later.
         this.startDuel(p1, p2, arena, kit, 1);
-        return true;
+        return this.isInDuel(p1.getUniqueId()) && this.isInDuel(p2.getUniqueId());
     }
 
     /**

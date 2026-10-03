@@ -349,8 +349,9 @@ public class PartyManager {
             this.disband(party, player.getName() + " disbanded the party.");
             return;
         }
-        if (party.isFighting() && party.involved().contains(id)) {
-            this.pullOut(party, id);
+        boolean wasFighting = party.isFighting() && party.involved().contains(id);
+        if (wasFighting) {
+            this.dropFromMatch(party, id);
         }
         party.remove(id);
         this.byPlayer.remove(id);
@@ -359,7 +360,7 @@ public class PartyManager {
         player.sendMessage(Text.prefixed("&7You left the party."));
         this.refreshItems(player);
         this.plugin.getTabService().detach(id);
-        this.plugin.getTabService().attachParty(party);
+        this.reattachTab(party);
         this.checkWin(party);
     }
 
@@ -1138,14 +1139,59 @@ public class PartyManager {
         if (party == null || !party.isFighting() || !party.involved().contains(id)) {
             return false;
         }
-        this.pullOut(this.matchHostOf(party), id);
-        for (Party side : this.sides(party)) {
-            side.getAlive().remove(id);
-            side.getWatching().remove(id);
-        }
+        this.dropFromMatch(party, id);
         player.sendMessage(Text.prefixed("&7You left the party match."));
         this.checkWin(party);
         return true;
+    }
+
+    /** Records a block change against whichever side owns the teardown. */
+    public void recordPartyChange(Party party, org.bukkit.Location loc, org.bukkit.block.data.BlockData original) {
+        Party host = this.matchHostOf(party);
+        if (host != null) {
+            host.recordChange(loc, original);
+        }
+    }
+
+    /**
+     * Rebuilds this party's tab bubble after somebody left it.
+     *
+     * <p>Mid-match the bubble is BOTH parties keyed on the host, so
+     * attachParty would re-key this side onto itself, split the fight in two
+     * and leave the teams unable to see each other with the match still
+     * running.
+     */
+    private void reattachTab(Party party) {
+        Party host = this.matchHostOf(party);
+        if (party.isFighting() && host != null && host.getOpponent() != null) {
+            this.plugin.getTabService().attachMatch(host, host.getOpponent());
+        } else {
+            this.plugin.getTabService().attachParty(party);
+        }
+    }
+
+    /**
+     * Takes one player out of a running match, on both sides of it.
+     *
+     * <p>Three things have to happen together and used to happen separately.
+     * The snapshot lives only on the HOST - startTeamMatch calls sendIn(host,
+     * ..) for both rosters - so restoring through the guest silently finds
+     * nothing and leaves the player in whatever gamemode the match pinned
+     * them to. The alive and watching sets are mirrored, so clearing one side
+     * leaves a corpse counted on the other. And the teams map is what
+     * nextRound rebuilds the next round's roster from, so a player removed
+     * from the rosters but left in teams gets teleported back into the arena
+     * when the next round starts - with their snapshot already consumed, so
+     * nothing will ever restore their inventory.
+     */
+    private void dropFromMatch(Party party, UUID id) {
+        this.pullOut(this.matchHostOf(party), id);
+        for (Party side : this.sides(party)) {
+            if (side == null) continue;
+            side.getAlive().remove(id);
+            side.getWatching().remove(id);
+            side.getTeams().remove(id);
+        }
     }
 
     /** Restores one player out of a match, leaving the party itself alone. */
@@ -1272,10 +1318,19 @@ public class PartyManager {
         this.plugin.getArenaManager().clearLooseEntities(arena);
         long now = System.currentTimeMillis();
         int seconds = Math.max(1, this.plugin.getConfig().getInt("party.countdown-seconds", 5));
+        // Watchers who are not on a team - somebody who joined with
+        // /party spectate - are never re-sent into the arena, so clearing
+        // `watching` drops them out of involved() entirely. finishMatch then
+        // never pulls them out, GameModeGuard never releases the SPECTATOR
+        // pin, and resetMatch destroys their snapshot: stuck as a ghost that
+        // not even an admin can /gamemode out of. Carry them across by hand.
+        HashSet<UUID> watchers = new HashSet<UUID>(host.getWatching());
+        watchers.removeAll(host.getTeams().keySet());
         for (Party side : this.sides(host)) {
             side.setRound(side.getRound() + 1);
             side.getAlive().clear();
             side.getWatching().clear();
+            side.getWatching().addAll(watchers);
             side.setStartedAt(now);
             side.setFightStartsAt(now + (long)seconds * 1000L);
         }
@@ -1432,22 +1487,16 @@ public class PartyManager {
             for (Party side : this.sides(party)) {
                 side.getAlive().remove(id);
                 side.getWatching().remove(id);
+                // teams too: nextRound rebuilds from it and would teleport a
+                // disconnected player's ghost back into the arena.
+                side.getTeams().remove(id);
             }
             this.matchHostOf(party).getSnapshots().remove(id);
         }
         party.remove(id);
         this.byPlayer.remove(id);
         this.plugin.getTabService().detach(id);
-        // Mid-match the bubble is BOTH parties keyed on the host. attachParty
-        // re-keys this side onto itself, which splits the fight in two and
-        // leaves the teams unable to see each other with the match still
-        // running - so rebuild the whole match instead.
-        Party host = this.matchHostOf(party);
-        if (party.isFighting() && host != null && host.getOpponent() != null) {
-            this.plugin.getTabService().attachMatch(host, host.getOpponent());
-        } else {
-            this.plugin.getTabService().attachParty(party);
-        }
+        this.reattachTab(party);
         this.broadcast(party, "&f" + this.nameOf(id) + "&7 left the server.");
         this.checkWin(party);
     }
