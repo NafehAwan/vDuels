@@ -47,7 +47,7 @@ implements CommandExecutor {
         }
         List<Map.Entry<UUID, Integer>> top = stats.topWins(size);
         sender.sendMessage("");
-        sender.sendMessage(LeaderboardCommand.mmc("  <gradient:#FF2E55:#FF7FC4>\u1d21\u026a\u0274\ua731 \u029f\u1d07\u1d00\u1d05\u1d07\u0280\u0299\u1d0f\u1d00\u0280\u1d05</gradient>"));
+        sender.sendMessage(LeaderboardCommand.mmc("  " + "<gradient:" + com.meowduels.gui.Style.ACCENT_A + ":" + com.meowduels.gui.Style.ACCENT_B + ">" + "\u1d21\u026a\u0274\ua731 \u029f\u1d07\u1d00\u1d05\u1d07\u0280\u0299\u1d0f\u1d00\u0280\u1d05</gradient>"));
         sender.sendMessage("");
         if (top.isEmpty()) {
             sender.sendMessage(LeaderboardCommand.mmc("  <#8E959D>\u0274\u1d0f \u1d05\u1d1c\u1d07\u029f\ua731 \u1d21\u1d0f\u0274 \u028f\u1d07\u1d1b <dark_gray>- <#8E959D>win one to appear here."));

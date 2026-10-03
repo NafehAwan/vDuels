@@ -120,7 +120,7 @@ extends JavaPlugin {
         this.keyKit = new NamespacedKey((Plugin)this, "kit");
         this.keyButton = new NamespacedKey((Plugin)this, "button");
         this.keyArena = new NamespacedKey((Plugin)this, "arena");
-        this.scoreboardIp = this.getConfig().getString("scoreboard-ip", "play.example.net");
+        this.scoreboardIp = this.getConfig().getString("scoreboard-ip", "example.net");
         this.serverName = this.getConfig().getString("server-name", "server");
         this.tabTitle = this.getConfig().getString("tab.title", "<gold><bold>ServerName</bold></gold>");
         this.tabDiscord = this.getConfig().getString("tab.discord", "<aqua>discord.example.net</aqua>");
@@ -152,6 +152,8 @@ extends JavaPlugin {
         // question it needs answered. Set after the manager exists and before
         // any listener can fire a cue.
         Sounds.mutedWhen(p -> !this.playerSettingsManager.isSounds(p.getUniqueId()));
+        Sounds.load(this.getConfig().getConfigurationSection("sounds"));
+        com.meowduels.gui.Style.load(this.getConfig().getConfigurationSection("theme"));
         this.tipService = new TipService(this);
         this.tabHook = new TabHook();
         if (this.tabHook.isAvailable()) {
@@ -497,7 +499,7 @@ extends JavaPlugin {
         this.reloadConfig();
         this.mergeConfigDefaults();
         this.reloadConfig();
-        this.scoreboardIp = this.getConfig().getString("scoreboard-ip", "play.example.net");
+        this.scoreboardIp = this.getConfig().getString("scoreboard-ip", "example.net");
         this.serverName = this.getConfig().getString("server-name", "server");
         this.tabTitle = this.getConfig().getString("tab.title", "<gold><bold>ServerName</bold></gold>");
         this.tabDiscord = this.getConfig().getString("tab.discord", "<aqua>discord.example.net</aqua>");
@@ -512,6 +514,8 @@ extends JavaPlugin {
         if (this.tipService != null) {
             this.tipService.reload();
         }
+        Sounds.load(this.getConfig().getConfigurationSection("sounds"));
+        com.meowduels.gui.Style.load(this.getConfig().getConfigurationSection("theme"));
     }
 
     public SpectateManager getSpectateManager() {

@@ -592,7 +592,7 @@ public class EventManager {
     private void warnOutside(Player p, int seconds, double damage) {
         try {
             String hearts = EventManager.oneDecimal(damage / 2.0);
-            p.sendActionBar((Component)this.borderMm.deserialize((Object)("<gradient:#FF2E55:#FF7FC4>\u1d0f\u1d1c\u1d1b\ua731\u026a\u1d05\u1d07 \u1d1b\u029c\u1d07 \u0299\u1d0f\u0280\u1d05\u1d07\u0280</gradient> <#6B7079>\u2503 <#FF8A93>-" + hearts + " \u2764 <#6B7079>\u2503 <#E6E8EB>" + seconds + "s")));
+            p.sendActionBar((Component)this.borderMm.deserialize((Object)("" + "<gradient:" + com.meowduels.gui.Style.ACCENT_A + ":" + com.meowduels.gui.Style.ACCENT_B + ">" + "\u1d0f\u1d1c\u1d1b\ua731\u026a\u1d05\u1d07 \u1d1b\u029c\u1d07 \u0299\u1d0f\u0280\u1d05\u1d07\u0280</gradient> <#6B7079>\u2503 <#FF8A93>-" + hearts + " \u2764 <#6B7079>\u2503 <#E6E8EB>" + seconds + "s")));
         }
         catch (Throwable throwable) {}
     }

@@ -478,7 +478,7 @@ public class ScoreboardService {
         this.queueBarShown.add(id);
         long seconds = Math.max(0L, queue.waitingSeconds(id));
         String time = String.format("%d:%02d", seconds / 60L, seconds % 60L);
-        player.sendActionBar(this.deserialize("<gradient:#FF2E55:#FF7FC4>\u01eb\u1d1c\u1d07\u1d1c\u1d07\u1d05 \ua730\u1d0f\u0280 " + kits + " " + (kits == 1 ? "\u1d0b\u026a\u1d1b" : "\u1d0b\u026a\u1d1b\ua731") + "</gradient> <#6B7079>\u2503 <#FF7FC4>\u231a <#E6E8EB>" + time));
+        player.sendActionBar(this.deserialize("" + "<gradient:" + com.meowduels.gui.Style.ACCENT_A + ":" + com.meowduels.gui.Style.ACCENT_B + ">" + "\u01eb\u1d1c\u1d07\u1d1c\u1d07\u1d05 \ua730\u1d0f\u0280 " + kits + " " + (kits == 1 ? "\u1d0b\u026a\u1d1b" : "\u1d0b\u026a\u1d1b\ua731") + "</gradient> <#6B7079>\u2503 <#FF7FC4>\u231a <#E6E8EB>" + time));
     }
 
     private void sendActionBar(Player player, ActiveDuel duel, UUID self) {
@@ -541,7 +541,7 @@ public class ScoreboardService {
         t.put("online", String.valueOf(Bukkit.getOnlinePlayers().size()));
         t.put("in_duels", String.valueOf(this.plugin.getDuelManager().playersInDuels()));
         t.put("server_ip", this.plugin.getScoreboardIp());
-        t.put("ip_color", this.plugin.getConfig().getString("scoreboard-ip-color", "<dark_red>"));
+        t.put("ip_color", this.plugin.getConfig().getString("scoreboard-ip-color", "<#FF78C1>"));
         t.put("ping", String.valueOf(player.getPing()));
         t.put("kills", String.valueOf(player.getStatistic(Statistic.PLAYER_KILLS)));
         t.put("deaths", String.valueOf(player.getStatistic(Statistic.DEATHS)));
@@ -644,7 +644,7 @@ public class ScoreboardService {
     }
 
     private String date() {
-        String fmt = this.plugin.getConfig().getString("scoreboard.date-format", "MMM d, yyyy");
+        String fmt = this.plugin.getConfig().getString("scoreboard.date-format", "dd/MM/yyyy");
         try {
             return LocalDate.now().format(DateTimeFormatter.ofPattern(fmt, Locale.ENGLISH));
         }

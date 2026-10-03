@@ -51,7 +51,7 @@ public class TabService {
 
     public TabService(MeowDuels plugin) {
         this.plugin = plugin;
-        this.external = plugin.getConfig().getBoolean("external-tab", false);
+        this.external = plugin.getConfig().getBoolean("external-tab", true);
     }
 
     public boolean isExternal() {

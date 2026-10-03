@@ -44,12 +44,16 @@ import org.bukkit.potion.PotionEffectType;
 
 public class GoldenHeadListener
 implements Listener {
+    // These were declared and then never read - the real numbers were
+    // re-inlined at the use site, so anybody tuning them changed nothing.
+    // They are the config defaults now, which is what they always looked like
+    // they were.
     private static final int REGEN_TICKS = 200;
     private static final int REGEN_AMPLIFIER = 1;
     private static final int ABSORPTION_TICKS = 2400;
     private static final int ABSORPTION_AMPLIFIER = 0;
     private static final int HUNGER_RESTORE = 4;
-    private static final float SATURATION_RESTORE = 9.6f;
+    private static final double SATURATION_RESTORE = 9.6;
     private final MeowDuels plugin;
     private static final String COOLDOWN = "golden-head";
 
@@ -98,17 +102,22 @@ implements Listener {
             }
             Cooldowns.start(player, COOLDOWN, this.heldHeadType(player), cooldownMs);
         }
-        player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 200, 1));
-        player.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 2400, 0));
-        int food = Math.min(20, player.getFoodLevel() + 4);
+        org.bukkit.configuration.file.FileConfiguration cfg = this.plugin.getConfig();
+        int regenTicks = cfg.getInt("golden-head.regen-seconds", REGEN_TICKS / 20) * 20;
+        int absorbTicks = cfg.getInt("golden-head.absorption-seconds", ABSORPTION_TICKS / 20) * 20;
+        if (regenTicks > 0) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, regenTicks,
+                    Math.max(0, cfg.getInt("golden-head.regen-level", REGEN_AMPLIFIER + 1) - 1)));
+        }
+        if (absorbTicks > 0) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, absorbTicks,
+                    Math.max(0, cfg.getInt("golden-head.absorption-level", ABSORPTION_AMPLIFIER + 1) - 1)));
+        }
+        int food = Math.min(20, player.getFoodLevel() + cfg.getInt("golden-head.hunger-restore", HUNGER_RESTORE));
         player.setFoodLevel(food);
-        player.setSaturation(Math.min((float)food, player.getSaturation() + 9.6f));
-        try {
-            player.playSound(player.getLocation(), "entity.player.burp", 0.7f, 1.0f);
-        }
-        catch (Throwable throwable) {
-            // empty catch block
-        }
+        player.setSaturation(Math.min((float)food, player.getSaturation()
+                + (float)cfg.getDouble("golden-head.saturation-restore", SATURATION_RESTORE)));
+        Sounds.eat(player);
         this.consumeOne(player);
     }
 
