@@ -350,7 +350,7 @@ public class GuiConfigManager {
                 glow = Boolean.valueOf(section.getBoolean("glow"));
             }
         }
-        return this.assemble(material, this.amount(menuId, itemId, 1), name, lore, glow, tokens, blocks);
+        return this.assemble(material, this.amount(menuId, itemId, face.amount), name, lore, glow, tokens, blocks);
     }
 
     /**
@@ -380,7 +380,7 @@ public class GuiConfigManager {
         if (section != null && section.contains("glow")) {
             glow = Boolean.valueOf(section.getBoolean("glow"));
         }
-        return this.assemble(material, this.amount(menuId, itemId, 1), name, lore, glow, tokens, null);
+        return this.assemble(material, this.amount(menuId, itemId, face.amount), name, lore, glow, tokens, null);
     }
 
     private Items assemble(Material material, int amount, String name, List<String> lore,
@@ -422,6 +422,7 @@ public class GuiConfigManager {
         private final String name;
         private final String[] lore;
         private boolean glow;
+        private int amount = 1;
 
         private Face(Material material, String name, String[] lore) {
             this.material = material;
@@ -436,6 +437,20 @@ public class GuiConfigManager {
         /** Marks this state as the one that shimmers. */
         public Face glow() {
             this.glow = true;
+            return this;
+        }
+
+        /**
+         * A stack size the code decides, rather than the usual 1.
+         *
+         * <p>The party-duels round buttons wear their round count as their
+         * stack size - the "first to 3" icon is a stack of three - so the
+         * number is the data, not styling. An {@code amount:} in the file
+         * still overrides it, for a server that would rather they all looked
+         * the same.
+         */
+        public Face amount(int amount) {
+            this.amount = Math.max(1, Math.min(64, amount));
             return this;
         }
     }

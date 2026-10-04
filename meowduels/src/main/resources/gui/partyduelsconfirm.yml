@@ -1,0 +1,104 @@
+# -------------------------------------------------------------------------
+# The last screen before a party-versus-party match. The round buttons
+# wear their count as their stack size, so 'first to 3' is a stack of
+# three; set amount: if you would rather they all looked the same.
+#
+# Every value here is the one the plugin uses when the key is missing, so you
+# can delete any line, any item, or this whole file: the menu goes back to
+# looking exactly as it ships. There is no reset command because deleting IS
+# the reset.
+#
+# Each item takes:
+#   slot      0-based, counting left to right then down (row 1 is 0-8)
+#   material  any Minecraft item id, e.g. CLOCK, PAPER, LIME_DYE
+#   amount    stack size shown on the icon, 1-64
+#   name      the item's title
+#   lore      the lines under it; "" is a blank spacer line
+#   glow      true to force the enchanted shimmer, false to force it off
+#
+# An item with lore-on and lore-off has two faces - one for when the thing
+# it controls is on, one for when it is off. name-on/name-off and
+# material-on/material-off work the same way, and a plain name:/material:
+# covers both states.
+#
+# Theme placeholders, usable in any name or lore in any menu. These follow
+# theme: in config.yml, so one edit there restyles every screen:
+#   {value} {label} {muted} {good} {bad} {warn}   colours
+#   {tick} {cross} {sep} {hint}                   the house symbols
+# Write a colour out instead if you want one line to ignore the theme.
+#
+# Colours: <yellow>, <gold>, <#FF2E55> for a custom colour, or
+# <gradient:#7CFF6B:#1FA32F>text</gradient>. Legacy &e codes work too.
+#
+# Placeholders usable in any name or lore on this screen:
+#   {opponent}     the other party's leader
+#   {kit}          the chosen kit
+#   {ours}         how many of ours are online
+#   {theirs}       how many of theirs are
+#   {rounds}       the round count
+#   {description}  the mode's description
+#
+# The text below is written in small capitals (ᴛʜɪꜱ ꜱᴛʏʟᴇ). That is just what
+# the characters are - type ordinary letters if you would rather have them.
+# -------------------------------------------------------------------------
+
+title: "<dark_gray>▏ <gradient:#7DE2FF:#4B7BFF>ᴘᴀʀᴛʏ ᴅᴜᴇʟꜱ</gradient> {sep}{value}{opponent}"
+rows: 4
+
+# Uncomment to give this one screen a different frame from the rest of the
+# plugin. Leave it out and it follows theme.filler in config.yml.
+#filler: "GRAY_STAINED_GLASS_PANE"
+#filler-name: " "
+
+items:
+
+  # The read-out: kit, sides, rounds.
+  info:
+    slot: 4
+    material: PLAYER_HEAD
+    name: "<gradient:#7DE2FF:#4B7BFF>{opponent}</gradient>{label}'ꜱ ᴘᴀʀᴛʏ"
+    lore:
+      - ""
+      - "{label}ᴋɪᴛ {sep}{kit}"
+      - "{label}ꜱɪᴅᴇꜱ {sep}{value}{ours} {label}ᴠꜱ {value}{theirs}"
+      - "{label}ʀᴏᴜɴᴅꜱ {sep}{value}ꜰɪʀꜱᴛ ᴛᴏ {rounds}"
+      - ""
+      - "{label}{description}"
+
+  # The four round options. Its on face is the one chosen.
+  rounds:
+    material: PAPER
+    name-on: "{good}ꜰɪʀꜱᴛ ᴛᴏ {rounds}"
+    name-off: "{value}ꜰɪʀꜱᴛ ᴛᴏ {rounds}"
+    glow-on: true
+    lore-on:
+      - ""
+      - "{good}ꜱᴇʟᴇᴄᴛᴇᴅ"
+    lore-off:
+      - ""
+      - "{hint}ᴄʟɪᴄᴋ ᴛᴏ ᴘɪᴄᴋ"
+
+  # Returns to the opponent picker.
+  back:
+    slot: 27
+    material: ARROW
+    name: "{value}ʙᴀᴄᴋ"
+    lore:
+      - ""
+      - "{hint}ᴄʟɪᴄᴋ ᴛᴏ ɢᴏ ʙᴀᴄᴋ"
+
+  # Its off face is a match that cannot start - only the on face
+  # carries the tag a click acts on.
+  start:
+    slot: 22
+    material-on: LIME_DYE
+    material-off: GRAY_DYE
+    name-on: "<gradient:{go-from}:{go-to}>{tick}ꜱᴛᴀʀᴛ</gradient>"
+    name-off: "{muted}{cross}ɴᴏᴛ ʀᴇᴀᴅʏ"
+    glow-on: true
+    lore-on:
+      - ""
+      - "{label}ᴛᴇᴀᴍ ᴠꜱ ᴛᴇᴀᴍ ᴜɴᴛɪʟ ᴏɴᴇ ꜱɪᴅᴇ ɪꜱ ᴏᴜᴛ"
+    lore-off:
+      - ""
+      - "{bad}ʙᴏᴛʜ ᴘᴀʀᴛɪᴇꜱ ɴᴇᴇᴅ ꜱᴏᴍᴇᴏɴᴇ ᴏɴʟɪɴᴇ"

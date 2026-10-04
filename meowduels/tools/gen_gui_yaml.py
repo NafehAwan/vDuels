@@ -247,6 +247,36 @@ NOTES = {
          "leave-leader": "Leaving as the leader, which disbands the party.",
          "leave-member": "Leaving as a member."},
     ),
+    "partyduelsconfirm": (
+        "The last screen before a party-versus-party match. The round buttons\n"
+        "wear their count as their stack size, so 'first to 3' is a stack of\n"
+        "three; set amount: if you would rather they all looked the same.",
+        {"opponent": "the other party's leader", "kit": "the chosen kit",
+         "ours": "how many of ours are online", "theirs": "how many of theirs are",
+         "rounds": "the round count", "description": "the mode's description"},
+        {"info": "The read-out: kit, sides, rounds.",
+         "rounds": "The four round options. Its on face is the one chosen.",
+         "back": "Returns to the opponent picker.",
+         "start": "Its off face is a match that cannot start - only the on face\n"
+                  "# carries the tag a click acts on."},
+    ),
+    "partyteam": (
+        "/party start > Split - who is on which side. Opens with the party\n"
+        "already shuffled into two fair teams rather than an empty board.",
+        {"player": "a member's name", "kit": "the chosen kit",
+         "size": "the party size, or a side's size on the banners",
+         "mode": "the mode's name", "state": "from state-offline, or empty"},
+        {"divider": "The column down the middle. Iron bars rather than a pane,\n"
+                    "# since the backdrop is panes.",
+         "banner-aqua": "The header over the left side.",
+         "banner-red": "The header over the right side.",
+         "head-aqua": "One head per player on the left side.",
+         "head-red": "One head per player on the right side.",
+         "shuffle": "Re-splits the party at random.",
+         "info": "Kit and headcount.",
+         "start": "Its off face is a side with nobody on it.",
+         "back": "Returns to the mode picker."},
+    ),
     "editkitlist": (
         "/editkit - pick a kit to edit its start-of-match potion effects.",
         {"kit": "the kit's id", "effects": "how many start effects it has"},

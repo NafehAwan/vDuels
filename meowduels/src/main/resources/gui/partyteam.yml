@@ -1,0 +1,141 @@
+# -------------------------------------------------------------------------
+# /party start > Split - who is on which side. Opens with the party
+# already shuffled into two fair teams rather than an empty board.
+#
+# Every value here is the one the plugin uses when the key is missing, so you
+# can delete any line, any item, or this whole file: the menu goes back to
+# looking exactly as it ships. There is no reset command because deleting IS
+# the reset.
+#
+# Each item takes:
+#   slot      0-based, counting left to right then down (row 1 is 0-8)
+#   material  any Minecraft item id, e.g. CLOCK, PAPER, LIME_DYE
+#   amount    stack size shown on the icon, 1-64
+#   name      the item's title
+#   lore      the lines under it; "" is a blank spacer line
+#   glow      true to force the enchanted shimmer, false to force it off
+#
+# An item with lore-on and lore-off has two faces - one for when the thing
+# it controls is on, one for when it is off. name-on/name-off and
+# material-on/material-off work the same way, and a plain name:/material:
+# covers both states.
+#
+# Theme placeholders, usable in any name or lore in any menu. These follow
+# theme: in config.yml, so one edit there restyles every screen:
+#   {value} {label} {muted} {good} {bad} {warn}   colours
+#   {tick} {cross} {sep} {hint}                   the house symbols
+# Write a colour out instead if you want one line to ignore the theme.
+#
+# Colours: <yellow>, <gold>, <#FF2E55> for a custom colour, or
+# <gradient:#7CFF6B:#1FA32F>text</gradient>. Legacy &e codes work too.
+#
+# Placeholders usable in any name or lore on this screen:
+#   {player}  a member's name
+#   {kit}     the chosen kit
+#   {size}    the party size, or a side's size on the banners
+#   {mode}    the mode's name
+#   {state}   from state-offline, or empty
+#
+# The text below is written in small capitals (ᴛʜɪꜱ ꜱᴛʏʟᴇ). That is just what
+# the characters are - type ordinary letters if you would rather have them.
+# -------------------------------------------------------------------------
+
+title: "<dark_gray>▏ <gradient:#7DE2FF:#4B7BFF>ᴘᴀʀᴛʏ ꜱᴘʟɪᴛ - ᴛᴇᴀᴍꜱ</gradient>"
+rows: 6
+
+# Uncomment to give this one screen a different frame from the rest of the
+# plugin. Leave it out and it follows theme.filler in config.yml.
+#filler: "GRAY_STAINED_GLASS_PANE"
+#filler-name: " "
+
+items:
+
+  # The column down the middle. Iron bars rather than a pane,
+  # since the backdrop is panes.
+  divider:
+    material: IRON_BARS
+    name: " "
+
+  # The header over the left side.
+  banner-aqua:
+    material: LIGHT_BLUE_STAINED_GLASS_PANE
+    name: "<gradient:#7DE2FF:#2BB9E8>ᴛᴇᴀᴍ ᴀꞯᴜᴀ</gradient>"
+    lore:
+      - ""
+      - "{label}ᴏɴ ᴛʜɪꜱ ꜱɪᴅᴇ {sep}{value}{size}"
+
+  # The header over the right side.
+  banner-red:
+    material: RED_STAINED_GLASS_PANE
+    name: "<gradient:#FF8A8A:#D63232>ᴛᴇᴀᴍ ʀᴇᴅ</gradient>"
+    lore:
+      - ""
+      - "{label}ᴏɴ ᴛʜɪꜱ ꜱɪᴅᴇ {sep}{value}{size}"
+
+  # Returns to the mode picker.
+  back:
+    slot: 45
+    material: ARROW
+    name: "{value}ʙᴀᴄᴋ"
+    lore:
+      - ""
+      - "{hint}ᴄʟɪᴄᴋ ᴛᴏ ɢᴏ ʙᴀᴄᴋ"
+
+  # Re-splits the party at random.
+  shuffle:
+    slot: 47
+    material: ENDER_PEARL
+    name: "<gradient:#7DE2FF:#4B7BFF>ꜱʜᴜꜰꜰʟᴇ</gradient>"
+    lore:
+      - ""
+      - "{label}ꜱᴘʟɪᴛ ᴛʜᴇ ᴘᴀʀᴛʏ ᴀᴛ ʀᴀɴᴅᴏᴍ ᴀɢᴀɪɴ"
+
+  # Kit and headcount.
+  info:
+    slot: 49
+    material: PAPER
+    name: "<gradient:#7DE2FF:#4B7BFF>{mode}</gradient>"
+    lore:
+      - ""
+      - "{label}ᴋɪᴛ {sep}{kit}"
+      - "{label}ᴘʟᴀʏᴇʀꜱ {sep}{value}{size}"
+      - ""
+      - "{hint}ᴄʟɪᴄᴋ ᴀ ʜᴇᴀᴅ ᴛᴏ ᴍᴏᴠᴇ ɪᴛ ᴀᴄʀᴏꜱꜱ"
+
+  # Its off face is a side with nobody on it.
+  start:
+    slot: 51
+    material-on: LIME_DYE
+    material-off: GRAY_DYE
+    name-on: "<gradient:{go-from}:{go-to}>ꜱᴛᴀʀᴛ ᴍᴀᴛᴄʜ</gradient>"
+    name-off: "{muted}ꜱᴛᴀʀᴛ ᴍᴀᴛᴄʜ"
+    glow-on: true
+    lore-on:
+      - ""
+      - "{label}ꜱᴇɴᴅ ʙᴏᴛʜ ᴛᴇᴀᴍꜱ ɪɴ"
+    lore-off:
+      - ""
+      - "<#FF8A93>ʙᴏᴛʜ ᴛᴇᴀᴍꜱ ɴᴇᴇᴅ ᴀ ᴘʟᴀʏᴇʀ"
+
+  # One head per player on the left side.
+  head-aqua:
+    material: PLAYER_HEAD
+    name: "<gradient:#7DE2FF:#2BB9E8>{player}</gradient>"
+    state-offline: "{muted}ᴏꜰꜰʟɪɴᴇ"
+    lore:
+      - ""
+      - "{label}ᴛᴇᴀᴍ {sep}<gradient:#7DE2FF:#2BB9E8>ᴛᴇᴀᴍ ᴀꞯᴜᴀ</gradient>"
+      - "{state}"
+      - ""
+      - "{hint}ᴄʟɪᴄᴋ ᴛᴏ ᴍᴏᴠᴇ ᴛᴏ ᴛʜᴇ ᴏᴛʜᴇʀ ᴛᴇᴀᴍ"
+
+  # One head per player on the right side.
+  head-red:
+    material: PLAYER_HEAD
+    name: "<gradient:#FF8A8A:#D63232>{player}</gradient>"
+    lore:
+      - ""
+      - "{label}ᴛᴇᴀᴍ {sep}<gradient:#FF8A8A:#D63232>ᴛᴇᴀᴍ ʀᴇᴅ</gradient>"
+      - "{state}"
+      - ""
+      - "{hint}ᴄʟɪᴄᴋ ᴛᴏ ᴍᴏᴠᴇ ᴛᴏ ᴛʜᴇ ᴏᴛʜᴇʀ ᴛᴇᴀᴍ"

@@ -2,12 +2,16 @@ package com.meowduels.gui;
 
 import com.meowduels.MeowDuels;
 import com.meowduels.gui.Menu;
+import com.meowduels.managers.GuiConfigManager;
+import com.meowduels.managers.GuiConfigManager.Face;
 import com.meowduels.model.Kit;
 import com.meowduels.model.Party;
 import com.meowduels.model.PartyMode;
 import com.meowduels.util.Items;
 import com.meowduels.util.Text;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -32,6 +36,9 @@ import org.bukkit.inventory.ItemStack;
  */
 public class PartyTeamMenu
 extends Menu {
+    /** The name of this screen's file: {@code gui/partyteam.yml}. */
+    private static final String MENU = "partyteam";
+
     private static final int ROWS = 6;
     private static final int SIZE = ROWS * 9;
     /** Column 4 is the divider; 0-3 are aqua, 5-8 are red. */
@@ -74,51 +81,80 @@ extends Menu {
         if (party.getTeams().isEmpty()) {
             party.shuffleTeams();
         }
-        this.createRaw(ROWS, "<dark_gray>\u258f " + PartyModeMenu.accent("\u1d18\u1d00\u0280\u1d1b\u028f \ua731\u1d18\u029f\u026a\u1d1b - \u1d1b\u1d07\u1d00\u1d0d\ua731"));
-        Style.frame(this.inventory, ROWS);
+        GuiConfigManager gui = this.plugin.gui();
+        int rows = gui.rows(MENU, ROWS);
+        int last = rows * 9 - 1;
+        Map<String, String> tokens = new HashMap<String, String>();
+        tokens.put("kit", this.kitLabel(party));
+        tokens.put("size", String.valueOf(party.size()));
+        tokens.put("mode", PartyMode.SPLIT.getLabel());
+        this.createRaw(rows, gui.title(MENU,
+                "<dark_gray>\u258f <gradient:#7DE2FF:#4B7BFF>\u1d18\u1d00\u0280\u1d1b\u028f \ua731\u1d18\u029f\u026a\u1d1b - \u1d1b\u1d07\u1d00\u1d0d\ua731</gradient>"));
+        gui.frame(MENU, this.inventory, rows);
         // Iron bars, not a pane: the backdrop is panes now, so a pane divider
         // would be a line drawn in the same colour as the thing it divides.
-        ItemStack divider = Items.of(Material.IRON_BARS).rawName(" ").build();
+        ItemStack divider = gui.face(MENU, "divider", null,
+                                    Face.of(Material.IRON_BARS, " ")).build();
         // Stops above the bottom bar: the bar is shared by both sides, and a
         // divider running through it would be a line the buttons then sit on
         // top of.
-        for (int row = 0; row < ROWS - 1; ++row) {
+        for (int row = 0; row < rows - 1; ++row) {
             this.inventory.setItem(row * 9 + DIVIDER_COL, divider);
         }
-        this.inventory.setItem(DIVIDER_COL - 2, this.banner(party, Party.Team.AQUA));
-        this.inventory.setItem(DIVIDER_COL + 2, this.banner(party, Party.Team.RED));
+        Map<String, String> aquaTokens = new HashMap<String, String>();
+        aquaTokens.put("size", String.valueOf(party.teamMembers(Party.Team.AQUA).size()));
+        Map<String, String> redTokens = new HashMap<String, String>();
+        redTokens.put("size", String.valueOf(party.teamMembers(Party.Team.RED).size()));
+        this.inventory.setItem(DIVIDER_COL - 2,
+                gui.face(MENU, "banner-aqua", aquaTokens,
+                         Face.of(Material.LIGHT_BLUE_STAINED_GLASS_PANE,
+                                 "<gradient:#7DE2FF:#2BB9E8>\u1d1b\u1d07\u1d00\u1d0d \u1d00\ua7af\u1d1c\u1d00</gradient>",
+                                 "",
+                                 "{label}\u1d0f\u0274 \u1d1b\u029c\u026a\ua731 \ua731\u026a\u1d05\u1d07 {sep}{value}{size}"))
+                        .hideTooltip().build());
+        this.inventory.setItem(DIVIDER_COL + 2,
+                gui.face(MENU, "banner-red", redTokens,
+                         Face.of(Material.RED_STAINED_GLASS_PANE,
+                                 "<gradient:#FF8A8A:#D63232>\u1d1b\u1d07\u1d00\u1d0d \u0280\u1d07\u1d05</gradient>",
+                                 "",
+                                 "{label}\u1d0f\u0274 \u1d1b\u029c\u026a\ua731 \ua731\u026a\u1d05\u1d07 {sep}{value}{size}"))
+                        .hideTooltip().build());
         this.fill(party, Party.Team.AQUA, AQUA_COLS);
         this.fill(party, Party.Team.RED, RED_COLS);
 
         boolean ready = party.aliveOrMembers(Party.Team.AQUA) > 0
                 && party.aliveOrMembers(Party.Team.RED) > 0;
-        this.inventory.setItem(SLOT_BACK, Style.back(this.plugin.keyButton(), "team-back"));
-        this.inventory.setItem(SLOT_SHUFFLE, Items.of(Material.ENDER_PEARL)
-                .rawName(PartyModeMenu.accent("\ua731\u029c\u1d1c\ua730\ua730\u029f\u1d07"))
-                .rawLore("", LABEL + "\ua731\u1d18\u029f\u026a\u1d1b \u1d1b\u029c\u1d07 \u1d18\u1d00\u0280\u1d1b\u028f \u1d00\u1d1b \u0280\u1d00\u0274\u1d05\u1d0f\u1d0d \u1d00\u0262\u1d00\u026a\u0274")
-                .hideTooltip().tag(this.plugin.keyButton(), "team-shuffle").build());
-        this.inventory.setItem(SLOT_INFO, Items.of(Material.PAPER)
-                .rawName(PartyModeMenu.accent(PartyMode.SPLIT.getLabel()))
-                .rawLore("",
-                         LABEL + "\u1d0b\u026a\u1d1b " + SEP + this.kitLabel(party),
-                         LABEL + "\u1d18\u029f\u1d00\u028f\u1d07\u0280\ua731 " + SEP + VALUE + party.size(),
-                         "",
-                         HINT + "\u1d04\u029f\u026a\u1d04\u1d0b \u1d00 \u029c\u1d07\u1d00\u1d05 \u1d1b\u1d0f \u1d0d\u1d0f\u1d20\u1d07 \u026a\u1d1b \u1d00\u1d04\u0280\u1d0f\ua731\ua731")
-                .hideTooltip().build());
-        this.inventory.setItem(SLOT_START, Items.of(ready ? Material.LIME_DYE : Material.GRAY_DYE)
-                .rawName(ready ? "<gradient:#7CFF6B:#1FA32F>\ua731\u1d1b\u1d00\u0280\u1d1b \u1d0d\u1d00\u1d1b\u1d04\u029c</gradient>" : MUTED + "\ua731\u1d1b\u1d00\u0280\u1d1b \u1d0d\u1d00\u1d1b\u1d04\u029c")
-                .rawLore("", ready ? LABEL + "\ua731\u1d07\u0274\u1d05 \u0299\u1d0f\u1d1b\u029c \u1d1b\u1d07\u1d00\u1d0d\ua731 \u026a\u0274" : "<#FF8A93>\u0299\u1d0f\u1d1b\u029c \u1d1b\u1d07\u1d00\u1d0d\ua731 \u0274\u1d07\u1d07\u1d05 \u1d00 \u1d18\u029f\u1d00\u028f\u1d07\u0280")
-                .glow(ready).hideTooltip()
-                .tag(this.plugin.keyButton(), "team-start").build());
+        this.inventory.setItem(Math.min(last, gui.slot(MENU, "back", SLOT_BACK, rows)),
+                gui.back(MENU, "back").tag(this.plugin.keyButton(), "team-back").build());
+        this.inventory.setItem(Math.min(last, gui.slot(MENU, "shuffle", SLOT_SHUFFLE, rows)),
+                gui.face(MENU, "shuffle", tokens,
+                         Face.of(Material.ENDER_PEARL,
+                                 "<gradient:#7DE2FF:#4B7BFF>\ua731\u029c\u1d1c\ua730\ua730\u029f\u1d07</gradient>",
+                                 "",
+                                 "{label}\ua731\u1d18\u029f\u026a\u1d1b \u1d1b\u029c\u1d07 \u1d18\u1d00\u0280\u1d1b\u028f \u1d00\u1d1b \u0280\u1d00\u0274\u1d05\u1d0f\u1d0d \u1d00\u0262\u1d00\u026a\u0274"))
+                        .hideTooltip().tag(this.plugin.keyButton(), "team-shuffle").build());
+        this.inventory.setItem(Math.min(last, gui.slot(MENU, "info", SLOT_INFO, rows)),
+                gui.face(MENU, "info", tokens,
+                         Face.of(Material.PAPER,
+                                 "<gradient:#7DE2FF:#4B7BFF>{mode}</gradient>",
+                                 "",
+                                 "{label}\u1d0b\u026a\u1d1b {sep}{kit}",
+                                 "{label}\u1d18\u029f\u1d00\u028f\u1d07\u0280\ua731 {sep}{value}{size}",
+                                 "",
+                                 "{hint}\u1d04\u029f\u026a\u1d04\u1d0b \u1d00 \u029c\u1d07\u1d00\u1d05 \u1d1b\u1d0f \u1d0d\u1d0f\u1d20\u1d07 \u026a\u1d1b \u1d00\u1d04\u0280\u1d0f\ua731\ua731"))
+                        .hideTooltip().build());
+        this.inventory.setItem(Math.min(last, gui.slot(MENU, "start", SLOT_START, rows)),
+                gui.toggle(MENU, "start", ready, tokens,
+                        Face.of(Material.LIME_DYE,
+                                "<gradient:{go-from}:{go-to}>\ua731\u1d1b\u1d00\u0280\u1d1b \u1d0d\u1d00\u1d1b\u1d04\u029c</gradient>",
+                                "",
+                                "{label}\ua731\u1d07\u0274\u1d05 \u0299\u1d0f\u1d1b\u029c \u1d1b\u1d07\u1d00\u1d0d\ua731 \u026a\u0274").glow(),
+                        Face.of(Material.GRAY_DYE,
+                                "{muted}\ua731\u1d1b\u1d00\u0280\u1d1b \u1d0d\u1d00\u1d1b\u1d04\u029c",
+                                "",
+                                "<#FF8A93>\u0299\u1d0f\u1d1b\u029c \u1d1b\u1d07\u1d00\u1d0d\ua731 \u0274\u1d07\u1d07\u1d05 \u1d00 \u1d18\u029f\u1d00\u028f\u1d07\u0280"))
+                        .hideTooltip().tag(this.plugin.keyButton(), "team-start").build());
         player.openInventory(this.inventory);
-    }
-
-    private ItemStack banner(Party party, Party.Team team) {
-        boolean aqua = team == Party.Team.AQUA;
-        return Items.of(aqua ? Material.LIGHT_BLUE_STAINED_GLASS_PANE : Material.RED_STAINED_GLASS_PANE)
-                .rawName((aqua ? AQUA : RED) + (aqua ? "\u1d1b\u1d07\u1d00\u1d0d \u1d00\ua7af\u1d1c\u1d00" : "\u1d1b\u1d07\u1d00\u1d0d \u0280\u1d07\u1d05") + "</gradient>")
-                .rawLore("", LABEL + "\u1d0f\u0274 \u1d1b\u029c\u026a\ua731 \ua731\u026a\u1d05\u1d07 " + SEP + VALUE + party.teamMembers(team).size())
-                .hideTooltip().build();
     }
 
     /** Heads down the four columns of one side, filling left to right. */
@@ -130,16 +166,38 @@ extends Menu {
         }
     }
 
+    /**
+     * One player's head, on whichever side they are on.
+     *
+     * <p>Two items rather than two faces of one, because the colour runs
+     * through the name, the team line and nothing else: a server recolouring
+     * one side should not have to pick the right half of a pair of faces.
+     */
     private ItemStack head(Party party, UUID id, Party.Team team) {
-        boolean aqua = team == Party.Team.AQUA;
-        boolean online = Bukkit.getPlayer((UUID)id) != null;
-        return Items.of(Material.PLAYER_HEAD)
-                .skull(Bukkit.getOfflinePlayer((UUID)id))
-                .rawName((aqua ? AQUA : RED) + this.nameOf(id) + "</gradient>")
-                .rawLore("",
-                         LABEL + "\u1d1b\u1d07\u1d00\u1d0d " + SEP + (aqua ? AQUA + "\u1d1b\u1d07\u1d00\u1d0d \u1d00\ua7af\u1d1c\u1d00</gradient>" : RED + "\u1d1b\u1d07\u1d00\u1d0d \u0280\u1d07\u1d05</gradient>"),
-                         online ? "" : MUTED + "\u1d0f\ua730\ua730\u029f\u026a\u0274\u1d07",
-                         "", HINT + "\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \u1d0d\u1d0f\u1d20\u1d07 \u1d1b\u1d0f \u1d1b\u029c\u1d07 \u1d0f\u1d1b\u029c\u1d07\u0280 \u1d1b\u1d07\u1d00\u1d0d")
+        GuiConfigManager gui = this.plugin.gui();
+        Map<String, String> tokens = new HashMap<String, String>();
+        tokens.put("player", this.nameOf(id));
+        tokens.put("state", Bukkit.getPlayer((UUID)id) != null ? ""
+                : gui.line(MENU, "head-aqua", "state-offline",
+                           "{muted}\u1d0f\ua730\ua730\u029f\u026a\u0274\u1d07", null));
+        Items item = team == Party.Team.AQUA
+                ? gui.face(MENU, "head-aqua", tokens,
+                           Face.of(Material.PLAYER_HEAD,
+                                   "<gradient:#7DE2FF:#2BB9E8>{player}</gradient>",
+                                   "",
+                                   "{label}\u1d1b\u1d07\u1d00\u1d0d {sep}<gradient:#7DE2FF:#2BB9E8>\u1d1b\u1d07\u1d00\u1d0d \u1d00\ua7af\u1d1c\u1d00</gradient>",
+                                   "{state}",
+                                   "",
+                                   "{hint}\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \u1d0d\u1d0f\u1d20\u1d07 \u1d1b\u1d0f \u1d1b\u029c\u1d07 \u1d0f\u1d1b\u029c\u1d07\u0280 \u1d1b\u1d07\u1d00\u1d0d"))
+                : gui.face(MENU, "head-red", tokens,
+                           Face.of(Material.PLAYER_HEAD,
+                                   "<gradient:#FF8A8A:#D63232>{player}</gradient>",
+                                   "",
+                                   "{label}\u1d1b\u1d07\u1d00\u1d0d {sep}<gradient:#FF8A8A:#D63232>\u1d1b\u1d07\u1d00\u1d0d \u0280\u1d07\u1d05</gradient>",
+                                   "{state}",
+                                   "",
+                                   "{hint}\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \u1d0d\u1d0f\u1d20\u1d07 \u1d1b\u1d0f \u1d1b\u029c\u1d07 \u1d0f\u1d1b\u029c\u1d07\u0280 \u1d1b\u1d07\u1d00\u1d0d"));
+        return item.skull(Bukkit.getOfflinePlayer((UUID)id))
                 .hideTooltip()
                 .tag(this.plugin.keyButton(), "team-move:" + id.toString()).build();
     }

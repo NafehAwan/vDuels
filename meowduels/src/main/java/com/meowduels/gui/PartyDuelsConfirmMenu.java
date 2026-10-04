@@ -2,11 +2,15 @@ package com.meowduels.gui;
 
 import com.meowduels.MeowDuels;
 import com.meowduels.gui.Menu;
+import com.meowduels.managers.GuiConfigManager;
+import com.meowduels.managers.GuiConfigManager.Face;
 import com.meowduels.model.Kit;
 import com.meowduels.model.Party;
 import com.meowduels.model.PartyMode;
 import com.meowduels.util.Items;
 import com.meowduels.util.Text;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -26,6 +30,9 @@ public class PartyDuelsConfirmMenu
 extends Menu {
     // Four rows, not five: the fifth was two empty interior rows padding a
     // window that asks one question.
+    /** The name of this screen's file: {@code gui/partyduelsconfirm.yml}. */
+    private static final String MENU = "partyduelsconfirm";
+
     private static final int ROWS = 4;
     private static final int SLOT_INFO = 4;
     private static final int[] ROUND_SLOTS = new int[]{11, 13, 15};
@@ -62,39 +69,69 @@ extends Menu {
             new PartyOpponentMenu(this.plugin).open(player);
             return;
         }
-        this.createRaw(ROWS, Style.title("#7DE2FF", "#4B7BFF",
-                "ᴘᴀʀᴛʏ ᴅᴜᴇʟꜱ", this.nameOf(target.getLeader())));
-        Style.frame(this.inventory, ROWS);
+        GuiConfigManager gui = this.plugin.gui();
+        int rows = gui.rows(MENU, ROWS);
+        int last = rows * 9 - 1;
         int ours = this.onlineCount(party);
         int theirs = this.onlineCount(target);
-        this.inventory.setItem(SLOT_INFO, Items.of(Material.PLAYER_HEAD)
-                .skull(Bukkit.getOfflinePlayer((UUID)target.getLeader()))
-                .rawName(PartyModeMenu.accent(this.nameOf(target.getLeader())) + LABEL + "'ꜱ ᴘᴀʀᴛʏ")
-                .rawLore("",
-                         LABEL + "ᴋɪᴛ " + SEP + this.kitLabel(party),
-                         LABEL + "ꜱɪᴅᴇꜱ " + SEP + VALUE + ours + " " + LABEL + "ᴠꜱ " + VALUE + theirs,
-                         LABEL + "ʀᴏᴜɴᴅꜱ " + SEP + VALUE + "ꜰɪʀꜱᴛ ᴛᴏ " + party.getDuelRounds(),
-                         "",
-                         LABEL + PartyMode.DUELS.getDescription())
-                .hideTooltip().build());
+        Map<String, String> tokens = new HashMap<String, String>();
+        tokens.put("opponent", this.nameOf(target.getLeader()));
+        tokens.put("kit", this.kitLabel(party));
+        tokens.put("ours", String.valueOf(ours));
+        tokens.put("theirs", String.valueOf(theirs));
+        tokens.put("rounds", String.valueOf(party.getDuelRounds()));
+        tokens.put("description", PartyMode.DUELS.getDescription());
+        this.createRaw(rows, gui.title(MENU,
+                "<dark_gray>▏ <gradient:#7DE2FF:#4B7BFF>ᴘᴀʀᴛʏ ᴅᴜᴇʟꜱ</gradient> {sep}{value}{opponent}", tokens));
+        gui.frame(MENU, this.inventory, rows);
+        this.inventory.setItem(Math.min(last, gui.slot(MENU, "info", SLOT_INFO, rows)),
+                gui.face(MENU, "info", tokens,
+                         Face.of(Material.PLAYER_HEAD,
+                                 "<gradient:#7DE2FF:#4B7BFF>{opponent}</gradient>{label}'ꜱ ᴘᴀʀᴛʏ",
+                                 "",
+                                 "{label}ᴋɪᴛ {sep}{kit}",
+                                 "{label}ꜱɪᴅᴇꜱ {sep}{value}{ours} {label}ᴠꜱ {value}{theirs}",
+                                 "{label}ʀᴏᴜɴᴅꜱ {sep}{value}ꜰɪʀꜱᴛ ᴛᴏ {rounds}",
+                                 "",
+                                 "{label}{description}"))
+                        .skull(Bukkit.getOfflinePlayer((UUID)target.getLeader()))
+                        .hideTooltip().build());
+        // The four round options. Each wears its own count as its stack size,
+        // so "first to 3" is a stack of three.
         for (int i = 0; i < ROUND_SLOTS.length; ++i) {
             int value = ROUND_VALUES[i];
-            boolean on = party.getDuelRounds() == value;
-            this.inventory.setItem(ROUND_SLOTS[i], Items.of(Material.PAPER, value)
-                    .rawName((on ? "<#7CFF6B>" : VALUE) + "ꜰɪʀꜱᴛ ᴛᴏ " + value)
-                    .rawLore("", on ? "<#7CFF6B>ꜱᴇʟᴇᴄᴛᴇᴅ"
-                            : HINT + "ᴄʟɪᴄᴋ ᴛᴏ ᴘɪᴄᴋ")
-                    .glow(on).hideTooltip()
-                    .tag(this.plugin.keyButton(), "pd-rounds:" + value).build());
+            Map<String, String> round = new HashMap<String, String>();
+            round.put("rounds", String.valueOf(value));
+            this.inventory.setItem(ROUND_SLOTS[i],
+                    gui.toggle(MENU, "rounds", party.getDuelRounds() == value, round,
+                            Face.of(Material.PAPER,
+                                    "{good}ꜰɪʀꜱᴛ ᴛᴏ {rounds}",
+                                    "",
+                                    "{good}ꜱᴇʟᴇᴄᴛᴇᴅ").amount(value).glow(),
+                            Face.of(Material.PAPER,
+                                    "{value}ꜰɪʀꜱᴛ ᴛᴏ {rounds}",
+                                    "",
+                                    "{hint}ᴄʟɪᴄᴋ ᴛᴏ ᴘɪᴄᴋ").amount(value))
+                            .hideTooltip()
+                            .tag(this.plugin.keyButton(), "pd-rounds:" + value).build());
         }
-        this.inventory.setItem(SLOT_BACK, Style.back(this.plugin.keyButton(), "pd-back"));
+        this.inventory.setItem(Math.min(last, gui.slot(MENU, "back", SLOT_BACK, rows)),
+                gui.back(MENU, "back").tag(this.plugin.keyButton(), "pd-back").build());
+        // The tag differs by state on purpose: only the ready button carries
+        // the one onClick acts on, so a click on "not ready" does nothing.
         boolean ready = ours > 0 && theirs > 0 && party.getKit() != null;
-        this.inventory.setItem(SLOT_START, Style.confirm(this.plugin.keyButton(),
-                ready ? "pd-go" : "pd-none", ready,
-                "ꜱᴛᴀʀᴛ", "ɴᴏᴛ ʀᴇᴀᴅʏ",
-                "", ready
-                        ? LABEL + "ᴛᴇᴀᴍ ᴠꜱ ᴛᴇᴀᴍ ᴜɴᴛɪʟ ᴏɴᴇ ꜱɪᴅᴇ ɪꜱ ᴏᴜᴛ"
-                        : Style.BAD + "ʙᴏᴛʜ ᴘᴀʀᴛɪᴇꜱ ɴᴇᴇᴅ ꜱᴏᴍᴇᴏɴᴇ ᴏɴʟɪɴᴇ"));
+        this.inventory.setItem(Math.min(last, gui.slot(MENU, "start", SLOT_START, rows)),
+                gui.toggle(MENU, "start", ready, tokens,
+                        Face.of(Material.LIME_DYE,
+                                "<gradient:{go-from}:{go-to}>{tick}ꜱᴛᴀʀᴛ</gradient>",
+                                "",
+                                "{label}ᴛᴇᴀᴍ ᴠꜱ ᴛᴇᴀᴍ ᴜɴᴛɪʟ ᴏɴᴇ ꜱɪᴅᴇ ɪꜱ ᴏᴜᴛ").glow(),
+                        Face.of(Material.GRAY_DYE,
+                                "{muted}{cross}ɴᴏᴛ ʀᴇᴀᴅʏ",
+                                "",
+                                "{bad}ʙᴏᴛʜ ᴘᴀʀᴛɪᴇꜱ ɴᴇᴇᴅ ꜱᴏᴍᴇᴏɴᴇ ᴏɴʟɪɴᴇ"))
+                        .hideTooltip()
+                        .tag(this.plugin.keyButton(), ready ? "pd-go" : "pd-none").build());
         player.openInventory(this.inventory);
     }
 
