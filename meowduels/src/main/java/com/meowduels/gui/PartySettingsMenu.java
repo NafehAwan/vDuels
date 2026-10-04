@@ -2,6 +2,8 @@ package com.meowduels.gui;
 
 import com.meowduels.MeowDuels;
 import com.meowduels.gui.Menu;
+import com.meowduels.managers.GuiConfigManager;
+import com.meowduels.managers.GuiConfigManager.Face;
 import com.meowduels.model.Party;
 import com.meowduels.util.Items;
 import org.bukkit.Material;
@@ -34,10 +36,21 @@ extends Menu {
         this.plugin = plugin;
     }
 
+    /** The name of this screen's file: {@code gui/partysettings.yml}. */
+    private static final String MENU = "partysettings";
+
+    /** The tail every toggle here shares - state, a gap, then the hint. */
+    private static final String ON_STATE = "{good}{tick}\u1d0f\u0274";
+    private static final String OFF_STATE = "{bad}{cross}\u1d0f\ua730\ua730";
+    private static final String TOGGLE_HINT = "{hint}\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \u1d1b\u1d0f\u0262\u0262\u029f\u1d07";
+
     @Override
     public void build() {
-        this.createRaw(ROWS, Style.title("#FF8AD0", "#B04BD6", "\u1d18\u1d00\u0280\u1d1b\u028f \ua731\u1d07\u1d1b\u1d1b\u026a\u0274\u0262\ua731"));
-        Style.frame(this.inventory, ROWS);
+        GuiConfigManager gui = this.plugin.gui();
+        int rows = gui.rows(MENU, ROWS);
+        this.createRaw(rows, gui.title(MENU,
+                "<dark_gray>\u258f <gradient:#FF8AD0:#B04BD6>\u1d18\u1d00\u0280\u1d1b\u028f \ua731\u1d07\u1d1b\u1d1b\u026a\u0274\u0262\ua731</gradient>"));
+        gui.frame(MENU, this.inventory, rows);
     }
 
     @Override
@@ -53,22 +66,38 @@ extends Menu {
             player.sendMessage(com.meowduels.util.Text.prefixed("&cOnly the party leader can change party settings."));
             return;
         }
-        this.inventory.setItem(SLOT_OPEN, this.toggle(party.isOpenToAll(),
-                Material.ENDER_EYE, "\u1d0f\u1d18\u1d07\u0274 \u1d1b\u1d0f \u1d00\u029f\u029f", "\u1d00\u0274\u028f\u1d0f\u0274\u1d07 \u1d04\u1d00\u0274 \u1d0a\u1d0f\u026a\u0274 \u1d21\u026a\u1d1b\u029c\u1d0f\u1d1c\u1d1b \u1d00\u0274 \u026a\u0274\u1d20\u026a\u1d1b\u1d07", "party-set-open"));
-        this.inventory.setItem(SLOT_FF, this.toggle(party.isFriendlyFire(),
-                Material.IRON_SWORD, "\ua730\u0280\u026a\u1d07\u0274\u1d05\u029f\u028f \ua730\u026a\u0280\u1d07", "\u1d0d\u1d07\u1d0d\u0299\u1d07\u0280\ua731 \u1d04\u1d00\u0274 \u029c\u1d1c\u0280\u1d1b \u1d07\u1d00\u1d04\u029c \u1d0f\u1d1b\u029c\u1d07\u0280 \u1d0f\u1d1c\u1d1b\ua731\u026a\u1d05\u1d07 \u1d00 \u1d0d\u1d00\u1d1b\u1d04\u029c", "party-set-ff"));
-        this.inventory.setItem(SLOT_BACK, Style.back(this.plugin.keyButton(), "party-back"));
+        GuiConfigManager gui = this.plugin.gui();
+        int rows = this.inventory.getSize() / 9;
+        int size = this.inventory.getSize();
+        this.inventory.setItem(Math.min(size - 1, gui.slot(MENU, "open", SLOT_OPEN, rows)),
+                gui.toggle(MENU, "open", party.isOpenToAll(), null,
+                        Face.of(Material.ENDER_EYE,
+                                "{value}\u1d0f\u1d18\u1d07\u0274 \u1d1b\u1d0f \u1d00\u029f\u029f",
+                                "",
+                                "{label}\u1d00\u0274\u028f\u1d0f\u0274\u1d07 \u1d04\u1d00\u0274 \u1d0a\u1d0f\u026a\u0274 \u1d21\u026a\u1d1b\u029c\u1d0f\u1d1c\u1d1b \u1d00\u0274 \u026a\u0274\u1d20\u026a\u1d1b\u1d07",
+                                "", ON_STATE, "", TOGGLE_HINT).glow(),
+                        Face.of(Material.ENDER_EYE,
+                                "{value}\u1d0f\u1d18\u1d07\u0274 \u1d1b\u1d0f \u1d00\u029f\u029f",
+                                "",
+                                "{label}\u1d00\u0274\u028f\u1d0f\u0274\u1d07 \u1d04\u1d00\u0274 \u1d0a\u1d0f\u026a\u0274 \u1d21\u026a\u1d1b\u029c\u1d0f\u1d1c\u1d1b \u1d00\u0274 \u026a\u0274\u1d20\u026a\u1d1b\u1d07",
+                                "", OFF_STATE, "", TOGGLE_HINT))
+                        .tag(this.plugin.keyButton(), "party-set-open").build());
+        this.inventory.setItem(Math.min(size - 1, gui.slot(MENU, "friendly-fire", SLOT_FF, rows)),
+                gui.toggle(MENU, "friendly-fire", party.isFriendlyFire(), null,
+                        Face.of(Material.IRON_SWORD,
+                                "{value}\ua730\u0280\u026a\u1d07\u0274\u1d05\u029f\u028f \ua730\u026a\u0280\u1d07",
+                                "",
+                                "{label}\u1d0d\u1d07\u1d0d\u0299\u1d07\u0280\ua731 \u1d04\u1d00\u0274 \u029c\u1d1c\u0280\u1d1b \u1d07\u1d00\u1d04\u029c \u1d0f\u1d1b\u029c\u1d07\u0280 \u1d0f\u1d1c\u1d1b\ua731\u026a\u1d05\u1d07 \u1d00 \u1d0d\u1d00\u1d1b\u1d04\u029c",
+                                "", ON_STATE, "", TOGGLE_HINT).glow(),
+                        Face.of(Material.IRON_SWORD,
+                                "{value}\ua730\u0280\u026a\u1d07\u0274\u1d05\u029f\u028f \ua730\u026a\u0280\u1d07",
+                                "",
+                                "{label}\u1d0d\u1d07\u1d0d\u0299\u1d07\u0280\ua731 \u1d04\u1d00\u0274 \u029c\u1d1c\u0280\u1d1b \u1d07\u1d00\u1d04\u029c \u1d0f\u1d1b\u029c\u1d07\u0280 \u1d0f\u1d1c\u1d1b\ua731\u026a\u1d05\u1d07 \u1d00 \u1d0d\u1d00\u1d1b\u1d04\u029c",
+                                "", OFF_STATE, "", TOGGLE_HINT))
+                        .tag(this.plugin.keyButton(), "party-set-ff").build());
+        this.inventory.setItem(Math.min(size - 1, gui.slot(MENU, "back", SLOT_BACK, rows)),
+                gui.back(MENU, "back").tag(this.plugin.keyButton(), "party-back").build());
         player.openInventory(this.inventory);
-    }
-
-    /** Same shape as the player settings menu, so a toggle is a toggle. */
-    private ItemStack toggle(boolean on, Material icon, String name, String why, String tag) {
-        return Items.of(icon)
-                .rawName(Style.VALUE + name)
-                .rawLore("", Style.LABEL + why, "",
-                         Style.state(on, "\u1d0f\u0274", "\u1d0f\ua730\ua730"),
-                         "", Style.HINT + "\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \u1d1b\u1d0f\u0262\u0262\u029f\u1d07")
-                .glow(on).hideTooltip().tag(this.plugin.keyButton(), tag).build();
     }
 
     @Override

@@ -253,7 +253,13 @@ def resolve(arg, consts):
 # --------------------------------------------------------------------------
 # Every gui.<call>(...) in the menu sources.
 # --------------------------------------------------------------------------
-CALL = re.compile(r"\bgui\.(item|title|rows|slot|frame|name|lore|material|amount|toggle|face|titleOf|miniName)\s*\(")
+GCM_CONSTS = constants(gcm)
+BACK_NAME = GCM_CONSTS.get("BACK_NAME")
+BACK_LORE = GCM_CONSTS.get("BACK_LORE")
+if isinstance(BACK_LORE, tuple) and BACK_LORE[0] == "@arr":
+    BACK_LORE = list(BACK_LORE[1])
+
+CALL = re.compile(r"\bgui\.(item|title|rows|slot|frame|name|lore|material|amount|toggle|face|titleOf|miniName|back)\s*\(")
 
 reads = {}          # menuId -> {"title":str, "rows":int, "items":{id:{...}}}
 item_count = 0
@@ -303,6 +309,14 @@ for name in sorted(os.listdir(GUI_SRC)):
             fail("%s: gui.%s's item id is not a literal (%s)" % (name, kind, args[1]))
             continue
         slot_entry = entry["items"].setdefault(item_id, {})
+        if kind == "back":
+            # gui.back(menu, id) - one fixed appearance, defined once in
+            # GuiConfigManager and read from there.
+            slot_entry["material"] = "ARROW"
+            slot_entry["name"] = BACK_NAME
+            slot_entry["lore"] = list(BACK_LORE or [])
+            item_count += 1
+            continue
         if kind == "miniName":
             # gui.miniName(menu, id, default, tokens) - the default IS a
             # literal, so it is checked like any other name.

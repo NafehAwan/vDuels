@@ -159,6 +159,25 @@ NOTES = {
          "trims": "Opens the per-kit armour trim picker. Only shown to players\n"
                   "# with meowduels.trims."},
     ),
+    "partyconfirm": (
+        "The confirm shown by /party leave. It takes two shapes: a leader\n"
+        "leaving disbands the party for everyone, a member only leaves.",
+        {},
+        {"stay": "Closes the window and changes nothing.",
+         "what-leader": "The middle slot as a leader sees it - the warning that\n"
+                        "# this ends the party for everyone.",
+         "what-member": "The middle slot as a member sees it.",
+         "leave-leader": "Goes through with disbanding.",
+         "leave-member": "Goes through with leaving."},
+    ),
+    "partysettings": (
+        "/party settings - the leader's two switches. Neither applies during a\n"
+        "match; a free-for-all where you cannot hit each other could not end.",
+        {},
+        {"open": "Whether anyone may join without an invite.",
+         "friendly-fire": "Whether members can hurt each other outside a match.",
+         "back": "Returns to the party menu."},
+    ),
     "editkitlist": (
         "/editkit - pick a kit to edit its start-of-match potion effects.",
         {"kit": "the kit's id", "effects": "how many start effects it has"},

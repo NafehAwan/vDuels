@@ -168,6 +168,15 @@ public class GuiConfigManager {
         all.put("hint", com.meowduels.gui.Style.HINT);
         all.put("tick", com.meowduels.gui.Style.TICK);
         all.put("cross", com.meowduels.gui.Style.CROSS);
+        // The gradient endpoints, so a file can write
+        // <gradient:{go-from}:{go-to}>…</gradient> and keep following the
+        // theme instead of pinning the two colours.
+        all.put("go-from", com.meowduels.gui.Style.GO_A);
+        all.put("go-to", com.meowduels.gui.Style.GO_B);
+        all.put("no-from", com.meowduels.gui.Style.NO_A);
+        all.put("no-to", com.meowduels.gui.Style.NO_B);
+        all.put("accent-from", com.meowduels.gui.Style.ACCENT_A);
+        all.put("accent-to", com.meowduels.gui.Style.ACCENT_B);
         if (tokens != null) {
             // The menu's own tokens last, so a screen that needs a {good} of
             // its own can still have one.
@@ -336,6 +345,23 @@ public class GuiConfigManager {
             }
         }
         return this.assemble(material, this.amount(menuId, itemId, 1), name, lore, glow, tokens);
+    }
+
+    /**
+     * The way out, bottom-left, in every window that has one.
+     *
+     * <p>Its default lives here rather than being repeated in the dozen menus
+     * that show one: they all had an identical button, and a server rewording
+     * "back" should not have to find all twelve. Each still gets its own
+     * {@code back:} entry, so one screen can differ if it needs to.
+     */
+    public static final String BACK_NAME = "{value}ʙᴀᴄᴋ";
+    public static final String[] BACK_LORE = new String[]{
+            "", "{hint}ᴄʟɪᴄᴋ ᴛᴏ ɢᴏ ʙᴀᴄᴋ"};
+
+    public Items back(String menuId, String itemId) {
+        return this.face(menuId, itemId, null,
+                         Face.of(Material.ARROW, BACK_NAME, BACK_LORE));
     }
 
     /** One item, where the code has a single appearance for it. */
