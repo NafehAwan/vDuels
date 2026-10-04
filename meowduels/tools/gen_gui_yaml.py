@@ -199,6 +199,29 @@ NOTES = {
          "what": "The read-out: mode, kit, headcount.",
          "start": "Starts the countdown for everyone."},
     ),
+    "partyinvite": (
+        "/party invite - everyone online who could be invited.\n"
+        "On this screen `rows` is the tallest the window may get; it still\n"
+        "shrinks to however many people are actually online.",
+        {"player": "the candidate's name"},
+        {"player": "One head per invitable player. Its on face is someone who has\n"
+                   "# already been invited and has not answered.",
+         "empty": "Shown when everyone online is already in a party.",
+         "back": "Returns to the party menu."},
+    ),
+    "partyopponent": (
+        "/party start > Party Duels - the other parties you could fight.\n"
+        "On this screen `rows` is the tallest the window may get.",
+        {"leader": "the other party's leader", "size": "how many are in it",
+         "count": "used by more-line", "mark": "used by member-line",
+         "colour": "used by member-line"},
+        {"party": "One card per party. {members} on a line of its own expands to\n"
+                  "# the roster, so you can move it inside the card or drop it.\n"
+                  "# member-line is one person in that roster and more-line is the\n"
+                  "# '+3 more' that caps it at eight.",
+         "empty": "Shown when no other party is up and out of a match.",
+         "back": "Returns to the mode picker."},
+    ),
     "editkitlist": (
         "/editkit - pick a kit to edit its start-of-match potion effects.",
         {"kit": "the kit's id", "effects": "how many start effects it has"},
@@ -305,6 +328,8 @@ def render(menu):
             # materials that glint by themselves.
             if spec.get(key) is True:
                 lines.append("    %s: true" % key)
+        for key, value in sorted(spec.get("lines", {}).items()):
+            lines.append("    %s: %s" % (key, scalar(value)))
         for key in ("lore", "lore-on", "lore-off"):
             if not spec.get(key):
                 continue

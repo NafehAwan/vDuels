@@ -2,11 +2,15 @@ package com.meowduels.gui;
 
 import com.meowduels.MeowDuels;
 import com.meowduels.gui.Menu;
+import com.meowduels.managers.GuiConfigManager;
+import com.meowduels.managers.GuiConfigManager.Face;
 import com.meowduels.model.Party;
 import com.meowduels.model.PartyMode;
 import com.meowduels.util.Items;
 import com.meowduels.util.Text;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -34,6 +38,9 @@ extends Menu {
     private static final String MUTED = "<#6B7079>";
     private static final String HINT = "<dark_gray>▸ <#8E959D>";
 
+    /** The name of this screen's file: {@code gui/partyopponent.yml}. */
+    private static final String MENU = "partyopponent";
+
     private final MeowDuels plugin;
 
     public PartyOpponentMenu(MeowDuels plugin) {
@@ -52,58 +59,87 @@ extends Menu {
             player.sendMessage(Text.prefixed("&cOnly the party leader can start a match."));
             return;
         }
+        GuiConfigManager gui = this.plugin.gui();
         List<Party> parties = this.plugin.getPartyManager().opponentParties(party);
-        int rows = Style.gridRows(parties.size(), MAX_LIST_ROWS);
-        this.createRaw(rows, Style.title("#7DE2FF", "#4B7BFF",
-                "ᴘᴀʀᴛʏ ᴅᴜᴇʟꜱ")
-                + " " + Style.SEP + VALUE + "ᴘɪᴄᴋ ᴀ ᴘᴀʀᴛʏ");
-        Style.frame(this.inventory, rows);
+        // `rows` is the cap, not the height: the window shrinks to the number
+        // of parties actually up.
+        int rows = Style.gridRows(parties.size(), gui.rows(MENU, MAX_LIST_ROWS));
+        this.createRaw(rows, gui.title(MENU,
+                "<dark_gray>▏ <gradient:#7DE2FF:#4B7BFF>ᴘᴀʀᴛʏ ᴅᴜᴇʟꜱ</gradient> {sep}{value}ᴘɪᴄᴋ ᴀ ᴘᴀʀᴛʏ"));
+        gui.frame(MENU, this.inventory, rows);
         int limit = (rows - 2) * Style.PER_ROW;
         for (int i = 0; i < parties.size() && i < limit; ++i) {
             Party other = parties.get(i);
-            this.inventory.setItem(Style.gridSlot(i), this.card(party, other));
+            this.inventory.setItem(Style.gridSlot(i), this.card(gui, party, other));
         }
         if (parties.isEmpty()) {
-            this.inventory.setItem(Style.gridSlot(Style.PER_ROW / 2), Items.of(Material.BARRIER)
-                    .rawName("<#FF8A93>ɴᴏ ᴘᴀʀᴛɪᴇꜱ ᴛᴏ ꜰɪɢʜᴛ")
-                    .rawLore("",
-                             LABEL + "ɴᴏʙᴏᴅʏ ᴇʟꜱᴇ ʜᴀꜱ ᴀ ᴘᴀʀᴛʏ ʀɪɢʜᴛ ɴᴏᴡ",
-                             "", MUTED + "ᴛʜᴇʏ ɴᴇᴇᴅ ᴛᴏ ʙᴇ ᴏᴜᴛ ᴏꜰ ᴀ ᴍᴀᴛᴄʜ")
-                    .hideTooltip().build());
+            this.inventory.setItem(Style.gridSlot(Style.PER_ROW / 2),
+                    gui.face(MENU, "empty", null,
+                             Face.of(Material.BARRIER,
+                                     "<#FF8A93>ɴᴏ ᴘᴀʀᴛɪᴇꜱ ᴛᴏ ꜰɪɢʜᴛ",
+                                     "",
+                                     "{label}ɴᴏʙᴏᴅʏ ᴇʟꜱᴇ ʜᴀꜱ ᴀ ᴘᴀʀᴛʏ ʀɪɢʜᴛ ɴᴏᴡ",
+                                     "",
+                                     "{muted}ᴛʜᴇʏ ɴᴇᴇᴅ ᴛᴏ ʙᴇ ᴏᴜᴛ ᴏꜰ ᴀ ᴍᴀᴛᴄʜ"))
+                            .hideTooltip().build());
         }
-        this.inventory.setItem(Style.backSlot(rows), Style.back(this.plugin.keyButton(), "opp-back"));
+        this.inventory.setItem(Style.backSlot(rows),
+                gui.back(MENU, "back").tag(this.plugin.keyButton(), "opp-back").build());
         player.openInventory(this.inventory);
     }
 
-    /** One party: the leader's head, their name, and who is in it. */
-    private ItemStack card(Party mine, Party other) {
+    /**
+     * One party: the leader's head, their name, and who is in it.
+     *
+     * <p>The roster is a {@code {members}} block rather than lore lines of its
+     * own, because how many there are is only known as the card is drawn. An
+     * owner can move that block within the card, or drop it, and still have
+     * the rest of the card.
+     */
+    private ItemStack card(GuiConfigManager gui, Party mine, Party other) {
         UUID leaderId = other.getLeader();
-        String leaderName = this.nameOf(leaderId);
-        Items item = Items.of(Material.PLAYER_HEAD)
-                .skull(Bukkit.getOfflinePlayer((UUID)leaderId))
-                .rawName(PartyModeMenu.accent(leaderName) + LABEL + "'ꜱ ᴘᴀʀᴛʏ");
-        java.util.ArrayList<String> lore = new java.util.ArrayList<String>();
-        lore.add("");
-        lore.add(LABEL + "ᴍᴇᴍʙᴇʀꜱ <dark_gray>» " + VALUE + other.size());
-        lore.add("");
+        Map<String, String> tokens = new HashMap<String, String>();
+        tokens.put("leader", this.nameOf(leaderId));
+        tokens.put("size", String.valueOf(other.size()));
+        java.util.ArrayList<String> roster = new java.util.ArrayList<String>();
         int shown = 0;
         for (UUID id : other.getMembers()) {
             if (shown >= 8) {
-                lore.add(MUTED + "  +" + (other.size() - shown) + " ᴍᴏʀᴇ");
+                Map<String, String> moreTokens = new HashMap<String, String>();
+                moreTokens.put("count", String.valueOf(other.size() - shown));
+                roster.add(gui.line(MENU, "party", "more-line",
+                                    "{muted}  +{count} ᴍᴏʀᴇ", moreTokens));
                 break;
             }
-            boolean online = Bukkit.getPlayer((UUID)id) != null;
-            String mark = id.equals(leaderId) ? "<#FFD65C>★ " : "<dark_gray>• ";
-            lore.add("  " + mark + (online ? VALUE : MUTED) + this.nameOf(id));
+            Map<String, String> row = new HashMap<String, String>();
+            row.put("mark", id.equals(leaderId) ? "<#FFD65C>★ " : "<dark_gray>• ");
+            row.put("colour", Bukkit.getPlayer((UUID)id) != null
+                    ? com.meowduels.gui.Style.VALUE : com.meowduels.gui.Style.MUTED);
+            row.put("player", this.nameOf(id));
+            roster.add(gui.line(MENU, "party", "member-line",
+                                "  {mark}{colour}{player}", row));
             ++shown;
         }
-        lore.add("");
-        boolean picked = leaderId.equals(mine.getDuelTarget());
-        lore.add(picked ? "<#7CFF6B>ꜱᴇʟᴇᴄᴛᴇᴅ"
-                : HINT + "ᴄʟɪᴄᴋ ᴛᴏ ꜰɪɢʜᴛ ᴛʜᴇᴍ");
-        return item.rawLore(lore.toArray(new String[0]))
-                .glow(picked).hideTooltip()
+        Map<String, java.util.List<String>> blocks = new HashMap<String, java.util.List<String>>();
+        blocks.put("members", roster);
+        return gui.toggle(MENU, "party", leaderId.equals(mine.getDuelTarget()), tokens, blocks,
+                        card("{good}ꜱᴇʟᴇᴄᴛᴇᴅ").glow(),
+                        card("{hint}ᴄʟɪᴄᴋ ᴛᴏ ꜰɪɢʜᴛ ᴛʜᴇᴍ"))
+                .skull(Bukkit.getOfflinePlayer((UUID)leaderId))
+                .hideTooltip()
                 .tag(this.plugin.keyButton(), "opp:" + leaderId).build();
+    }
+
+    /** The card, which differs between its two states only in the last line. */
+    private static Face card(String status) {
+        return Face.of(Material.PLAYER_HEAD,
+                       "<gradient:#7DE2FF:#4B7BFF>{leader}</gradient>{label}'ꜱ ᴘᴀʀᴛʏ",
+                       "",
+                       "{label}ᴍᴇᴍʙᴇʀꜱ <dark_gray>» {value}{size}",
+                       "",
+                       "{members}",
+                       "",
+                       status);
     }
 
     private String nameOf(UUID id) {

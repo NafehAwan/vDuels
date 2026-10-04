@@ -291,7 +291,7 @@ BACK_LORE = GCM_CONSTS.get("BACK_LORE")
 if isinstance(BACK_LORE, tuple) and BACK_LORE[0] == "@arr":
     BACK_LORE = list(BACK_LORE[1])
 
-CALL = re.compile(r"\bgui\.(item|title|rows|slot|frame|name|lore|material|amount|toggle|face|titleOf|miniName|back)\s*\(")
+CALL = re.compile(r"\bgui\.(item|title|rows|slot|frame|name|lore|material|amount|toggle|face|titleOf|miniName|back|line)\s*\(")
 
 reads = {}          # menuId -> {"title":str, "rows":int, "items":{id:{...}}}
 item_count = 0
@@ -342,6 +342,17 @@ for name in sorted(os.listdir(GUI_SRC)):
             fail("%s: gui.%s's item id is not a literal (%s)" % (name, kind, args[1]))
             continue
         slot_entry = entry["items"].setdefault(item_id, {})
+        if kind == "line":
+            # gui.line(menu, id, key, default, tokens) - a named sub-line of an
+            # item, such as a party card's member row.
+            key = resolve(args[2], consts)
+            value = resolve(args[3], consts) if len(args) > 3 else None
+            if not isinstance(key, str) or not isinstance(value, str):
+                fail("%s: gui.line(%s) key or default is not a literal"
+                     % (name, item_id))
+                continue
+            slot_entry.setdefault("lines", {})[key] = value
+            continue
         if kind == "back":
             # gui.back(menu, id) - one fixed appearance, defined once in
             # GuiConfigManager and read from there.

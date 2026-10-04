@@ -320,6 +320,12 @@ public class GuiConfigManager {
      */
     public Items toggle(String menuId, String itemId, boolean on, Map<String, String> tokens,
                         Face faceOn, Face faceOff) {
+        return this.toggle(menuId, itemId, on, tokens, null, faceOn, faceOff);
+    }
+
+    /** As {@link #toggle}, for a face whose lore contains a {@code {block}}. */
+    public Items toggle(String menuId, String itemId, boolean on, Map<String, String> tokens,
+                        Map<String, List<String>> blocks, Face faceOn, Face faceOff) {
         Face face = on ? faceOn : faceOff;
         String suffix = on ? "-on" : "-off";
         ConfigurationSection section = this.itemSection(menuId, itemId);
@@ -344,7 +350,7 @@ public class GuiConfigManager {
                 glow = Boolean.valueOf(section.getBoolean("glow"));
             }
         }
-        return this.assemble(material, this.amount(menuId, itemId, 1), name, lore, glow, tokens);
+        return this.assemble(material, this.amount(menuId, itemId, 1), name, lore, glow, tokens, blocks);
     }
 
     /**
@@ -374,15 +380,27 @@ public class GuiConfigManager {
         if (section != null && section.contains("glow")) {
             glow = Boolean.valueOf(section.getBoolean("glow"));
         }
-        return this.assemble(material, this.amount(menuId, itemId, 1), name, lore, glow, tokens);
+        return this.assemble(material, this.amount(menuId, itemId, 1), name, lore, glow, tokens, null);
     }
 
     private Items assemble(Material material, int amount, String name, List<String> lore,
-                           Boolean glow, Map<String, String> tokens) {
+                           Boolean glow, Map<String, String> tokens,
+                           Map<String, List<String>> blocks) {
         Map<String, String> all = this.withTheme(tokens);
         Items items = Items.of(material, amount).rawName(Tokens.apply(name, all));
         List<String> filled = new ArrayList<String>(lore.size());
         for (String line : lore) {
+            String trimmed = line == null ? "" : line.trim();
+            if (blocks != null && trimmed.length() > 2
+                    && trimmed.charAt(0) == '{' && trimmed.charAt(trimmed.length() - 1) == '}') {
+                List<String> block = blocks.get(trimmed.substring(1, trimmed.length() - 1));
+                if (block != null) {
+                    for (String blockLine : block) {
+                        filled.add(Tokens.apply(blockLine, all));
+                    }
+                    continue;
+                }
+            }
             filled.add(Tokens.apply(line, all));
         }
         items.rawLore(filled.toArray(new String[0]));
@@ -462,13 +480,57 @@ public class GuiConfigManager {
 
     /** Lore for an entry whose other properties the code decides. */
     public List<String> lore(String menuId, String itemId, Map<String, String> tokens, String... defLore) {
+        return this.lore(menuId, itemId, tokens, null, defLore);
+    }
+
+    /**
+     * Lore where one of the lines stands for a list of lines.
+     *
+     * <p>A party card shows its members, one per line, and there is no telling
+     * how many until it is drawn. Without this, the whole block would have to
+     * stay in the code and an owner could not move it, reorder the card, or
+     * put anything below it.
+     *
+     * <p>So a {@code blocks} entry named {@code members} makes {@code {members}}
+     * on a line of its own expand to those lines, in place. A line that merely
+     * contains the name among other text is left to ordinary substitution,
+     * which would otherwise paste a whole list into the middle of a sentence.
+     */
+    public List<String> lore(String menuId, String itemId, Map<String, String> tokens,
+                             Map<String, List<String>> blocks, String... defLore) {
         List<String> lore = this.lore(this.itemSection(menuId, itemId), defLore);
         Map<String, String> all = this.withTheme(tokens);
         List<String> filled = new ArrayList<String>(lore.size());
         for (String line : lore) {
+            String trimmed = line == null ? "" : line.trim();
+            if (blocks != null && trimmed.length() > 2
+                    && trimmed.charAt(0) == '{' && trimmed.charAt(trimmed.length() - 1) == '}') {
+                List<String> block = blocks.get(trimmed.substring(1, trimmed.length() - 1));
+                if (block != null) {
+                    for (String blockLine : block) {
+                        filled.add(Tokens.apply(blockLine, all));
+                    }
+                    continue;
+                }
+            }
             filled.add(Tokens.apply(line, all));
         }
         return filled;
+    }
+
+    /**
+     * One named line of an item, for the pieces a list builds itself out of.
+     *
+     * <p>The rows inside a party card - a member, or the "+3 more" that caps
+     * them - are assembled per entry, so they are not lore lines of their own
+     * and cannot be edited as such. This gives each one a key
+     * ({@code member-line}, {@code more-line}) that an owner can reword while
+     * the code still decides how many there are.
+     */
+    public String line(String menuId, String itemId, String key, String def, Map<String, String> tokens) {
+        ConfigurationSection section = this.itemSection(menuId, itemId);
+        String value = section == null ? def : section.getString(key, def);
+        return Tokens.apply(value, this.withTheme(tokens));
     }
 
     /**

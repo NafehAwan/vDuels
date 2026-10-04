@@ -161,6 +161,13 @@ for menu in sorted(reads):
         if got is None:
             fail("gui/%s.yml: no item '%s', which the code reads" % (menu, item_id))
             continue
+        for key, want in sorted(expect.get("lines", {}).items()):
+            if key not in got:
+                fail("gui/%s.yml: item '%s' has no %s, the code default is %r"
+                     % (menu, item_id, key, want))
+            elif got[key] != want:
+                fail("gui/%s.yml: item '%s' %s is %r, the code default is %r"
+                     % (menu, item_id, key, got[key], want))
         for key in ("slot", "material", "material-on", "material-off",
                     "name", "name-on", "name-off",
                     "lore", "lore-on", "lore-off",
