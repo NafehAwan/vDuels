@@ -442,9 +442,12 @@ for name in sorted(os.listdir(GUI_SRC)):
                 inner_close = balanced(face, inner_open)
                 parts = split_args(face[inner_open + 1:inner_close])
                 values = [resolve(a, consts) for a in parts]
-                if not values or any(v is None for v in values):
-                    fail("%s: gui.%s(%s) has a non-literal Face argument; pass it "
-                         "as a {token} so the default stays checkable"
+                # The material may be worked out at runtime - the party menu's
+                # kit button wears the chosen kit's icon - so only the name and
+                # lore have to be literals.
+                if len(values) < 2 or any(v is None for v in values[1:]):
+                    fail("%s: gui.%s(%s) has a non-literal name or lore line; pass "
+                         "it as a {token} so the default stays checkable"
                          % (name, kind, item_id))
                     parsed = None
                     break
@@ -454,7 +457,10 @@ for name in sorted(os.listdir(GUI_SRC)):
             if parsed is None:
                 continue
             if kind == "face":
-                slot_entry["material"] = parsed[0]["material"]
+                if parsed[0]["material"] is None:
+                    slot_entry.setdefault("dynamic", []).append("material")
+                else:
+                    slot_entry["material"] = parsed[0]["material"]
                 slot_entry["name"] = parsed[0]["name"]
                 if parsed[0]["lore"]:
                     slot_entry["lore"] = parsed[0]["lore"]
@@ -464,7 +470,13 @@ for name in sorted(os.listdir(GUI_SRC)):
                 on, off = parsed
                 # Only the keys that actually differ between the two states
                 # are shipped per state; the rest stay single.
-                if on["material"] == off["material"]:
+                if on["material"] is None or off["material"] is None:
+                    slot_entry.setdefault("dynamic", []).append("material")
+                    if on["material"] is not None:
+                        slot_entry["material-on"] = on["material"]
+                    if off["material"] is not None:
+                        slot_entry["material-off"] = off["material"]
+                elif on["material"] == off["material"]:
                     slot_entry["material"] = on["material"]
                 else:
                     slot_entry["material-on"] = on["material"]

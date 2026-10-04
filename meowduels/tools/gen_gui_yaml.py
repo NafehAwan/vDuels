@@ -222,6 +222,31 @@ NOTES = {
          "empty": "Shown when no other party is up and out of a match.",
          "back": "Returns to the mode picker."},
     ),
+    "party": (
+        "/party - the party at a glance, its members, and the leader's buttons.",
+        {"leader": "the leader's name", "size": "how many are in the party",
+         "kit": "the chosen kit", "alive": "how many are still in, mid-match",
+         "player": "a member's name", "count": "used by overflow",
+         "mode": "the mode line, from mode-fighting or mode-idle",
+         "status": "the status line, from status-fighting or status-idle",
+         "state": "a member's state, from one of the state-* lines",
+         "why": "why start is lit or not, from one of the why-* lines"},
+        {"card": "The party at a glance. mode-fighting/mode-idle and\n"
+                 "# status-fighting/status-idle are the two lines that read\n"
+                 "# differently mid-match.",
+         "member": "One head per member, capped at nine. Its on face is the\n"
+                   "# leader. state-alive, state-out, state-offline and\n"
+                   "# state-idle are the line under the role.",
+         "overflow": "The '+3' that stands in for members past the ninth.",
+         "kit": "Leader only. Wears the chosen kit's icon unless you set\n"
+                "# material-on.",
+         "invite": "Leader only. Opens the invite list.",
+         "settings": "Leader only. Opens the party settings.",
+         "start": "Leader only. Its off face is a party that cannot start yet;\n"
+                  "# why-fighting, why-too-few and why-ready say which.",
+         "leave-leader": "Leaving as the leader, which disbands the party.",
+         "leave-member": "Leaving as a member."},
+    ),
     "editkitlist": (
         "/editkit - pick a kit to edit its start-of-match potion effects.",
         {"kit": "the kit's id", "effects": "how many start effects it has"},
