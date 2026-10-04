@@ -191,6 +191,38 @@ if not FIXED:
 # --------------------------------------------------------------------------
 # Constants, so `gui.slot(MENU, "cancel", SLOT_BACK, rows)` can be resolved.
 # --------------------------------------------------------------------------
+def face_helpers(src):
+    """Static helpers whose whole body is `return Face.of(...)`.
+
+    The party screens share a handful of item shapes between several items -
+    three modes that each read the same way when playable and the same way
+    when not - and writing the Face out three times invites the three copies
+    to drift. A helper keeps them to one, and this expands the call so the
+    defaults stay readable here.
+
+    Only the single-parameter form is understood, which is all the code uses;
+    anything more involved is reported rather than guessed at.
+    """
+    out = {}
+    pattern = re.compile(
+        r"(?:private|static|\s)+Face\s+(\w+)\(([^)]*)\)\s*\{\s*return\s+(Face\.of\()",
+        re.S)
+    for m in pattern.finditer(src):
+        name = m.group(1)
+        params = [pp.strip().split()[-1] for pp in m.group(2).split(",") if pp.strip()]
+        open_paren = src.index("(", m.start(3))
+        close = balanced(src, open_paren)
+        if close < 0:
+            continue
+        tail_end = src.index(";", close)
+        out[name] = {
+            "args": src[open_paren + 1:close],
+            "glow": ".glow()" in src[close:tail_end],
+            "params": params,
+        }
+    return out
+
+
 def constants(src):
     out = {}
     for m in re.finditer(r"static\s+final\s+String\s+(\w+)\s*=\s*\"((?:[^\"\\]|\\.)*)\"", src):
@@ -271,6 +303,7 @@ for name in sorted(os.listdir(GUI_SRC)):
         raw = fh.read()
     src = strip_comments(raw)
     consts = constants(raw)
+    helpers = face_helpers(src)
     for m in CALL.finditer(src):
         kind = m.group(1)
         open_paren = src.index("(", m.end() - 1)
@@ -368,7 +401,26 @@ for name in sorted(os.listdir(GUI_SRC)):
         if kind in ("toggle", "face"):
             # gui.toggle(menu, id, on, tokens, Face.of(..).glow(), Face.of(..))
             # gui.face(menu, id, tokens, Face.of(..))
-            faces = [a for a in args[2:] if a.lstrip().startswith("Face.of(")]
+            faces = []
+            for a in args[2:]:
+                a = a.lstrip()
+                if a.startswith("Face.of("):
+                    faces.append(a)
+                    continue
+                call = re.match(r"(\w+)\((.*)\)$", a, re.S)
+                if call and call.group(1) in helpers:
+                    helper = helpers[call.group(1)]
+                    body = helper["args"]
+                    actual = split_args(call.group(2))
+                    if len(actual) != len(helper["params"]):
+                        fail("%s: %s(...) passes %d argument(s), the helper takes %d"
+                             % (name, call.group(1), len(actual), len(helper["params"])))
+                        continue
+                    for param, value in zip(helper["params"], actual):
+                        body = re.sub(r"\b%s\b" % re.escape(param), value, body)
+                    faces.append("Face.of(" + body + ")"
+                                 + (".glow()" if helper["glow"] else ""))
+                    continue
             if not faces or (kind == "toggle" and len(faces) != 2):
                 fail("%s: gui.%s(%s) does not have the Face argument(s) it needs"
                      % (name, kind, item_id))

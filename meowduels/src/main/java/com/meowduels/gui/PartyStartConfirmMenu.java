@@ -2,11 +2,15 @@ package com.meowduels.gui;
 
 import com.meowduels.MeowDuels;
 import com.meowduels.gui.Menu;
+import com.meowduels.managers.GuiConfigManager;
+import com.meowduels.managers.GuiConfigManager.Face;
 import com.meowduels.model.Kit;
 import com.meowduels.model.Party;
 import com.meowduels.model.PartyMode;
 import com.meowduels.util.Items;
 import com.meowduels.util.Text;
+import java.util.HashMap;
+import java.util.Map;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -22,6 +26,9 @@ import org.bukkit.inventory.ItemStack;
  */
 public class PartyStartConfirmMenu
 extends Menu {
+    /** The name of this screen's file: {@code gui/partystartconfirm.yml}. */
+    private static final String MENU = "partystartconfirm";
+
     private static final int ROWS = 3;
     private static final int SLOT_BACK = 18;
     private static final int SLOT_WHAT = 12;
@@ -54,20 +61,36 @@ extends Menu {
         // A chest rather than the hopper this used to be: five slots in a row
         // cannot carry a border, and a window with no border next to one with
         // a border reads as a different plugin.
-        this.createRaw(ROWS, Style.title("#7DE2FF", "#4B7BFF", "\ua731\u1d1b\u1d00\u0280\u1d1b \u1d0d\u1d00\u1d1b\u1d04\u029c"));
-        Style.frame(this.inventory, ROWS);
-        this.inventory.setItem(SLOT_BACK, Style.back(this.plugin.keyButton(), "start-back"));
-        this.inventory.setItem(SLOT_WHAT, Items.of(Material.PAPER)
-                .rawName(PartyModeMenu.accent(this.mode.getLabel()))
-                .rawLore("",
-                         LABEL + "\u1d0b\u026a\u1d1b " + SEP + this.kitLabel(party),
-                         LABEL + "\u1d18\u029f\u1d00\u028f\u1d07\u0280\ua731 " + SEP + VALUE + party.size(),
-                         "",
-                         LABEL + this.mode.getDescription())
-                .hideTooltip().build());
-        this.inventory.setItem(SLOT_START, Style.confirm(this.plugin.keyButton(), "start-go", true,
-                "\ua731\u1d1b\u1d00\u0280\u1d1b", "\ua731\u1d1b\u1d00\u0280\u1d1b",
-                "", LABEL + "\ua731\u1d07\u0274\u1d05 \u1d07\u1d20\u1d07\u0280\u028f\u1d0f\u0274\u1d07 \u026a\u0274 \u1d00\u0274\u1d05 \u0299\u1d07\u0262\u026a\u0274 \u1d1b\u029c\u1d07 \u1d04\u1d0f\u1d1c\u0274\u1d1b\u1d05\u1d0f\u1d21\u0274"));
+        GuiConfigManager gui = this.plugin.gui();
+        int rows = gui.rows(MENU, ROWS);
+        int size = rows * 9;
+        Map<String, String> tokens = new HashMap<String, String>();
+        tokens.put("mode", this.mode.getLabel());
+        tokens.put("description", this.mode.getDescription());
+        tokens.put("kit", this.kitLabel(party));
+        tokens.put("players", String.valueOf(party.size()));
+        this.createRaw(rows, gui.title(MENU,
+                "<dark_gray>\u258f <gradient:#7DE2FF:#4B7BFF>\ua731\u1d1b\u1d00\u0280\u1d1b \u1d0d\u1d00\u1d1b\u1d04\u029c</gradient>", tokens));
+        gui.frame(MENU, this.inventory, rows);
+        this.inventory.setItem(Math.min(size - 1, gui.slot(MENU, "back", SLOT_BACK, rows)),
+                gui.back(MENU, "back").tag(this.plugin.keyButton(), "start-back").build());
+        this.inventory.setItem(Math.min(size - 1, gui.slot(MENU, "what", SLOT_WHAT, rows)),
+                gui.face(MENU, "what", tokens,
+                         Face.of(Material.PAPER,
+                                 "<gradient:#7DE2FF:#4B7BFF>{mode}</gradient>",
+                                 "",
+                                 "{label}\u1d0b\u026a\u1d1b {sep}{kit}",
+                                 "{label}\u1d18\u029f\u1d00\u028f\u1d07\u0280\ua731 {sep}{value}{players}",
+                                 "",
+                                 "{label}{description}"))
+                        .hideTooltip().build());
+        this.inventory.setItem(Math.min(size - 1, gui.slot(MENU, "start", SLOT_START, rows)),
+                gui.face(MENU, "start", tokens,
+                         Face.of(Material.LIME_DYE,
+                                 "<gradient:{go-from}:{go-to}>{tick}\ua731\u1d1b\u1d00\u0280\u1d1b</gradient>",
+                                 "",
+                                 "{label}\ua731\u1d07\u0274\u1d05 \u1d07\u1d20\u1d07\u0280\u028f\u1d0f\u0274\u1d07 \u026a\u0274 \u1d00\u0274\u1d05 \u0299\u1d07\u0262\u026a\u0274 \u1d1b\u029c\u1d07 \u1d04\u1d0f\u1d1c\u0274\u1d1b\u1d05\u1d0f\u1d21\u0274").glow())
+                        .hideTooltip().tag(this.plugin.keyButton(), "start-go").build());
         player.openInventory(this.inventory);
     }
 

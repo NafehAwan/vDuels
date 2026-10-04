@@ -178,6 +178,27 @@ NOTES = {
          "friendly-fire": "Whether members can hurt each other outside a match.",
          "back": "Returns to the party menu."},
     ),
+    "partymode": (
+        "/party start - what kind of party match to play. The two unbuilt modes\n"
+        "are shown greyed rather than hidden: a picker with one option reads as\n"
+        "broken, one with two greyed options reads as a roadmap.",
+        {"mode": "the mode's name", "description": "its one-line description"},
+        {"ffa": "Free-for-all. Its off face is what shows if the mode is ever\n"
+                "# marked unavailable.",
+         "split": "Two teams.",
+         "duels": "Party versus party, one pair at a time.",
+         "back": "Returns to the party menu."},
+    ),
+    "partystartconfirm": (
+        "The last screen before a party match starts. The middle slot is not a\n"
+        "button - it is the answer sheet, so the decision is made on what is\n"
+        "about to happen rather than on what was clicked two windows ago.",
+        {"mode": "the chosen mode", "description": "the mode's description",
+         "kit": "the chosen kit", "players": "how many are coming"},
+        {"back": "Returns to the kit picker.",
+         "what": "The read-out: mode, kit, headcount.",
+         "start": "Starts the countdown for everyone."},
+    ),
     "editkitlist": (
         "/editkit - pick a kit to edit its start-of-match potion effects.",
         {"kit": "the kit's id", "effects": "how many start effects it has"},

@@ -1,0 +1,116 @@
+# -------------------------------------------------------------------------
+# /party start - what kind of party match to play. The two unbuilt modes
+# are shown greyed rather than hidden: a picker with one option reads as
+# broken, one with two greyed options reads as a roadmap.
+#
+# Every value here is the one the plugin uses when the key is missing, so you
+# can delete any line, any item, or this whole file: the menu goes back to
+# looking exactly as it ships. There is no reset command because deleting IS
+# the reset.
+#
+# Each item takes:
+#   slot      0-based, counting left to right then down (row 1 is 0-8)
+#   material  any Minecraft item id, e.g. CLOCK, PAPER, LIME_DYE
+#   amount    stack size shown on the icon, 1-64
+#   name      the item's title
+#   lore      the lines under it; "" is a blank spacer line
+#   glow      true to force the enchanted shimmer, false to force it off
+#
+# An item with lore-on and lore-off has two faces - one for when the thing
+# it controls is on, one for when it is off. name-on/name-off and
+# material-on/material-off work the same way, and a plain name:/material:
+# covers both states.
+#
+# Theme placeholders, usable in any name or lore in any menu. These follow
+# theme: in config.yml, so one edit there restyles every screen:
+#   {value} {label} {muted} {good} {bad} {warn}   colours
+#   {tick} {cross} {sep} {hint}                   the house symbols
+# Write a colour out instead if you want one line to ignore the theme.
+#
+# Colours: <yellow>, <gold>, <#FF2E55> for a custom colour, or
+# <gradient:#7CFF6B:#1FA32F>text</gradient>. Legacy &e codes work too.
+#
+# Placeholders usable in any name or lore on this screen:
+#   {mode}         the mode's name
+#   {description}  its one-line description
+#
+# The text below is written in small capitals (ᴛʜɪꜱ ꜱᴛʏʟᴇ). That is just what
+# the characters are - type ordinary letters if you would rather have them.
+# -------------------------------------------------------------------------
+
+title: "<dark_gray>▏ <gradient:#7DE2FF:#4B7BFF>ᴘᴀʀᴛʏ ᴍᴀᴛᴄʜ</gradient>"
+rows: 3
+
+# Uncomment to give this one screen a different frame from the rest of the
+# plugin. Leave it out and it follows theme.filler in config.yml.
+#filler: "GRAY_STAINED_GLASS_PANE"
+#filler-name: " "
+
+items:
+
+  # Free-for-all. Its off face is what shows if the mode is ever
+  # marked unavailable.
+  ffa:
+    slot: 11
+    material-on: DIAMOND_SWORD
+    material-off: GRAY_DYE
+    name-on: "<gradient:#7DE2FF:#4B7BFF>{mode}</gradient>"
+    name-off: "{muted}{mode}"
+    glow-on: true
+    lore-on:
+      - ""
+      - "{label}{description}"
+      - ""
+      - "{hint}ᴄʟɪᴄᴋ ᴛᴏ ᴄʜᴏᴏꜱᴇ"
+    lore-off:
+      - ""
+      - "{muted}{description}"
+      - ""
+      - "{label}ᴄᴏᴍɪɴɢ ꜱᴏᴏɴ"
+
+  # Two teams.
+  split:
+    slot: 13
+    material-on: SHIELD
+    material-off: GRAY_DYE
+    name-on: "<gradient:#7DE2FF:#4B7BFF>{mode}</gradient>"
+    name-off: "{muted}{mode}"
+    glow-on: true
+    lore-on:
+      - ""
+      - "{label}{description}"
+      - ""
+      - "{hint}ᴄʟɪᴄᴋ ᴛᴏ ᴄʜᴏᴏꜱᴇ"
+    lore-off:
+      - ""
+      - "{muted}{description}"
+      - ""
+      - "{label}ᴄᴏᴍɪɴɢ ꜱᴏᴏɴ"
+
+  # Party versus party, one pair at a time.
+  duels:
+    slot: 15
+    material-on: IRON_SWORD
+    material-off: GRAY_DYE
+    name-on: "<gradient:#7DE2FF:#4B7BFF>{mode}</gradient>"
+    name-off: "{muted}{mode}"
+    glow-on: true
+    lore-on:
+      - ""
+      - "{label}{description}"
+      - ""
+      - "{hint}ᴄʟɪᴄᴋ ᴛᴏ ᴄʜᴏᴏꜱᴇ"
+    lore-off:
+      - ""
+      - "{muted}{description}"
+      - ""
+      - "{label}ᴄᴏᴍɪɴɢ ꜱᴏᴏɴ"
+
+  # Returns to the party menu.
+  back:
+    slot: 18
+    material: ARROW
+    name: "{value}ʙᴀᴄᴋ"
+    lore:
+      - ""
+      - "{hint}ᴄʟɪᴄᴋ ᴛᴏ ɢᴏ ʙᴀᴄᴋ"
