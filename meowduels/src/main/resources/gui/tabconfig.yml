@@ -14,6 +14,11 @@
 #   lore      the lines under it; "" is a blank spacer line
 #   glow      true to force the enchanted shimmer, false to force it off
 #
+# An item with lore-on and lore-off has two faces - one for when the thing
+# it controls is on, one for when it is off. name-on/name-off and
+# material-on/material-off work the same way, and a plain name:/material:
+# covers both states.
+#
 # Colours: <yellow>, <gold>, <#FF2E55> for a custom colour, or
 # <gradient:#7CFF6B:#1FA32F>text</gradient>. Legacy &e codes work too.
 #

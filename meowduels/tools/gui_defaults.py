@@ -226,7 +226,7 @@ def resolve(arg, consts):
 # --------------------------------------------------------------------------
 # Every gui.<call>(...) in the menu sources.
 # --------------------------------------------------------------------------
-CALL = re.compile(r"\bgui\.(item|title|rows|slot|frame|name|lore|material|amount|toggle)\s*\(")
+CALL = re.compile(r"\bgui\.(item|title|rows|slot|frame|name|lore|material|amount|toggle|face|titleOf)\s*\(")
 
 reads = {}          # menuId -> {"title":str, "rows":int, "items":{id:{...}}}
 item_count = 0
@@ -254,6 +254,12 @@ for name in sorted(os.listdir(GUI_SRC)):
             continue
         entry = reads.setdefault(menu, {"items": {}, "file": name})
         if kind == "frame":
+            continue
+        if kind == "titleOf":
+            variant = resolve(args[1], consts)
+            value = resolve(args[2], consts)
+            if isinstance(variant, str) and isinstance(value, str):
+                entry["title-" + variant] = value
             continue
         if kind == "title":
             value = resolve(args[1], consts)
@@ -294,7 +300,66 @@ for name in sorted(os.listdir(GUI_SRC)):
             if isinstance(value, int):
                 slot_entry["slot"] = value
             continue
-        if kind == "toggle":
+        if kind in ("toggle", "face"):
+            # gui.toggle(menu, id, on, tokens, Face.of(..).glow(), Face.of(..))
+            # gui.face(menu, id, tokens, Face.of(..))
+            faces = [a for a in args[2:] if a.lstrip().startswith("Face.of(")]
+            if not faces or (kind == "toggle" and len(faces) != 2):
+                fail("%s: gui.%s(%s) does not have the Face argument(s) it needs"
+                     % (name, kind, item_id))
+                continue
+            parsed = []
+            for face in faces:
+                inner_open = face.index("(")
+                inner_close = balanced(face, inner_open)
+                parts = split_args(face[inner_open + 1:inner_close])
+                values = [resolve(a, consts) for a in parts]
+                if not values or any(v is None for v in values):
+                    fail("%s: gui.%s(%s) has a non-literal Face argument; pass it "
+                         "as a {token} so the default stays checkable"
+                         % (name, kind, item_id))
+                    parsed = None
+                    break
+                parsed.append({"material": values[0], "name": values[1],
+                               "lore": values[2:],
+                               "glow": ".glow()" in face[inner_close:]})
+            if parsed is None:
+                continue
+            if kind == "face":
+                slot_entry["material"] = parsed[0]["material"]
+                slot_entry["name"] = parsed[0]["name"]
+                if parsed[0]["lore"]:
+                    slot_entry["lore"] = parsed[0]["lore"]
+                if parsed[0]["glow"]:
+                    slot_entry["glow"] = True
+            else:
+                on, off = parsed
+                # Only the keys that actually differ between the two states
+                # are shipped per state; the rest stay single.
+                if on["material"] == off["material"]:
+                    slot_entry["material"] = on["material"]
+                else:
+                    slot_entry["material-on"] = on["material"]
+                    slot_entry["material-off"] = off["material"]
+                if on["name"] == off["name"]:
+                    slot_entry["name"] = on["name"]
+                else:
+                    slot_entry["name-on"] = on["name"]
+                    slot_entry["name-off"] = off["name"]
+                if on["lore"] == off["lore"]:
+                    if on["lore"]:
+                        slot_entry["lore"] = on["lore"]
+                else:
+                    slot_entry["lore-on"] = on["lore"]
+                    slot_entry["lore-off"] = off["lore"]
+                if on["glow"] != off["glow"]:
+                    slot_entry["glow-on"] = on["glow"]
+                    slot_entry["glow-off"] = off["glow"]
+                elif on["glow"]:
+                    slot_entry["glow"] = True
+            item_count += 1
+            continue
+        if kind == "legacy-toggle":
             # gui.toggle(menu, id, on, tokens, Material, name,
             #            new String[]{on face}, new String[]{off face})
             rest = args[2:]

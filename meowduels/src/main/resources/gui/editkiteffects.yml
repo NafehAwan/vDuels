@@ -45,6 +45,7 @@ items:
     slot: 10
     material: BLAZE_POWDER
     name: "&cꜱᴛʀᴇɴɢᴛʜ ɪɪ &7(1:30)"
+    glow-on: true
     lore-on:
       - ""
       - "&aᴇɴᴀʙʟᴇᴅ"
@@ -59,6 +60,7 @@ items:
     slot: 12
     material: SUGAR
     name: "&dꜱᴘᴇᴇᴅ ɪɪ &7(1:30)"
+    glow-on: true
     lore-on:
       - ""
       - "&aᴇɴᴀʙʟᴇᴅ"
@@ -73,6 +75,7 @@ items:
     slot: 14
     material: FEATHER
     name: "&dꜱᴘᴇᴇᴅ ɪɪ &7(ɪɴꜰɪɴɪᴛᴇ)"
+    glow-on: true
     lore-on:
       - ""
       - "&aᴇɴᴀʙʟᴇᴅ"
@@ -87,6 +90,7 @@ items:
     slot: 16
     material: GHAST_TEAR
     name: "&aʀᴇɢᴇɴᴇʀᴀᴛɪᴏɴ ɪɪ &7(1:30)"
+    glow-on: true
     lore-on:
       - ""
       - "&aᴇɴᴀʙʟᴇᴅ"

@@ -164,6 +164,24 @@ public class GuiConfigManager {
     }
 
     /**
+     * One of a screen's several titles, as {@code title-<variant>}.
+     *
+     * <p>Four menus are opened in two modes and name themselves differently
+     * in each - the kit editor is "Your Kits" to a player and "Kit Editor" to
+     * an admin, and the kit picker and queue grow a category name once you
+     * page into one. Falling back to the plain {@code title} keeps a file
+     * that only sets that one working for both.
+     */
+    public String titleOf(String menuId, String variant, String def, Map<String, String> tokens) {
+        YamlConfiguration file = this.files.get(menuId);
+        if (file == null) {
+            return Tokens.apply(def, tokens);
+        }
+        String value = file.getString("title-" + variant, file.getString("title", def));
+        return Tokens.apply(value, tokens);
+    }
+
+    /**
      * The window height in rows, clamped to what a chest can actually be.
      *
      * <p>A chest inventory outside 1-6 rows throws on creation, which would
@@ -258,49 +276,89 @@ public class GuiConfigManager {
      * {@code name}/{@code material} and then to the code.
      */
     public Items toggle(String menuId, String itemId, boolean on, Map<String, String> tokens,
-                        Material defMaterial, String defName,
-                        String[] defLoreOn, String[] defLoreOff) {
-        return this.item(menuId, itemId, on, tokens, defMaterial, defName,
-                         on ? defLoreOn : defLoreOff);
-    }
-
-    private Items item(String menuId, String itemId, boolean on, Map<String, String> tokens,
-                       Material defMaterial, String defName, String... defLore) {
+                        Face faceOn, Face faceOff) {
+        Face face = on ? faceOn : faceOff;
         String suffix = on ? "-on" : "-off";
         ConfigurationSection section = this.itemSection(menuId, itemId);
-        Material material = defMaterial;
-        String name = defName;
-        List<String> lore = Arrays.asList(defLore);
+        Material material = face.material;
+        String name = face.name;
+        List<String> lore = Arrays.asList(face.lore);
+        Boolean glow = face.glow ? Boolean.TRUE : null;
         if (section != null) {
-            // Each of the three reads the same way: the state-specific key if
-            // it is there, else the plain key, else what the code passed in.
             String named = section.contains("material" + suffix)
                     ? section.getString("material" + suffix)
                     : section.getString("material");
             material = this.material(menuId, itemId, named, material);
             name = section.getString("name" + suffix, section.getString("name", name));
-            lore = section.contains("lore" + suffix)
-                    ? section.getStringList("lore" + suffix)
-                    : this.lore(section, defLore);
+            if (section.contains("lore" + suffix)) {
+                lore = section.getStringList("lore" + suffix);
+            } else if (section.contains("lore")) {
+                lore = section.getStringList("lore");
+            }
+            if (section.contains("glow" + suffix)) {
+                glow = Boolean.valueOf(section.getBoolean("glow" + suffix));
+            } else if (section.contains("glow")) {
+                glow = Boolean.valueOf(section.getBoolean("glow"));
+            }
         }
-        int amount = section == null ? 1 : Math.max(1, Math.min(64, section.getInt("amount", 1)));
+        return this.assemble(material, this.amount(menuId, itemId, 1), name, lore, glow, tokens);
+    }
+
+    /** One item, where the code has a single appearance for it. */
+    public Items face(String menuId, String itemId, Map<String, String> tokens, Face face) {
+        ConfigurationSection section = this.itemSection(menuId, itemId);
+        Material material = this.material(menuId, itemId, section, face.material);
+        String name = section == null ? face.name : section.getString("name", face.name);
+        List<String> lore = this.lore(section, face.lore);
+        Boolean glow = face.glow ? Boolean.TRUE : null;
+        if (section != null && section.contains("glow")) {
+            glow = Boolean.valueOf(section.getBoolean("glow"));
+        }
+        return this.assemble(material, this.amount(menuId, itemId, 1), name, lore, glow, tokens);
+    }
+
+    private Items assemble(Material material, int amount, String name, List<String> lore,
+                           Boolean glow, Map<String, String> tokens) {
         Items items = Items.of(material, amount).rawName(Tokens.apply(name, tokens));
         List<String> filled = new ArrayList<String>(lore.size());
         for (String line : lore) {
             filled.add(Tokens.apply(line, tokens));
         }
         items.rawLore(filled.toArray(new String[0]));
-        // The shimmer marks the on state, which is what every caller of this
-        // overload wants, so it is applied here rather than chained at the
-        // call site - chaining it would run *after* the file's own glow and
-        // silently win, making the key look broken.
-        items.glow(on);
-        if (section != null && section.contains("glow" + suffix)) {
-            items.glint(Boolean.valueOf(section.getBoolean("glow" + suffix)));
-        } else if (section != null && section.contains("glow")) {
-            items.glint(Boolean.valueOf(section.getBoolean("glow")));
+        return items.glint(glow);
+    }
+
+    /**
+     * How one item looks in one state.
+     *
+     * <p>Several buttons here read differently depending on what they
+     * control - a map is selected, compatible, or incompatible; an effect is
+     * on or off - and each state can want its own icon, wording and shimmer.
+     * Passing those as a growing list of parallel arguments got unreadable at
+     * about six; naming the pair of states is clearer, and the checker can
+     * still read every literal out of it.
+     */
+    public static final class Face {
+        private final Material material;
+        private final String name;
+        private final String[] lore;
+        private boolean glow;
+
+        private Face(Material material, String name, String[] lore) {
+            this.material = material;
+            this.name = name;
+            this.lore = lore;
         }
-        return items;
+
+        public static Face of(Material material, String name, String... lore) {
+            return new Face(material, name, lore);
+        }
+
+        /** Marks this state as the one that shimmers. */
+        public Face glow() {
+            this.glow = true;
+            return this;
+        }
     }
 
     /**

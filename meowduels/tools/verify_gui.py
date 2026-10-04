@@ -143,12 +143,12 @@ for menu in sorted(reads):
     code = reads[menu]
     checked_menus += 1
 
-    if "title" in code:
-        if doc.get("title") is None:
-            fail("gui/%s.yml: no title, but the code has one (%r)" % (menu, code["title"]))
-        elif doc["title"] != code["title"]:
-            fail("gui/%s.yml: title is %r, the code default is %r"
-                 % (menu, doc["title"], code["title"]))
+    for key in sorted(k for k in code if k == "title" or k.startswith("title-")):
+        if doc.get(key) is None:
+            fail("gui/%s.yml: no %s, but the code has one (%r)" % (menu, key, code[key]))
+        elif doc[key] != code[key]:
+            fail("gui/%s.yml: %s is %r, the code default is %r"
+                 % (menu, key, doc[key], code[key]))
     if "rows" in code:
         if doc.get("rows") is None:
             fail("gui/%s.yml: no rows, but the code has %d" % (menu, code["rows"]))
@@ -161,57 +161,54 @@ for menu in sorted(reads):
         if got is None:
             fail("gui/%s.yml: no item '%s', which the code reads" % (menu, item_id))
             continue
-        if "slot" in expect:
-            if menu in FIXED:
-                if "slot" in got:
+        for key in ("slot", "material", "material-on", "material-off",
+                    "name", "name-on", "name-off",
+                    "lore", "lore-on", "lore-off",
+                    "glow", "glow-on", "glow-off", "amount"):
+            if key not in expect:
+                continue
+            want = expect[key]
+            if key == "slot" and menu in FIXED:
+                if key in got:
                     fail("gui/%s.yml: item '%s' has a slot, but this menu dispatches "
                          "clicks by slot number - moving it would fire the wrong "
                          "handler, so the key must not be shipped" % (menu, item_id))
-            elif "slot" not in got:
-                fail("gui/%s.yml: item '%s' has no slot, the code default is %d"
-                     % (menu, item_id, expect["slot"]))
-            elif int(got["slot"]) != expect["slot"]:
-                fail("gui/%s.yml: item '%s' slot is %s, the code default is %d"
-                     % (menu, item_id, got["slot"], expect["slot"]))
-        if "material" in expect:
-            have = got.get("material") or got.get("material-on")
-            if have is None:
-                fail("gui/%s.yml: item '%s' has no material, the code default is %s"
-                     % (menu, item_id, expect["material"]))
-            elif have != expect["material"] and got.get("material-on") != expect["material"] \
-                    and got.get("material-off") != expect["material"]:
-                fail("gui/%s.yml: item '%s' material is %s, the code default is %s"
-                     % (menu, item_id, have, expect["material"]))
-        if "name" in expect:
-            have = got.get("name", got.get("name-on"))
-            if have is None:
-                fail("gui/%s.yml: item '%s' has no name, the code default is %r"
-                     % (menu, item_id, expect["name"]))
-            elif have != expect["name"] and got.get("name-on") != expect["name"] \
-                    and got.get("name-off") != expect["name"]:
-                fail("gui/%s.yml: item '%s' name is %r, the code default is %r"
-                     % (menu, item_id, have, expect["name"]))
-        for face in ("lore-on", "lore-off"):
-            if not expect.get(face):
                 continue
-            if face not in got:
-                fail("gui/%s.yml: item '%s' has no %s, the code has %d line(s)"
-                     % (menu, item_id, face, len(expect[face])))
-            elif list(got[face]) != list(expect[face]):
-                fail("gui/%s.yml: item '%s' %s differs from the code default:\n"
-                     "      shipped: %r\n         code: %r"
-                     % (menu, item_id, face, list(got[face]), list(expect[face])))
-        if expect.get("lore"):
-            have = got.get("lore", got.get("lore-on"))
-            if have is None:
-                fail("gui/%s.yml: item '%s' has no lore, the code has %d line(s)"
-                     % (menu, item_id, len(expect["lore"])))
-            elif list(have) != list(expect["lore"]) \
-                    and list(got.get("lore-on") or []) != list(expect["lore"]) \
-                    and list(got.get("lore-off") or []) != list(expect["lore"]):
-                fail("gui/%s.yml: item '%s' lore differs from the code default:\n"
-                     "      shipped: %r\n         code: %r"
-                     % (menu, item_id, list(have), list(expect["lore"])))
+            if key in ("glow", "glow-on", "glow-off") and want is False:
+                # A face that does not glow carries no key: Items.glow(false)
+                # has always been a no-op, and shipping `glow: false` would
+                # start forcing the shimmer off on materials that glint by
+                # themselves.
+                if key in got:
+                    fail("gui/%s.yml: item '%s' ships %s: false, but the code "
+                         "leaves that state's shimmer alone - the key would "
+                         "change what an enchanted icon looks like"
+                         % (menu, item_id, key))
+                continue
+            if key not in got:
+                fail("gui/%s.yml: item '%s' has no %s, the code default is %r"
+                     % (menu, item_id, key, want))
+                continue
+            have = got[key]
+            if key.startswith("lore"):
+                if list(have) != list(want):
+                    fail("gui/%s.yml: item '%s' %s differs from the code default:\n"
+                         "      shipped: %r\n         code: %r"
+                         % (menu, item_id, key, list(have), list(want)))
+                continue
+            if key in ("slot", "amount"):
+                if int(have) != int(want):
+                    fail("gui/%s.yml: item '%s' %s is %s, the code default is %s"
+                         % (menu, item_id, key, have, want))
+                continue
+            if key.startswith("glow"):
+                if str(have).lower() != str(want).lower():
+                    fail("gui/%s.yml: item '%s' %s is %s, the code default is %s"
+                         % (menu, item_id, key, have, want))
+                continue
+            if have != want:
+                fail("gui/%s.yml: item '%s' %s is %r, the code default is %r"
+                     % (menu, item_id, key, have, want))
 
     for item_id in sorted(doc["items"]):
         if item_id not in code["items"]:

@@ -167,8 +167,8 @@ def render(menu):
     lines.append("# " + "-" * 73)
     lines.append("")
 
-    if "title" in code:
-        lines.append("title: %s" % scalar(code["title"]))
+    for key in sorted(k for k in code if k == "title" or k.startswith("title-")):
+        lines.append("%s: %s" % (key, scalar(code[key])))
     if "rows" in code:
         lines.append("rows: %d" % code["rows"])
     lines.append("")
@@ -188,17 +188,25 @@ def render(menu):
         lines.append("  %s:" % item_id)
         if "slot" in spec and menu not in G.FIXED:
             lines.append("    slot: %d" % spec["slot"])
-        if "material" in spec:
-            lines.append("    material: %s" % spec["material"])
-        elif "material" in spec.get("dynamic", []):
-            # No default to ship: the code picks this per entry. Offered as a
-            # comment so an owner can see the key exists without having every
-            # row pinned to one icon by accident.
+        for key in ("material", "material-on", "material-off"):
+            if key in spec:
+                lines.append("    %s: %s" % (key, spec[key]))
+        if "material" not in spec and "material-on" not in spec \
+                and "material" in spec.get("dynamic", []):
             lines.append("    # material: STONE   # each row uses its own icon unless you set this")
-        if spec.get("name") is not None:
-            lines.append("    name: %s" % scalar(spec["name"]))
-        elif "name" in spec.get("dynamic", []):
-            lines.append("    # name: \"&e{kit}\"   # each row is titled by the kit unless you set this")
+        if "amount" in spec:
+            lines.append("    amount: %d" % spec["amount"])
+        for key in ("name", "name-on", "name-off"):
+            if spec.get(key) is not None:
+                lines.append("    %s: %s" % (key, scalar(spec[key])))
+        if "name" not in spec and "name-on" not in spec and "name" in spec.get("dynamic", []):
+            lines.append('    # name: "&e{kit}"   # each row is titled by the kit unless you set this')
+        for key in ("glow", "glow-on", "glow-off"):
+            # Only a true is shipped. Items.glow(false) has always been a
+            # no-op, so a shipped false would start forcing the shimmer off on
+            # materials that glint by themselves.
+            if spec.get(key) is True:
+                lines.append("    %s: true" % key)
         for key in ("lore", "lore-on", "lore-off"):
             if not spec.get(key):
                 continue

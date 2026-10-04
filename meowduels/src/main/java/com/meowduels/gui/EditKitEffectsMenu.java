@@ -13,6 +13,7 @@ import com.meowduels.MeowDuels;
 import com.meowduels.gui.KitItemsEditMenu;
 import com.meowduels.gui.Menu;
 import com.meowduels.managers.GuiConfigManager;
+import com.meowduels.managers.GuiConfigManager.Face;
 import com.meowduels.model.Kit;
 import com.meowduels.model.StartEffect;
 import com.meowduels.util.Items;
@@ -54,31 +55,23 @@ extends Menu {
         // so a file can reword or recolour either state on its own.
         this.put(rows, gui.slot(MENU, "strength", 10, rows),
                  gui.toggle(MENU, "strength", this.kit.hasStartEffect(StartEffect.STRENGTH2_90), tokens,
-                          Material.BLAZE_POWDER,
-                          "&c\ua731\u1d1b\u0280\u1d07\u0274\u0262\u1d1b\u029c \u026a\u026a &7(1:30)",
-                          new String[]{"", ON, TOGGLE_HINT},
-                          new String[]{"", OFF, TOGGLE_HINT}),
+                            Face.of(Material.BLAZE_POWDER, "&c\ua731\u1d1b\u0280\u1d07\u0274\u0262\u1d1b\u029c \u026a\u026a &7(1:30)", "", ON, TOGGLE_HINT).glow(),
+                            Face.of(Material.BLAZE_POWDER, "&c\ua731\u1d1b\u0280\u1d07\u0274\u0262\u1d1b\u029c \u026a\u026a &7(1:30)", "", OFF, TOGGLE_HINT)),
                  StartEffect.STRENGTH2_90.name());
         this.put(rows, gui.slot(MENU, "speed", 12, rows),
                  gui.toggle(MENU, "speed", this.kit.hasStartEffect(StartEffect.SPEED2_90), tokens,
-                          Material.SUGAR,
-                          "&d\ua731\u1d18\u1d07\u1d07\u1d05 \u026a\u026a &7(1:30)",
-                          new String[]{"", ON, TOGGLE_HINT},
-                          new String[]{"", OFF, TOGGLE_HINT}),
+                            Face.of(Material.SUGAR, "&d\ua731\u1d18\u1d07\u1d07\u1d05 \u026a\u026a &7(1:30)", "", ON, TOGGLE_HINT).glow(),
+                            Face.of(Material.SUGAR, "&d\ua731\u1d18\u1d07\u1d07\u1d05 \u026a\u026a &7(1:30)", "", OFF, TOGGLE_HINT)),
                  StartEffect.SPEED2_90.name());
         this.put(rows, gui.slot(MENU, "speed-infinite", 14, rows),
                  gui.toggle(MENU, "speed-infinite", this.kit.hasStartEffect(StartEffect.SPEED2_INFINITE), tokens,
-                          Material.FEATHER,
-                          "&d\ua731\u1d18\u1d07\u1d07\u1d05 \u026a\u026a &7(\u026a\u0274\ua730\u026a\u0274\u026a\u1d1b\u1d07)",
-                          new String[]{"", ON, TOGGLE_HINT},
-                          new String[]{"", OFF, TOGGLE_HINT}),
+                            Face.of(Material.FEATHER, "&d\ua731\u1d18\u1d07\u1d07\u1d05 \u026a\u026a &7(\u026a\u0274\ua730\u026a\u0274\u026a\u1d1b\u1d07)", "", ON, TOGGLE_HINT).glow(),
+                            Face.of(Material.FEATHER, "&d\ua731\u1d18\u1d07\u1d07\u1d05 \u026a\u026a &7(\u026a\u0274\ua730\u026a\u0274\u026a\u1d1b\u1d07)", "", OFF, TOGGLE_HINT)),
                  StartEffect.SPEED2_INFINITE.name());
         this.put(rows, gui.slot(MENU, "regeneration", 16, rows),
                  gui.toggle(MENU, "regeneration", this.kit.hasStartEffect(StartEffect.REGEN2_90), tokens,
-                          Material.GHAST_TEAR,
-                          "&a\u0280\u1d07\u0262\u1d07\u0274\u1d07\u0280\u1d00\u1d1b\u026a\u1d0f\u0274 \u026a\u026a &7(1:30)",
-                          new String[]{"", ON, TOGGLE_HINT},
-                          new String[]{"", OFF, TOGGLE_HINT}),
+                            Face.of(Material.GHAST_TEAR, "&a\u0280\u1d07\u0262\u1d07\u0274\u1d07\u0280\u1d00\u1d1b\u026a\u1d0f\u0274 \u026a\u026a &7(1:30)", "", ON, TOGGLE_HINT).glow(),
+                            Face.of(Material.GHAST_TEAR, "&a\u0280\u1d07\u0262\u1d07\u0274\u1d07\u0280\u1d00\u1d1b\u026a\u1d0f\u0274 \u026a\u026a &7(1:30)", "", OFF, TOGGLE_HINT)),
                  StartEffect.REGEN2_90.name());
         // Admin-only, server-wide actions. Everything above is this kit's start
         // effects; everything here changes what the kit IS for every player.
