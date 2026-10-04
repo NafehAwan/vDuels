@@ -39,7 +39,7 @@ COMMON = """\
 #   lore      the lines under it; "" is a blank spacer line
 #   glow      true to force the enchanted shimmer, false to force it off\n#\n# An item with lore-on and lore-off has two faces - one for when the thing\n# it controls is on, one for when it is off. name-on/name-off and\n# material-on/material-off work the same way, and a plain name:/material:\n# covers both states.
 #
-# Colours: <yellow>, <gold>, <#FF2E55> for a custom colour, or
+# Theme placeholders, usable in any name or lore in any menu. These follow\n# theme: in config.yml, so one edit there restyles every screen:\n#   {value} {label} {muted} {good} {bad} {warn}   colours\n#   {tick} {cross} {sep} {hint}                   the house symbols\n# Write a colour out instead if you want one line to ignore the theme.\n#\n# Colours: <yellow>, <gold>, <#FF2E55> for a custom colour, or
 # <gradient:#7CFF6B:#1FA32F>text</gradient>. Legacy &e codes work too.\
 """
 
@@ -145,6 +145,19 @@ NOTES = {
          "opponent": "The other player's column.",
          "rematch": "Sends a fresh duel request to the same opponent.\n"
                     "# These four names are MiniMessage, so gradients work."},
+    ),
+    "settings": (
+        "/settings - each player's own switches.",
+        {},
+        {"duel-requests": "Whether anyone may send this player a duel.",
+         "party-invites": "Whether anyone may invite them to a party.",
+         "spectators": "Whether their duels can be watched.",
+         "isolated-chat": "On, a match's chat is private to the match. Off by\n"
+                          "# default.",
+         "scoreboard": "Their sidebar.",
+         "sounds": "Every cue this plugin plays.",
+         "trims": "Opens the per-kit armour trim picker. Only shown to players\n"
+                  "# with meowduels.trims."},
     ),
     "editkitlist": (
         "/editkit - pick a kit to edit its start-of-match potion effects.",

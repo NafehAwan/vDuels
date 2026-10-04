@@ -3,6 +3,8 @@ package com.meowduels.gui;
 import com.meowduels.MeowDuels;
 import com.meowduels.gui.Menu;
 import com.meowduels.gui.Style;
+import com.meowduels.managers.GuiConfigManager;
+import com.meowduels.managers.GuiConfigManager.Face;
 import com.meowduels.gui.TrimKitMenu;
 import com.meowduels.util.Items;
 import java.util.UUID;
@@ -48,80 +50,98 @@ extends Menu {
         this.owner = player.getUniqueId();
     }
 
+    /** The name of this screen's file: {@code gui/settings.yml}. */
+    private static final String MENU = "settings";
+
+    /**
+     * The two lines every switch ends with, as theme placeholders.
+     *
+     * <p>Written {@code {hint}} rather than with the colour spelled out so a
+     * server retinting {@code theme:} in config.yml retints these too - the
+     * house style here is composed from the palette, not typed.
+     */
+    private static final String OFF_HINT = "{hint}ᴄʟɪᴄᴋ ᴛᴏ ᴛᴜʀɴ ᴏɴ";
+    private static final String ON_HINT = "{hint}ᴄʟɪᴄᴋ ᴛᴏ ᴛᴜʀɴ ᴏꜰꜰ";
+
     @Override
     public void build() {
-        this.createRaw(ROWS, Style.title("#A0E9FF", "#4C7DF0",
-                "ꜱᴇᴛᴛɪɴɢꜱ"));
-        Style.frame(this.inventory, ROWS);
+        GuiConfigManager gui = this.plugin.gui();
+        int rows = gui.rows(MENU, ROWS);
+        int size = rows * 9;
+        this.createRaw(rows, gui.title(MENU, "<dark_gray>▏ <gradient:#A0E9FF:#4C7DF0>ꜱᴇᴛᴛɪɴɢꜱ</gradient>"));
+        gui.frame(MENU, this.inventory, rows);
 
-        this.inventory.setItem(SLOT_DUEL, this.toggle(Material.IRON_SWORD, DUEL,
-                "ᴅᴜᴇʟ ʀᴇǫᴜᴇꜱᴛꜱ",
-                this.plugin.getPlayerSettings().isDuelRequests(this.owner),
-                "ᴀɴʏᴏɴᴇ ᴄᴀɴ ᴄʜᴀʟʟᴇɴɢᴇ ʏᴏᴜ",
-                "ᴄʜᴀʟʟᴇɴɢᴇꜱ ᴀʀᴇ ʙʟᴏᴄᴋᴇᴅ"));
+        this.put(rows, gui.slot(MENU, "duel-requests", SLOT_DUEL, rows), DUEL,
+                 gui.toggle(MENU, "duel-requests",
+                         this.plugin.getPlayerSettings().isDuelRequests(this.owner), null,
+                         Face.of(Material.IRON_SWORD, "{value}ᴅᴜᴇʟ ʀᴇǫᴜᴇꜱᴛꜱ",
+                                 "", "{good}{tick}ᴀɴʏᴏɴᴇ ᴄᴀɴ ᴄʜᴀʟʟᴇɴɢᴇ ʏᴏᴜ", "", ON_HINT).glow(),
+                         Face.of(Material.IRON_SWORD, "{value}ᴅᴜᴇʟ ʀᴇǫᴜᴇꜱᴛꜱ",
+                                 "", "{bad}{cross}ᴄʜᴀʟʟᴇɴɢᴇꜱ ᴀʀᴇ ʙʟᴏᴄᴋᴇᴅ", "", OFF_HINT)));
 
-        this.inventory.setItem(SLOT_INVITES, this.toggle(Material.PLAYER_HEAD, INVITES,
-                "ᴘᴀʀᴛʏ ɪɴᴠɪᴛᴇꜱ",
-                this.plugin.getPlayerSettings().isPartyInvites(this.owner),
-                "ᴀɴʏᴏɴᴇ ᴄᴀɴ ɪɴᴠɪᴛᴇ ʏᴏᴜ",
-                "ɪɴᴠɪᴛᴇꜱ ᴀʀᴇ ʙʟᴏᴄᴋᴇᴅ"));
+        this.put(rows, gui.slot(MENU, "party-invites", SLOT_INVITES, rows), INVITES,
+                 gui.toggle(MENU, "party-invites",
+                         this.plugin.getPlayerSettings().isPartyInvites(this.owner), null,
+                         Face.of(Material.PLAYER_HEAD, "{value}ᴘᴀʀᴛʏ ɪɴᴠɪᴛᴇꜱ",
+                                 "", "{good}{tick}ᴀɴʏᴏɴᴇ ᴄᴀɴ ɪɴᴠɪᴛᴇ ʏᴏᴜ", "", ON_HINT).glow(),
+                         Face.of(Material.PLAYER_HEAD, "{value}ᴘᴀʀᴛʏ ɪɴᴠɪᴛᴇꜱ",
+                                 "", "{bad}{cross}ɪɴᴠɪᴛᴇꜱ ᴀʀᴇ ʙʟᴏᴄᴋᴇᴅ", "", OFF_HINT)));
 
-        this.inventory.setItem(SLOT_SPECTATORS, this.toggle(Material.ENDER_EYE, SPECTATORS,
-                "ꜱᴘᴇᴄᴛᴀᴛᴏʀꜱ",
-                this.plugin.getPlayerSettings().isSpectators(this.owner),
-                "ᴏᴛʜᴇʀꜱ ᴄᴀɴ ᴡᴀᴛᴄʜ ʏᴏᴜʀ ᴅᴜᴇʟꜱ",
-                "ʏᴏᴜʀ ᴅᴜᴇʟꜱ ᴀʀᴇ ᴘʀɪᴠᴀᴛᴇ"));
+        this.put(rows, gui.slot(MENU, "spectators", SLOT_SPECTATORS, rows), SPECTATORS,
+                 gui.toggle(MENU, "spectators",
+                         this.plugin.getPlayerSettings().isSpectators(this.owner), null,
+                         Face.of(Material.ENDER_EYE, "{value}ꜱᴘᴇᴄᴛᴀᴛᴏʀꜱ",
+                                 "", "{good}{tick}ᴏᴛʜᴇʀꜱ ᴄᴀɴ ᴡᴀᴛᴄʜ ʏᴏᴜʀ ᴅᴜᴇʟꜱ", "", ON_HINT).glow(),
+                         Face.of(Material.ENDER_EYE, "{value}ꜱᴘᴇᴄᴛᴀᴛᴏʀꜱ",
+                                 "", "{bad}{cross}ʏᴏᴜʀ ᴅᴜᴇʟꜱ ᴀʀᴇ ᴘʀɪᴠᴀᴛᴇ", "", OFF_HINT)));
 
-        this.inventory.setItem(SLOT_CHAT, this.toggle(Material.OAK_SIGN, CHAT,
-                "ɪꜱᴏʟᴀᴛᴇᴅ ᴄʜᴀᴛ",
-                this.plugin.getPlayerSettings().isIsolatedChat(this.owner),
-                "ɪɴ ᴀ ᴍᴀᴛᴄʜ, ᴏɴʟʏ ᴛʜᴇ ᴍᴀᴛᴄʜ ᴛᴀʟᴋꜱ",
-                "ʏᴏᴜ ꜱᴇᴇ ᴀɴᴅ ᴊᴏɪɴ ᴛʜᴇ ᴡʜᴏʟᴇ ꜱᴇʀᴠᴇʀ"));
+        this.put(rows, gui.slot(MENU, "isolated-chat", SLOT_CHAT, rows), CHAT,
+                 gui.toggle(MENU, "isolated-chat",
+                         this.plugin.getPlayerSettings().isIsolatedChat(this.owner), null,
+                         Face.of(Material.OAK_SIGN, "{value}ɪꜱᴏʟᴀᴛᴇᴅ ᴄʜᴀᴛ",
+                                 "", "{good}{tick}ɪɴ ᴀ ᴍᴀᴛᴄʜ, ᴏɴʟʏ ᴛʜᴇ ᴍᴀᴛᴄʜ ᴛᴀʟᴋꜱ", "", ON_HINT).glow(),
+                         Face.of(Material.OAK_SIGN, "{value}ɪꜱᴏʟᴀᴛᴇᴅ ᴄʜᴀᴛ",
+                                 "", "{bad}{cross}ʏᴏᴜ ꜱᴇᴇ ᴀɴᴅ ᴊᴏɪɴ ᴛʜᴇ ᴡʜᴏʟᴇ ꜱᴇʀᴠᴇʀ", "", OFF_HINT)));
 
-        this.inventory.setItem(SLOT_BOARD, this.toggle(Material.PAPER, BOARD,
-                "ꜱᴄᴏʀᴇʙᴏᴀʀᴅ",
-                this.plugin.getPlayerSettings().isScoreboard(this.owner),
-                "ᴛʜᴇ ꜱɪᴅᴇʙᴀʀ ɪꜱ ᴏɴ",
-                "ᴛʜᴇ ꜱɪᴅᴇʙᴀʀ ɪꜱ ʜɪᴅᴅᴇɴ"));
+        this.put(rows, gui.slot(MENU, "scoreboard", SLOT_BOARD, rows), BOARD,
+                 gui.toggle(MENU, "scoreboard",
+                         this.plugin.getPlayerSettings().isScoreboard(this.owner), null,
+                         Face.of(Material.PAPER, "{value}ꜱᴄᴏʀᴇʙᴏᴀʀᴅ",
+                                 "", "{good}{tick}ᴛʜᴇ ꜱɪᴅᴇʙᴀʀ ɪꜱ ᴏɴ", "", ON_HINT).glow(),
+                         Face.of(Material.PAPER, "{value}ꜱᴄᴏʀᴇʙᴏᴀʀᴅ",
+                                 "", "{bad}{cross}ᴛʜᴇ ꜱɪᴅᴇʙᴀʀ ɪꜱ ʜɪᴅᴅᴇɴ", "", OFF_HINT)));
 
-        this.inventory.setItem(SLOT_SOUNDS, this.toggle(Material.NOTE_BLOCK, SOUNDS,
-                "ᴍᴇɴᴜ ꜱᴏᴜɴᴅꜱ",
-                this.plugin.getPlayerSettings().isSounds(this.owner),
-                "ᴄʟɪᴄᴋꜱ, ᴄᴏᴜɴᴛᴅᴏᴡɴꜱ ᴀɴᴅ ᴄᴜᴇꜱ",
-                "ᴍᴇᴏᴡᴅᴜᴇʟꜱ ᴍᴀᴋᴇꜱ ɴᴏ ꜱᴏᴜɴᴅ"));
+        this.put(rows, gui.slot(MENU, "sounds", SLOT_SOUNDS, rows), SOUNDS,
+                 gui.toggle(MENU, "sounds",
+                         this.plugin.getPlayerSettings().isSounds(this.owner), null,
+                         Face.of(Material.NOTE_BLOCK, "{value}ᴍᴇɴᴜ ꜱᴏᴜɴᴅꜱ",
+                                 "", "{good}{tick}ᴄʟɪᴄᴋꜱ, ᴄᴏᴜɴᴛᴅᴏᴡɴꜱ ᴀɴᴅ ᴄᴜᴇꜱ", "", ON_HINT).glow(),
+                         Face.of(Material.NOTE_BLOCK, "{value}ᴍᴇɴᴜ ꜱᴏᴜɴᴅꜱ",
+                                 "", "{bad}{cross}ᴍᴇᴏᴡᴅᴜᴇʟꜱ ᴍᴀᴋᴇꜱ ɴᴏ ꜱᴏᴜɴᴅ", "", OFF_HINT)));
 
         Player p = Bukkit.getPlayer((UUID)this.owner);
         if (p != null && p.hasPermission("meowduels.trims")) {
-            this.inventory.setItem(SLOT_TRIMS, Items.of(Material.LEATHER_CHESTPLATE)
-                    .rawName(Style.VALUE + "ᴋɪᴛ ᴛʀɪᴍꜱ")
-                    .rawLore("",
-                             Style.LABEL + "ꜱᴇᴛ ʏᴏᴜʀ ᴀʀᴍᴏᴜʀ ᴛʀɪᴍ ᴘᴇʀ ᴋɪᴛ",
-                             "",
-                             Style.HINT + "ᴄʟɪᴄᴋ ᴛᴏ ᴏᴘᴇɴ")
-                    .hideTooltip().tag(this.plugin.keyButton(), TRIMS).build());
+            this.put(rows, gui.slot(MENU, "trims", SLOT_TRIMS, rows), TRIMS,
+                     gui.item(MENU, "trims", null, Material.LEATHER_CHESTPLATE,
+                              "{value}ᴋɪᴛ ᴛʀɪᴍꜱ",
+                              "",
+                              "{label}ꜱᴇᴛ ʏᴏᴜʀ ᴀʀᴍᴏᴜʀ ᴛʀɪᴍ ᴘᴇʀ ᴋɪᴛ",
+                              "",
+                              "{hint}ᴄʟɪᴄᴋ ᴛᴏ ᴏᴘᴇɴ"));
         }
     }
 
     /**
-     * One switch.
+     * One switch, tagged with the button id its click handler expects.
      *
-     * <p>Name plain, state in green or red with a tick or a cross, then the
-     * hint. No gradient: five gradients in a row is a fruit salad, and the
-     * thing that should catch your eye here is which ones are off.
+     * <p>The file's item id and the tag are deliberately different strings:
+     * the tags are what {@code onClick} already matches on and renaming them
+     * would be a behaviour change, while the ids are what an owner reads, so
+     * they say {@code duel-requests} rather than {@code set-duelreq}.
      */
-    private ItemStack toggle(Material icon, String id, String name, boolean on,
-                             String whenOn, String whenOff) {
-        return Items.of(icon)
-                .rawName(Style.VALUE + name)
-                .rawLore("",
-                         Style.state(on, whenOn, whenOff),
-                         "",
-                         Style.HINT + "ᴄʟɪᴄᴋ ᴛᴏ "
-                                 + (on ? "ᴛᴜʀɴ ᴏꜰꜰ" : "ᴛᴜʀɴ ᴏɴ"))
-                .glow(on)
-                .hideTooltip()
-                .tag(this.plugin.keyButton(), id)
-                .build();
+    private void put(int rows, int slot, String tag, Items item) {
+        int at = Math.max(0, Math.min(rows * 9 - 1, slot));
+        this.inventory.setItem(at, item.hideTooltip().tag(this.plugin.keyButton(), tag).build());
     }
 
     @Override

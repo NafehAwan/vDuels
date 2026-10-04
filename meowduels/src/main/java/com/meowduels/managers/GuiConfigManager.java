@@ -143,6 +143,39 @@ public class GuiConfigManager {
                 file.getString("filler-name", com.meowduels.gui.Style.FILLER_NAME)));
     }
 
+    /**
+     * The palette, as placeholders every menu file can use.
+     *
+     * <p>Without these, a file would have to spell its colours out, and the
+     * house style is composed rather than written: the settings screen builds
+     * a toggle's state line out of {@code Style.GOOD + Style.TICK + text}, all
+     * of which come from {@code theme:} in config.yml. Shipping the resolved
+     * strings would have frozen them - an owner retinting the theme would
+     * find these 27 files still on the old colours.
+     *
+     * <p>So {@code {good}{tick}ᴏɴ} in a file stays wired to the theme, and an
+     * owner who wants one line in a fixed colour writes the colour instead.
+     */
+    private Map<String, String> withTheme(Map<String, String> tokens) {
+        Map<String, String> all = new LinkedHashMap<String, String>();
+        all.put("value", com.meowduels.gui.Style.VALUE);
+        all.put("label", com.meowduels.gui.Style.LABEL);
+        all.put("muted", com.meowduels.gui.Style.MUTED);
+        all.put("good", com.meowduels.gui.Style.GOOD);
+        all.put("bad", com.meowduels.gui.Style.BAD);
+        all.put("warn", com.meowduels.gui.Style.WARN);
+        all.put("sep", com.meowduels.gui.Style.SEP);
+        all.put("hint", com.meowduels.gui.Style.HINT);
+        all.put("tick", com.meowduels.gui.Style.TICK);
+        all.put("cross", com.meowduels.gui.Style.CROSS);
+        if (tokens != null) {
+            // The menu's own tokens last, so a screen that needs a {good} of
+            // its own can still have one.
+            all.putAll(tokens);
+        }
+        return all;
+    }
+
     private ConfigurationSection itemSection(String menuId, String itemId) {
         YamlConfiguration file = this.files.get(menuId);
         return file == null ? null : file.getConfigurationSection("items." + itemId);
@@ -160,7 +193,7 @@ public class GuiConfigManager {
 
     /** The window title with {@code {token}}s filled in. */
     public String title(String menuId, String def, Map<String, String> tokens) {
-        return Tokens.apply(this.title(menuId, def), tokens);
+        return Tokens.apply(this.title(menuId, def), this.withTheme(tokens));
     }
 
     /**
@@ -175,10 +208,10 @@ public class GuiConfigManager {
     public String titleOf(String menuId, String variant, String def, Map<String, String> tokens) {
         YamlConfiguration file = this.files.get(menuId);
         if (file == null) {
-            return Tokens.apply(def, tokens);
+            return Tokens.apply(def, this.withTheme(tokens));
         }
         String value = file.getString("title-" + variant, file.getString("title", def));
-        return Tokens.apply(value, tokens);
+        return Tokens.apply(value, this.withTheme(tokens));
     }
 
     /**
@@ -252,10 +285,11 @@ public class GuiConfigManager {
         int amount = section == null ? 1 : Math.max(1, Math.min(64, section.getInt("amount", 1)));
         String name = section == null ? defName : section.getString("name", defName);
         List<String> lore = this.lore(section, defLore);
-        Items items = Items.of(material, amount).rawName(Tokens.apply(name, tokens));
+        Map<String, String> all = this.withTheme(tokens);
+        Items items = Items.of(material, amount).rawName(Tokens.apply(name, all));
         List<String> filled = new ArrayList<String>(lore.size());
         for (String line : lore) {
-            filled.add(Tokens.apply(line, tokens));
+            filled.add(Tokens.apply(line, all));
         }
         items.rawLore(filled.toArray(new String[0]));
         if (section != null && section.contains("glow")) {
@@ -319,10 +353,11 @@ public class GuiConfigManager {
 
     private Items assemble(Material material, int amount, String name, List<String> lore,
                            Boolean glow, Map<String, String> tokens) {
-        Items items = Items.of(material, amount).rawName(Tokens.apply(name, tokens));
+        Map<String, String> all = this.withTheme(tokens);
+        Items items = Items.of(material, amount).rawName(Tokens.apply(name, all));
         List<String> filled = new ArrayList<String>(lore.size());
         for (String line : lore) {
-            filled.add(Tokens.apply(line, tokens));
+            filled.add(Tokens.apply(line, all));
         }
         items.rawLore(filled.toArray(new String[0]));
         return items.glint(glow);
@@ -379,7 +414,7 @@ public class GuiConfigManager {
         if (section == null) {
             return null;
         }
-        return Tokens.apply(section.getString("name"), tokens);
+        return Tokens.apply(section.getString("name"), this.withTheme(tokens));
     }
 
     /**
@@ -396,15 +431,16 @@ public class GuiConfigManager {
     public String miniName(String menuId, String itemId, String def, Map<String, String> tokens) {
         ConfigurationSection section = this.itemSection(menuId, itemId);
         String value = section == null ? def : section.getString("name", def);
-        return Tokens.apply(value, tokens);
+        return Tokens.apply(value, this.withTheme(tokens));
     }
 
     /** Lore for an entry whose other properties the code decides. */
     public List<String> lore(String menuId, String itemId, Map<String, String> tokens, String... defLore) {
         List<String> lore = this.lore(this.itemSection(menuId, itemId), defLore);
+        Map<String, String> all = this.withTheme(tokens);
         List<String> filled = new ArrayList<String>(lore.size());
         for (String line : lore) {
-            filled.add(Tokens.apply(line, tokens));
+            filled.add(Tokens.apply(line, all));
         }
         return filled;
     }
