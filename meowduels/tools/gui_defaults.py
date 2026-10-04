@@ -226,7 +226,7 @@ def resolve(arg, consts):
 # --------------------------------------------------------------------------
 # Every gui.<call>(...) in the menu sources.
 # --------------------------------------------------------------------------
-CALL = re.compile(r"\bgui\.(item|title|rows|slot|frame)\s*\(")
+CALL = re.compile(r"\bgui\.(item|title|rows|slot|frame|name|lore|material|amount|toggle)\s*\(")
 
 reads = {}          # menuId -> {"title":str, "rows":int, "items":{id:{...}}}
 item_count = 0
@@ -270,10 +270,55 @@ for name in sorted(os.listdir(GUI_SRC)):
             fail("%s: gui.%s's item id is not a literal (%s)" % (name, kind, args[1]))
             continue
         slot_entry = entry["items"].setdefault(item_id, {})
+        if kind in ("name", "material", "amount"):
+            # Dynamic by design: the code works these out per entry, so there
+            # is no literal to ship and nothing for the checker to compare.
+            # Recorded only so the item is known to exist.
+            slot_entry.setdefault("dynamic", []).append(kind)
+            continue
+        if kind == "lore":
+            # gui.lore(menu, id, tokens, line...) - the lines are the default.
+            rest = args[2:]
+            while rest and resolve(rest[0], consts) is None:
+                rest = rest[1:]
+            values = [resolve(a, consts) for a in rest]
+            if any(v is None for v in values):
+                fail("%s: gui.lore(%s) has a non-literal line; pass it as a "
+                     "{token} so the default stays checkable" % (name, item_id))
+                continue
+            if values:
+                slot_entry["lore"] = values
+            continue
         if kind == "slot":
             value = resolve(args[2], consts)
             if isinstance(value, int):
                 slot_entry["slot"] = value
+            continue
+        if kind == "toggle":
+            # gui.toggle(menu, id, on, tokens, Material, name,
+            #            new String[]{on face}, new String[]{off face})
+            rest = args[2:]
+            while rest and not rest[0].startswith("Material."):
+                rest = rest[1:]
+            if len(rest) < 4:
+                fail("%s: gui.toggle(%s) does not have a material, a name and "
+                     "two lore arrays" % (name, item_id))
+                continue
+            faces = []
+            for arr in rest[2:4]:
+                inner = arr[arr.index("{") + 1:arr.rindex("}")]
+                values = [resolve(a, consts) for a in split_args(inner)]
+                if any(v is None for v in values):
+                    fail("%s: gui.toggle(%s) has a non-literal lore line"
+                         % (name, item_id))
+                    values = None
+                faces.append(values)
+            if any(f is None for f in faces):
+                continue
+            slot_entry["material"] = resolve(rest[0], consts)
+            slot_entry["name"] = resolve(rest[1], consts)
+            slot_entry["lore-on"], slot_entry["lore-off"] = faces
+            item_count += 1
             continue
         # gui.item: [menu, id, (on)?, (tokens)?, Material, name, lore...]
         rest = args[2:]

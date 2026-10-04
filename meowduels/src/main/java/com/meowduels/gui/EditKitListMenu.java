@@ -12,8 +12,11 @@ package com.meowduels.gui;
 import com.meowduels.MeowDuels;
 import com.meowduels.gui.EditKitEffectsMenu;
 import com.meowduels.gui.Menu;
+import com.meowduels.managers.GuiConfigManager;
 import com.meowduels.model.Kit;
 import com.meowduels.util.Items;
+import com.meowduels.util.Text;
+import java.util.HashMap;
 import java.util.List;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -29,26 +32,54 @@ extends Menu {
         this.plugin = plugin;
     }
 
+    /** The name of this screen's file: {@code gui/editkitlist.yml}. */
+    private static final String MENU = "editkitlist";
+
+    private static final int ROWS = 6;
+
     @Override
     public void build() {
-        this.create(6, "&7&lEdit Kit");
-        ItemStack filler = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
-        for (int i = 0; i < 54; ++i) {
-            this.inventory.setItem(i, filler);
-        }
+        GuiConfigManager gui = this.plugin.gui();
+        int rows = gui.rows(MENU, ROWS);
+        this.createRaw(rows, gui.title(MENU, "&7&lᴇᴅɪᴛ ᴋɪᴛ"));
+        gui.frame(MENU, this.inventory, rows);
         List<Kit> kits = this.plugin.getKitManager().all();
+        int size = rows * 9;
         for (int i = 0; i < SLOTS.length && i < kits.size(); ++i) {
-            this.inventory.setItem(SLOTS[i], this.icon(kits.get(i)));
+            if (SLOTS[i] >= size) break;
+            this.inventory.setItem(SLOTS[i], this.icon(gui, kits.get(i)));
         }
     }
 
-    private ItemStack icon(Kit kit) {
-        int effects = kit.getStartEffects().size();
-        Items item = Items.of(kit.getIcon()).lore("", "&7Start effects: &f" + effects, "&aClick to edit.").hideTooltip().tag(this.plugin.keyKit(), kit.getName());
-        if (kit.getDisplayName() != null && !kit.getDisplayName().isEmpty()) {
+    /**
+     * One kit's row.
+     *
+     * <p>The title is still chosen here rather than in the file. A kit with a
+     * display name is titled with {@code miniName}, which parses MiniMessage
+     * into a real component; one without gets a small-capped {@code &e<id>}.
+     * Those are two different renderers picked per kit, so a single template
+     * would restyle every kit on the server. {@code name:} in the file
+     * overrides both when an owner wants one.
+     */
+    private ItemStack icon(GuiConfigManager gui, Kit kit) {
+        HashMap<String, String> tokens = new HashMap<String, String>();
+        tokens.put("kit", kit.getName());
+        tokens.put("effects", String.valueOf(kit.getStartEffects().size()));
+        Items item = Items.of(gui.material(MENU, "kit", kit.getIcon()),
+                              gui.amount(MENU, "kit", 1))
+                .rawLore(gui.lore(MENU, "kit", tokens,
+                                  "",
+                                  "&7ꜱᴛᴀʀᴛ ᴇꜰꜰᴇᴄᴛꜱ: &f{effects}",
+                                  "&aᴄʟɪᴄᴋ ᴛᴏ ᴇᴅɪᴛ.").toArray(new String[0]))
+                .hideTooltip()
+                .tag(this.plugin.keyKit(), kit.getName());
+        String override = gui.name(MENU, "kit", tokens);
+        if (override != null) {
+            item.rawName(override);
+        } else if (kit.getDisplayName() != null && !kit.getDisplayName().isEmpty()) {
             item.miniName(kit.getDisplayName());
         } else {
-            item.name("&e" + kit.getName());
+            item.rawName("&e" + Text.smallCaps(kit.getName()));
         }
         return item.build();
     }

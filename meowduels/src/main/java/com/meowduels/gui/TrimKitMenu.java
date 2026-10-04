@@ -12,8 +12,11 @@ package com.meowduels.gui;
 import com.meowduels.MeowDuels;
 import com.meowduels.gui.Menu;
 import com.meowduels.gui.TrimMenu;
+import com.meowduels.managers.GuiConfigManager;
 import com.meowduels.model.Kit;
 import com.meowduels.util.Items;
+import com.meowduels.util.Text;
+import java.util.HashMap;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -27,23 +30,39 @@ extends Menu {
         this.plugin = plugin;
     }
 
+    /** The name of this screen's file: {@code gui/trimkit.yml}. */
+    private static final String MENU = "trimkit";
+
+    private static final int ROWS = 6;
+
     @Override
     public void build() {
-        this.create(6, "&d&lTrims &7- Pick a kit");
-        ItemStack filler = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
-        for (int i = 0; i < 54; ++i) {
-            this.inventory.setItem(i, filler);
-        }
+        GuiConfigManager gui = this.plugin.gui();
+        int rows = gui.rows(MENU, ROWS);
+        this.createRaw(rows, gui.title(MENU, "&d&lᴛʀɪᴍꜱ &7- ᴘɪᴄᴋ ᴀ ᴋɪᴛ"));
+        gui.frame(MENU, this.inventory, rows);
+        int size = rows * 9;
         int slot = 0;
         for (Kit kit : this.plugin.getKitManager().all()) {
-            if (slot >= 54) break;
-            Items icon = Items.of(kit.getIcon()).tag(this.plugin.keyKit(), kit.getName());
-            if (kit.getDisplayName() != null && !kit.getDisplayName().isEmpty()) {
+            if (slot >= size) break;
+            HashMap<String, String> tokens = new HashMap<String, String>();
+            tokens.put("kit", kit.getName());
+            Items icon = Items.of(gui.material(MENU, "kit", kit.getIcon()),
+                                  gui.amount(MENU, "kit", 1))
+                    .tag(this.plugin.keyKit(), kit.getName());
+            // As on the other kit lists: the file can title a row, but with
+            // no name: set the kit keeps deciding, so a display name stays a
+            // parsed component rather than becoming a section string.
+            String override = gui.name(MENU, "kit", tokens);
+            if (override != null) {
+                icon.rawName(override);
+            } else if (kit.getDisplayName() != null && !kit.getDisplayName().isEmpty()) {
                 icon.miniName(kit.getDisplayName());
             } else {
-                icon.name("&e" + kit.getName());
+                icon.rawName("&e" + Text.smallCaps(kit.getName()));
             }
-            icon.lore("&7Click to edit this kit's armor trims.");
+            icon.rawLore(gui.lore(MENU, "kit", tokens,
+                                  "&7ᴄʟɪᴄᴋ ᴛᴏ ᴇᴅɪᴛ ᴛʜɪꜱ ᴋɪᴛ'ꜱ ᴀʀᴍᴏʀ ᴛʀɪᴍꜱ.").toArray(new String[0]));
             this.inventory.setItem(slot++, icon.build());
         }
     }

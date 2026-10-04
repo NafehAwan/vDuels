@@ -257,8 +257,15 @@ public class GuiConfigManager {
      * {@code material-on}/{@code material-off}, each falling back to the plain
      * {@code name}/{@code material} and then to the code.
      */
-    public Items item(String menuId, String itemId, boolean on, Map<String, String> tokens,
-                      Material defMaterial, String defName, String... defLore) {
+    public Items toggle(String menuId, String itemId, boolean on, Map<String, String> tokens,
+                        Material defMaterial, String defName,
+                        String[] defLoreOn, String[] defLoreOff) {
+        return this.item(menuId, itemId, on, tokens, defMaterial, defName,
+                         on ? defLoreOn : defLoreOff);
+    }
+
+    private Items item(String menuId, String itemId, boolean on, Map<String, String> tokens,
+                       Material defMaterial, String defName, String... defLore) {
         String suffix = on ? "-on" : "-off";
         ConfigurationSection section = this.itemSection(menuId, itemId);
         Material material = defMaterial;
@@ -283,12 +290,70 @@ public class GuiConfigManager {
             filled.add(Tokens.apply(line, tokens));
         }
         items.rawLore(filled.toArray(new String[0]));
+        // The shimmer marks the on state, which is what every caller of this
+        // overload wants, so it is applied here rather than chained at the
+        // call site - chaining it would run *after* the file's own glow and
+        // silently win, making the key look broken.
+        items.glow(on);
         if (section != null && section.contains("glow" + suffix)) {
             items.glint(Boolean.valueOf(section.getBoolean("glow" + suffix)));
         } else if (section != null && section.contains("glow")) {
             items.glint(Boolean.valueOf(section.getBoolean("glow")));
         }
         return items;
+    }
+
+    /**
+     * A name override, or {@code null} where the file gives none.
+     *
+     * <p>For the list screens, where an entry's label is not a constant the
+     * code could hand over as a default. A kit row is titled by
+     * {@code miniName(kit.getDisplayName())} when the kit has a display name
+     * and by a small-capped {@code &e<id>} when it does not - two different
+     * renderers, chosen per kit at runtime.
+     *
+     * <p>Collapsing that into one template would quietly restyle every kit
+     * on the server, so the Java keeps deciding and this only speaks up when
+     * an owner has actually written a {@code name:} for the row.
+     */
+    public String name(String menuId, String itemId, Map<String, String> tokens) {
+        ConfigurationSection section = this.itemSection(menuId, itemId);
+        if (section == null) {
+            return null;
+        }
+        return Tokens.apply(section.getString("name"), tokens);
+    }
+
+    /** Lore for an entry whose other properties the code decides. */
+    public List<String> lore(String menuId, String itemId, Map<String, String> tokens, String... defLore) {
+        List<String> lore = this.lore(this.itemSection(menuId, itemId), defLore);
+        List<String> filled = new ArrayList<String>(lore.size());
+        for (String line : lore) {
+            filled.add(Tokens.apply(line, tokens));
+        }
+        return filled;
+    }
+
+    /**
+     * A material override, defaulting to one the code worked out.
+     *
+     * <p>Separate from {@link #item} because a kit row's icon comes from the
+     * kit, so there is no literal to ship as the default - the shipped file
+     * leaves {@code material:} out entirely and setting it pins every row to
+     * the same icon, which is a thing an owner may well want and should not
+     * get by accident.
+     */
+    public Material material(String menuId, String itemId, Material def) {
+        return this.material(menuId, itemId, this.itemSection(menuId, itemId), def);
+    }
+
+    /** The stack size for an entry, where the code has no opinion. */
+    public int amount(String menuId, String itemId, int def) {
+        ConfigurationSection section = this.itemSection(menuId, itemId);
+        if (section == null || !section.contains("amount")) {
+            return def;
+        }
+        return Math.max(1, Math.min(64, section.getInt("amount", def)));
     }
 
     private List<String> lore(ConfigurationSection section, String[] defLore) {

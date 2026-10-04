@@ -37,7 +37,7 @@ COMMON = """\
 #   amount    stack size shown on the icon, 1-64
 #   name      the item's title
 #   lore      the lines under it; "" is a blank spacer line
-#   glow      true to force the enchanted shimmer, false to force it off
+#   glow      true to force the enchanted shimmer, false to force it off\n#\n# An item with lore-on and lore-off has two faces - one for when the thing\n# it controls is on, one for when it is off. name-on/name-off and\n# material-on/material-off work the same way, and a plain name:/material:\n# covers both states.
 #
 # Colours: <yellow>, <gold>, <#FF2E55> for a custom colour, or
 # <gradient:#7CFF6B:#1FA32F>text</gradient>. Legacy &e codes work too.\
@@ -79,6 +79,38 @@ NOTES = {
          "map": "Opens the map picker. Left unset, a random compatible arena is used.",
          "confirm": "Sends the request.",
          "cancel": "Back to the kit picker this screen was opened from."},
+    ),
+    "editkiteffects": (
+        "/editkit <kit> - the potion effects a kit starts a match with, and the\n"
+        "two admin actions that redefine the kit itself.",
+        {"kit": "the kit's id"},
+        {"strength": "Strength II for the first 90 seconds.",
+         "speed": "Speed II for the first 90 seconds.",
+         "speed-infinite": "Speed II for the whole match.",
+         "regeneration": "Regeneration II for the first 90 seconds.",
+         "edit-items": "Opens the kit's item grid. Changes apply to every player.",
+         "capture": "Replaces the kit with whatever the admin is holding.\n"
+                    "# Needs a shift-click, since it cannot be undone."},
+    ),
+    "eventmap": (
+        "/event - pick the arena an event will be hosted in.",
+        {"arena": "the arena's name", "world": "the world it is in",
+         "border": "its shrinking-border setting"},
+        {"arena-free": "One row per event-ready arena that is free. These fill the\n"
+                       "# window in order, so they take no slot of their own.",
+         "arena-busy": "The same row for an arena already in use. Not clickable.",
+         "empty": "Shown instead when no arena has an event spawn set yet."},
+    ),
+    "editkitlist": (
+        "/editkit - pick a kit to edit its start-of-match potion effects.",
+        {"kit": "the kit's id", "effects": "how many start effects it has"},
+        {"kit": "One row per kit. With no name: set, a kit with a display name keeps\n"
+                "# it and one without is titled by its id."},
+    ),
+    "trimkit": (
+        "/trims - pick a kit to edit its armour trims.",
+        {"kit": "the kit's id"},
+        {"kit": "One row per kit, filling the window from the top left."},
     ),
     "tabconfig": (
         "/tabconfig - the three lines shown in the player list header.",
@@ -158,11 +190,20 @@ def render(menu):
             lines.append("    slot: %d" % spec["slot"])
         if "material" in spec:
             lines.append("    material: %s" % spec["material"])
+        elif "material" in spec.get("dynamic", []):
+            # No default to ship: the code picks this per entry. Offered as a
+            # comment so an owner can see the key exists without having every
+            # row pinned to one icon by accident.
+            lines.append("    # material: STONE   # each row uses its own icon unless you set this")
         if spec.get("name") is not None:
             lines.append("    name: %s" % scalar(spec["name"]))
-        if spec.get("lore"):
-            lines.append("    lore:")
-            for line in spec["lore"]:
+        elif "name" in spec.get("dynamic", []):
+            lines.append("    # name: \"&e{kit}\"   # each row is titled by the kit unless you set this")
+        for key in ("lore", "lore-on", "lore-off"):
+            if not spec.get(key):
+                continue
+            lines.append("    %s:" % key)
+            for line in spec[key]:
                 lines.append("      - %s" % scalar(line))
     return "\n".join(lines) + "\n", None
 
