@@ -116,9 +116,37 @@ public final class Items {
         return this;
     }
 
+    /**
+     * Adds the enchanted shimmer, and does nothing at all when asked for no
+     * shimmer.
+     *
+     * <p>The asymmetry is deliberate and must stay. A handful of materials
+     * glint on their own - an enchanted book used as a kit icon, say - and
+     * every caller here passes a "is this one selected" flag, not a styling
+     * decision. Turning the override off for the unselected ones would strip
+     * a glint those materials are supposed to have.
+     *
+     * <p>To suppress a glint on purpose, use {@link #glint} with
+     * {@link Boolean#FALSE}.
+     */
     public Items glow(boolean glow) {
         if (this.meta != null && glow) {
             this.meta.setEnchantmentGlintOverride(Boolean.valueOf(true));
+        }
+        return this;
+    }
+
+    /**
+     * The shimmer as three states rather than two: on, off, or untouched.
+     *
+     * <p>What {@link #glow} cannot express, and what a menu file needs - a
+     * {@code glow:} key that is absent has to leave the item exactly as the
+     * code built it, while {@code glow: false} has to be able to take a
+     * shimmer away. {@code null} is the absent case.
+     */
+    public Items glint(Boolean glow) {
+        if (this.meta != null && glow != null) {
+            this.meta.setEnchantmentGlintOverride(glow);
         }
         return this;
     }

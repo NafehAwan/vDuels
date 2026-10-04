@@ -4,6 +4,8 @@ import com.meowduels.MeowDuels;
 import com.meowduels.gui.KitPickMenu;
 import com.meowduels.gui.MapSelectMenu;
 import com.meowduels.gui.Menu;
+import com.meowduels.managers.GuiConfigManager;
+import com.meowduels.managers.GuiLayoutManager;
 import com.meowduels.model.Arena;
 import com.meowduels.model.Kit;
 import com.meowduels.util.Items;
@@ -35,6 +37,9 @@ import org.bukkit.inventory.ItemStack;
 public class DuelConfirmMenu
 extends Menu {
     private static final int[] ROUND_OPTIONS = new int[]{1, 2, 3, 5};
+
+    /** The name of this screen's file: {@code gui/duelconfirm.yml}. */
+    private static final String MENU = GuiLayoutManager.DUEL_CONFIRM;
 
     private static final int ROWS = 3;
     private static final int SLOT_INFO = 10;
@@ -91,12 +96,14 @@ extends Menu {
 
     @Override
     public void build() {
-        this.createRaw(ROWS, "Round Selection");
-        Style.frame(this.inventory, ROWS);
+        GuiConfigManager gui = this.plugin.gui();
+        int rows = gui.rows(MENU, ROWS);
+        this.createRaw(rows, gui.title(MENU, "Round Selection"));
+        gui.frame(MENU, this.inventory, rows);
         HashMap<String, Integer> buttonSlots = new HashMap<String, Integer>();
-        if (this.plugin.getGuiLayoutManager().has("duelconfirm")) {
-            for (Map.Entry<Integer, ItemStack> e : this.plugin.getGuiLayoutManager().get("duelconfirm").entrySet()) {
-                if (e.getKey() >= ROWS * 9) continue;
+        if (this.plugin.getGuiLayoutManager().has(MENU)) {
+            for (Map.Entry<Integer, ItemStack> e : this.plugin.getGuiLayoutManager().get(MENU).entrySet()) {
+                if (e.getKey() >= rows * 9) continue;
                 String id = Items.readTag(e.getValue(), this.plugin.keyButton());
                 if (id != null) {
                     buttonSlots.put(id, e.getKey());
@@ -105,11 +112,33 @@ extends Menu {
                 this.inventory.setItem(e.getKey().intValue(), e.getValue());
             }
         }
-        this.inventory.setItem(buttonSlots.getOrDefault("info", SLOT_INFO).intValue(), this.renderButton("info"));
-        this.inventory.setItem(buttonSlots.getOrDefault("clock", SLOT_ROUNDS).intValue(), this.renderButton("clock"));
-        this.inventory.setItem(buttonSlots.getOrDefault("map", SLOT_MAP).intValue(), this.renderButton("map"));
-        this.inventory.setItem(buttonSlots.getOrDefault("confirm", SLOT_SEND).intValue(), this.renderButton("confirm"));
-        this.inventory.setItem(buttonSlots.getOrDefault("cancel", SLOT_BACK).intValue(), this.renderButton("cancel"));
+        // Three sources, in this order: a layout an admin arranged with
+        // /editgui wins, then gui/duelconfirm.yml, then the slot below. The
+        // editor saving on close - even a close with no edits made - is why
+        // a yml slot here can look ignored; /editgui duelconfirm reset clears
+        // the stored layout and hands the file back control.
+        this.place(buttonSlots, "info", gui.slot(MENU, "info", SLOT_INFO, rows), rows);
+        this.place(buttonSlots, "clock", gui.slot(MENU, "clock", SLOT_ROUNDS, rows), rows);
+        this.place(buttonSlots, "map", gui.slot(MENU, "map", SLOT_MAP, rows), rows);
+        this.place(buttonSlots, "confirm", gui.slot(MENU, "confirm", SLOT_SEND, rows), rows);
+        this.place(buttonSlots, "cancel", gui.slot(MENU, "cancel", SLOT_BACK, rows), rows);
+    }
+
+    /**
+     * Puts a button down, keeping it inside the window.
+     *
+     * <p>The clamp is not defensive padding. Every default slot here was
+     * picked for a three-row window, and {@code rows} is editable, so an owner
+     * who shrinks this menu to two rows would otherwise have
+     * {@code setItem(22)} throw on an eighteen-slot inventory and take the
+     * screen down rather than merely look wrong.
+     */
+    private void place(Map<String, Integer> editorSlots, String id, int slot, int rows) {
+        int at = editorSlots.getOrDefault(id, Integer.valueOf(slot)).intValue();
+        if (at < 0 || at >= rows * 9) {
+            at = Math.max(0, Math.min(rows * 9 - 1, at));
+        }
+        this.inventory.setItem(at, this.renderButton(id));
     }
 
     /** The kit, under the name the rest of the genre gives it. */
@@ -122,52 +151,72 @@ extends Menu {
         return name == null || name.isEmpty() ? "<yellow>" + kit.getName() : name;
     }
 
+    /**
+     * The tokens every item on this screen can use, whether it needs them or
+     * not.
+     *
+     * <p>All five get the same map: which placeholders a line may contain is
+     * then a property of the file rather than of the code, so an owner can
+     * move "Rounds: 3" onto the clock or the opponent's name onto the confirm
+     * button without a change here.
+     */
+    private Map<String, String> tokens() {
+        HashMap<String, String> tokens = new HashMap<String, String>();
+        tokens.put("rounds", String.valueOf(this.currentRounds()));
+        tokens.put("gamemode", this.gamemodeLabel());
+        tokens.put("opponent", this.target.getName());
+        tokens.put("sender", this.sender.getName());
+        return tokens;
+    }
+
     private ItemStack renderButton(String id) {
+        GuiConfigManager gui = this.plugin.gui();
+        Map<String, String> tokens = this.tokens();
         switch (id) {
             case "clock": {
-                return Items.of(Material.CLOCK)
-                        .rawName("<gold>✦ <yellow>Rounds <gold>✦")
-                        .rawLore("",
-                                 "<yellow>Current <white>" + this.currentRounds() + " Rounds",
-                                 "",
-                                 "<yellow>LMB <white>Increase Rounds",
-                                 "<yellow>RMB <white>Decrease Rounds")
+                return gui.item(MENU, "clock", tokens, Material.CLOCK,
+                                "<gold>✦ <yellow>Rounds <gold>✦",
+                                "",
+                                "<yellow>Current <white>{rounds} Rounds",
+                                "",
+                                "<yellow>LMB <white>Increase Rounds",
+                                "<yellow>RMB <white>Decrease Rounds")
                         .hideTooltip()
                         .tag(this.plugin.keyButton(), "clock")
                         .build();
             }
             case "map": {
-                return Items.of(Material.PAPER)
-                        .rawName("<aqua>⇄ Map Selection ⇄")
-                        .rawLore("<white>Click to Open Menu!")
+                return gui.item(MENU, "map", tokens, Material.PAPER,
+                                "<aqua>⇄ Map Selection ⇄",
+                                "<white>Click to Open Menu!")
                         .hideTooltip()
                         .tag(this.plugin.keyButton(), "map")
                         .build();
             }
             case "confirm": {
-                return Items.of(Material.LIME_DYE)
-                        .rawName("<aqua>✔ Send Duel ✔")
-                        .rawLore("<white>Click to Send Duel!")
+                return gui.item(MENU, "confirm", tokens, Material.LIME_DYE,
+                                "<aqua>✔ Send Duel ✔",
+                                "<white>Click to Send Duel!")
                         .hideTooltip()
                         .tag(this.plugin.keyButton(), "confirm")
                         .build();
             }
             case "cancel": {
-                return Items.of(Material.BARRIER)
-                        .rawName("<red>✖ Go Back ✖")
-                        .rawLore("<white>Go Back")
+                return gui.item(MENU, "cancel", tokens, Material.BARRIER,
+                                "<red>✖ Go Back ✖",
+                                "<white>Go Back")
                         .hideTooltip()
                         .tag(this.plugin.keyButton(), "cancel")
                         .build();
             }
         }
-        return Items.of(Material.ITEM_FRAME)
-                .rawName("<blue>◆ <aqua>Information <blue>◆")
-                .rawLore("",
-                         "<white>Gamemode: " + this.gamemodeLabel(),
-                         "<white>Rounds: <yellow>" + this.currentRounds(),
-                         "<white>Opponent: <yellow>" + this.target.getName(),
-                         "<white>Sender: <yellow>" + this.sender.getName())
+        return gui.item(MENU, "info", tokens, Material.ITEM_FRAME,
+                        "<blue>◆ <aqua>Information <blue>◆",
+                        "",
+                        "<white>Gamemode: {gamemode}",
+                        "<white>Rounds: <yellow>{rounds}",
+                        "<white>Opponent: <yellow>{opponent}",
+                        "<white>Sender: <yellow>{sender}")
                 .hideTooltip()
                 .tag(this.plugin.keyButton(), "info")
                 .build();

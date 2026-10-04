@@ -36,6 +36,7 @@ import com.meowduels.managers.ArenaManager;
 import com.meowduels.managers.CategoryManager;
 import com.meowduels.managers.DuelManager;
 import com.meowduels.managers.EventManager;
+import com.meowduels.managers.GuiConfigManager;
 import com.meowduels.managers.GuiLayoutManager;
 import com.meowduels.managers.KitManager;
 import com.meowduels.managers.MessageManager;
@@ -81,6 +82,7 @@ extends JavaPlugin {
     private DuelManager duelManager;
     private SetupManager setupManager;
     private GuiLayoutManager guiLayoutManager;
+    private GuiConfigManager guiConfigManager;
     private ScoreboardService scoreboardService;
     private MessageManager messageManager;
     private CategoryManager categoryManager;
@@ -135,6 +137,7 @@ extends JavaPlugin {
         this.categoryManager = new CategoryManager(this);
         this.queueCategoryManager = new CategoryManager(this, "queuecategories.yml");
         this.guiLayoutManager = new GuiLayoutManager(this);
+        this.guiConfigManager = new GuiConfigManager(this);
         this.setupManager = new SetupManager(this);
         this.scoreboardService = new ScoreboardService(this);
         this.duelManager = new DuelManager(this);
@@ -459,6 +462,11 @@ extends JavaPlugin {
         return this.guiLayoutManager;
     }
 
+    /** The menus as files - see {@link GuiConfigManager}. */
+    public GuiConfigManager gui() {
+        return this.guiConfigManager;
+    }
+
     public ScoreboardService getScoreboardService() {
         return this.scoreboardService;
     }
@@ -507,6 +515,9 @@ extends JavaPlugin {
         this.loadDuelSpawn();
         if (this.messageManager != null) {
             this.messageManager.reload();
+        }
+        if (this.guiConfigManager != null) {
+            this.guiConfigManager.reload();
         }
         if (this.scoreboardService != null) {
             this.scoreboardService.reload();

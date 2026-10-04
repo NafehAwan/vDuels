@@ -54,6 +54,7 @@ public class Material {
     public static org.bukkit.Material TOTEM_OF_UNDYING;
     public org.bukkit.block.data.BlockData createBlockData() { return null; }
     public static org.bukkit.Material matchMaterial(java.lang.String a0) { return null; }
+    public boolean isItem() { return true; }
     public java.lang.String name() { return null; }
     public static org.bukkit.Material SPLASH_POTION;
     public static org.bukkit.Material LINGERING_POTION;

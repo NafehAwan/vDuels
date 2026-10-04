@@ -1,6 +1,7 @@
 package org.bukkit.configuration;
 
 public interface ConfigurationSection {
+    boolean contains(java.lang.String a0);
     boolean getBoolean(java.lang.String a0);
     boolean getBoolean(java.lang.String a0, boolean a1);
     org.bukkit.configuration.ConfigurationSection getConfigurationSection(java.lang.String a0);

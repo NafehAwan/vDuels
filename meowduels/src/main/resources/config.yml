@@ -153,6 +153,13 @@ theme:
   # look like yours.
   accent-from: "#FF2E55"
   accent-to: "#FF7FC4"
+  # The pane every menu is floored with. One edit here retints all 27 screens;
+  # a single menu that needs its own can override it with `filler:` in its own
+  # file under gui/. Keep filler-name a space - an item with no name shows its
+  # material instead, so blank panes would read "Gray Stained Glass Pane" on
+  # every hover.
+  filler: "GRAY_STAINED_GLASS_PANE"
+  filler-name: " "
 
 # ---- Sounds ----
 # Every cue the plugin plays. `key` is any Minecraft sound name, so a resource

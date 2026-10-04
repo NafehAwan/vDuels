@@ -1,0 +1,66 @@
+# -------------------------------------------------------------------------
+# /tabconfig - the three lines shown in the player list header.
+#
+# Every value here is the one the plugin uses when the key is missing, so you
+# can delete any line, any item, or this whole file: the menu goes back to
+# looking exactly as it ships. There is no reset command because deleting IS
+# the reset.
+#
+# Each item takes:
+#   slot      0-based, counting left to right then down (row 1 is 0-8)
+#   material  any Minecraft item id, e.g. CLOCK, PAPER, LIME_DYE
+#   amount    stack size shown on the icon, 1-64
+#   name      the item's title
+#   lore      the lines under it; "" is a blank spacer line
+#   glow      true to force the enchanted shimmer, false to force it off
+#
+# Colours: <yellow>, <gold>, <#FF2E55> for a custom colour, or
+# <gradient:#7CFF6B:#1FA32F>text</gradient>. Legacy &e codes work too.
+#
+# Placeholders usable in any name or lore on this screen:
+#   {current}  what that field is set to right now
+#
+# The text below is written in small capitals (ᴛʜɪꜱ ꜱᴛʏʟᴇ). That is just what
+# the characters are - type ordinary letters if you would rather have them.
+# -------------------------------------------------------------------------
+
+title: "&7&lᴛᴀʙ ꜱᴇᴛᴛɪɴɢꜱ"
+rows: 3
+
+# Uncomment to give this one screen a different frame from the rest of the
+# plugin. Leave it out and it follows theme.filler in config.yml.
+#filler: "GRAY_STAINED_GLASS_PANE"
+#filler-name: " "
+
+items:
+
+  # The header's top line. Accepts MiniMessage, so gradients work.
+  title:
+    slot: 11
+    material: BOOK
+    name: "&eᴛɪᴛʟᴇ"
+    lore:
+      - "&7ᴄᴜʀʀᴇɴᴛ:"
+      - "&f{current}"
+      - ""
+      - "&aᴄʟɪᴄᴋ ᴛᴏ ᴄʜᴀɴɢᴇ &7(ᴍɪɴɪᴍᴇꜱꜱᴀɢᴇ / ɢʀᴀᴅɪᴇɴᴛꜱ)"
+
+  # Your Discord invite.
+  discord:
+    slot: 13
+    material: PAPER
+    name: "&dᴅɪꜱᴄᴏʀᴅ"
+    lore:
+      - "&7ᴄᴜʀʀᴇɴᴛ: &f{current}"
+      - ""
+      - "&aᴄʟɪᴄᴋ ᴛᴏ ᴄʜᴀɴɢᴇ"
+
+  # Your store link.
+  store:
+    slot: 15
+    material: GOLDEN_APPLE
+    name: "&6ꜱᴛᴏʀᴇ"
+    lore:
+      - "&7ᴄᴜʀʀᴇɴᴛ: &f{current}"
+      - ""
+      - "&aᴄʟɪᴄᴋ ᴛᴏ ᴄʜᴀɴɢᴇ"

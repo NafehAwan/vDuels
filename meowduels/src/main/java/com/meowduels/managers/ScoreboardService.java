@@ -497,17 +497,7 @@ public class ScoreboardService {
         if (cached != null) {
             return cached;
         }
-        return this.deserialize(this.replace(raw, tokens));
-    }
-
-    private String replace(String s, Map<String, String> tokens) {
-        if (s.indexOf(123) < 0) {
-            return s;
-        }
-        for (Map.Entry<String, String> e : tokens.entrySet()) {
-            s = s.replace("{" + e.getKey() + "}", e.getValue());
-        }
-        return s;
+        return this.deserialize(com.meowduels.util.Tokens.apply(raw, tokens));
     }
 
     /** mm:ss, the same shape the duel board's {time} uses. */

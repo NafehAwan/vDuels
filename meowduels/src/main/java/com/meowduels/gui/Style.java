@@ -60,6 +60,22 @@ public final class Style {
     public static String ACCENT_A = "#FF2E55";
     public static String ACCENT_B = "#FF7FC4";
 
+    /**
+     * The pane every window is floored with, and the name it carries.
+     *
+     * <p>Here rather than per menu because a frame is the one thing that has
+     * to agree across all 27 screens - a server that retints it wants the
+     * whole plugin retinted, not one menu out of step. A single screen that
+     * genuinely needs its own can still say so with {@code filler:} in its own
+     * file.
+     *
+     * <p>The name is a single space, not empty: an item with no display name
+     * falls back to showing its material, so a border of blank panes would
+     * read "Gray Stained Glass Pane" on every hover.
+     */
+    public static String FILLER = "GRAY_STAINED_GLASS_PANE";
+    public static String FILLER_NAME = " ";
+
     /** The accent as a ready-made gradient tag. */
     public static String accent(String text) {
         return Style.gradient(ACCENT_A, ACCENT_B, text);
@@ -91,6 +107,23 @@ public final class Style {
         NO_B = t.getString("cancel-to", NO_B);
         ACCENT_A = t.getString("accent-from", ACCENT_A);
         ACCENT_B = t.getString("accent-to", ACCENT_B);
+        FILLER = t.getString("filler", FILLER);
+        FILLER_NAME = t.getString("filler-name", FILLER_NAME);
+    }
+
+    /**
+     * The filler pane, by material name, falling back to the shipped grey.
+     *
+     * <p>Resolved on each call rather than cached at load: {@code /md reload}
+     * re-reads the theme, and a cached pane would keep the old colour until
+     * the next restart.
+     */
+    public static ItemStack filler(String material, String name) {
+        Material pane = material == null ? null : Material.matchMaterial(material);
+        if (pane == null || !pane.isItem()) {
+            pane = Material.GRAY_STAINED_GLASS_PANE;
+        }
+        return Items.of(pane).rawName(name == null ? " " : name).build();
     }
 
     private Style() {
@@ -119,7 +152,11 @@ public final class Style {
      * panel.
      */
     public static void frame(Inventory inventory, int rows) {
-        ItemStack pane = Items.of(Material.GRAY_STAINED_GLASS_PANE).rawName(" ").build();
+        Style.frame(inventory, rows, Style.filler(FILLER, FILLER_NAME));
+    }
+
+    /** As {@link #frame}, with the pane a menu's own file asked for. */
+    public static void frame(Inventory inventory, int rows, ItemStack pane) {
         int size = rows * 9;
         for (int i = 0; i < size; ++i) {
             inventory.setItem(i, pane);
