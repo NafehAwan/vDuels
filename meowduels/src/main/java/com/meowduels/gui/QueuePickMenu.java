@@ -13,11 +13,15 @@ package com.meowduels.gui;
 import com.meowduels.MeowDuels;
 import com.meowduels.gui.Menu;
 import com.meowduels.managers.CategoryManager;
+import com.meowduels.managers.GuiConfigManager;
+import com.meowduels.managers.GuiConfigManager.Face;
 import com.meowduels.model.Kit;
 import com.meowduels.util.Items;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Material;
@@ -59,16 +63,28 @@ extends Menu {
         OPEN.remove(this);
     }
 
+    /** The name of this screen's file: {@code gui/queuepick.yml}. */
+    private static final String MENU = "queuepick";
+
+    private static final int ROWS = 4;
+    private static final int SLOT_ARROW = 35;
+
     @Override
     public void build() {
+        GuiConfigManager gui = this.plugin.gui();
+        int rows = gui.rows(MENU, ROWS);
         List<CategoryManager.Category> categories = this.plugin.getQueueCategoryManager().all();
         if (categories.isEmpty()) {
-            this.create(4, "&7Queue");
+            this.createRaw(rows, gui.titleOf(MENU, "plain",
+                    "&7\ua7af\u1d1c\u1d07\u1d1c\u1d07", null));
         } else {
             if (this.categoryIndex >= categories.size()) {
                 this.categoryIndex = 0;
             }
-            this.create(4, "&7Queue \u2192 &7" + categories.get(this.categoryIndex).getHeader());
+            Map<String, String> tokens = new HashMap<String, String>();
+            tokens.put("category", categories.get(this.categoryIndex).getHeader());
+            this.createRaw(rows, gui.titleOf(MENU, "category",
+                    "&7\ua7af\u1d1c\u1d07\u1d1c\u1d07 \u2192 &7{category}", tokens));
         }
         this.populate();
     }
@@ -93,39 +109,68 @@ extends Menu {
             multi = categories.size() > 1;
             kitNames = this.plugin.getQueueCategoryManager().kitsFor(categories.get(this.categoryIndex));
         }
-        ItemStack filler = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
-        for (i = 0; i < 36; ++i) {
-            this.inventory.setItem(i, filler);
-        }
+        GuiConfigManager gui = this.plugin.gui();
+        int rows = this.inventory.getSize() / 9;
+        int last = this.inventory.getSize() - 1;
+        gui.frame(MENU, this.inventory, rows);
         for (i = 0; i < KIT_SLOTS.length && i < kitNames.size(); ++i) {
-            ItemStack icon = this.kitIcon((String)kitNames.get(i));
+            if (KIT_SLOTS[i] > last) break;
+            ItemStack icon = this.kitIcon(gui, (String)kitNames.get(i));
             if (icon == null) continue;
             this.inventory.setItem(KIT_SLOTS[i], icon);
         }
-        this.inventory.setItem(35, multi ? this.arrowItem() : filler);
+        if (multi) {
+            this.inventory.setItem(Math.min(last, gui.slot(MENU, "next-category", SLOT_ARROW, rows)),
+                    gui.face(MENU, "next-category", null,
+                             Face.of(Material.ARROW,
+                                     "&e\u0274\u1d07x\u1d1b \u1d04\u1d00\u1d1b\u1d07\u0262\u1d0f\u0280\u028f",
+                                     "&f\u2192 \u1d00\u0274\u1d0f\u1d1b\u029c\u1d07\u0280 \u1d04\u1d00\u1d1b\u1d07\u0262\u1d0f\u0280\u028f"))
+                            .tag(this.plugin.keyButton(), "next-cat").build());
+        }
     }
 
-    private ItemStack kitIcon(String name) {
+    /**
+     * One kit's queue tile: how many are waiting, how many are fighting.
+     *
+     * <p>The stack size is the number of fights running, so a busy kit reads
+     * as a tall stack at a glance.
+     *
+     * <p>The marker is \u2694 (U+2694) rather than the \ud83d\udde1 (U+1F5E1) this used to
+     * carry. Minecraft's bundled font only covers the Basic Multilingual
+     * Plane, so anything above U+FFFF draws as a white box - which is what
+     * those two lines have actually been showing.
+     */
+    private ItemStack kitIcon(GuiConfigManager gui, String name) {
         Kit kit = this.plugin.getKitManager().get(name);
         if (kit == null) {
             return null;
         }
-        int queued = this.plugin.getQueueManager().queued(name);
         int fights = this.plugin.getQueueManager().dueling(name);
-        boolean mine = this.viewer != null && this.plugin.getQueueManager().isQueuedFor(this.viewer.getUniqueId(), name);
+        Map<String, String> tokens = new HashMap<String, String>();
+        tokens.put("kit", kit.getName());
+        tokens.put("queued", String.valueOf(this.plugin.getQueueManager().queued(name)));
+        tokens.put("fights", String.valueOf(fights));
         int amount = Math.max(1, Math.min(64, fights));
-        String action = mine ? "&7LMB TO &cLEAVE" : "&7LMB TO &aJOIN";
-        Items item = Items.of(kit.getIcon(), amount).lore("&6\ud83d\udde1 &fIN QUEUE: &6" + queued + "&7/&62", "&6\ud83d\udde1 &fDUELING: &6" + fights, "", action).hideTooltip().glow(mine).tag(this.plugin.keyKit(), kit.getName());
-        if (kit.getDisplayName() != null && !kit.getDisplayName().isEmpty()) {
+        boolean mine = this.viewer != null
+                && this.plugin.getQueueManager().isQueuedFor(this.viewer.getUniqueId(), name);
+        Items item = gui.toggle(MENU, "kit", mine, tokens,
+                        Face.of(gui.material(MENU, "kit", kit.getIcon()), "&e{kit}",
+                                "&6\u2694 &f\u026a\u0274 \ua7af\u1d1c\u1d07\u1d1c\u1d07: &6{queued}&7/&62",
+                                "&6\u2694 &f\u1d05\u1d1c\u1d07\u029f\u026a\u0274\u0262: &6{fights}",
+                                "",
+                                "&7\u029f\u1d0d\u0299 \u1d1b\u1d0f &c\u029f\u1d07\u1d00\u1d20\u1d07").amount(amount).glow(),
+                        Face.of(gui.material(MENU, "kit", kit.getIcon()), "&e{kit}",
+                                "&6\u2694 &f\u026a\u0274 \ua7af\u1d1c\u1d07\u1d1c\u1d07: &6{queued}&7/&62",
+                                "&6\u2694 &f\u1d05\u1d1c\u1d07\u029f\u026a\u0274\u0262: &6{fights}",
+                                "",
+                                "&7\u029f\u1d0d\u0299 \u1d1b\u1d0f &a\u1d0a\u1d0f\u026a\u0274").amount(amount))
+                .hideTooltip()
+                .tag(this.plugin.keyKit(), kit.getName());
+        if (gui.name(MENU, "kit", tokens) == null
+                && kit.getDisplayName() != null && !kit.getDisplayName().isEmpty()) {
             item.miniName(kit.getDisplayName());
-        } else {
-            item.name("&e" + kit.getName());
         }
         return item.build();
-    }
-
-    private ItemStack arrowItem() {
-        return Items.of(Material.ARROW).name("&eNext Category").lore("&f\u2192 another category").tag(this.plugin.keyButton(), "next-cat").build();
     }
 
     @Override

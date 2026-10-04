@@ -3,6 +3,8 @@ package com.meowduels.gui;
 import com.meowduels.MeowDuels;
 import com.meowduels.gui.Menu;
 import com.meowduels.managers.CategoryManager;
+import com.meowduels.managers.GuiConfigManager;
+import com.meowduels.managers.GuiConfigManager.Face;
 import com.meowduels.model.Kit;
 import com.meowduels.model.Party;
 import com.meowduels.model.PartyMode;
@@ -10,7 +12,9 @@ import com.meowduels.util.Items;
 import com.meowduels.util.Text;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -31,6 +35,9 @@ import org.bukkit.inventory.ItemStack;
  */
 public class PartyKitMenu
 extends Menu {
+    /** The name of this screen's file: {@code gui/partykit.yml}. */
+    private static final String MENU = "partykit";
+
     private static final int ROWS = 4;
     private static final int SIZE = ROWS * 9;
     private static final int[] KIT_SLOTS = new int[]{10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25};
@@ -128,11 +135,19 @@ extends Menu {
             this.step = 0;
         }
         Page page = pages.get(this.step);
-        this.createRaw(ROWS, "<dark_gray>\u258f " + this.mode.getLabel() + " " + Style.SEP + Style.VALUE + page.title);
-        Style.frame(this.inventory, ROWS);
+        GuiConfigManager gui = this.plugin.gui();
+        int rows = gui.rows(MENU, ROWS);
+        int last = rows * 9 - 1;
+        Map<String, String> titleTokens = new HashMap<String, String>();
+        titleTokens.put("mode", this.mode.getLabel());
+        titleTokens.put("category", page.title);
+        this.createRaw(rows, gui.title(MENU,
+                "<dark_gray>\u258f {mode} {sep}{value}{category}", titleTokens));
+        gui.frame(MENU, this.inventory, rows);
         String chosen = party.getKit();
         for (int i = 0; i < KIT_SLOTS.length && i < page.kits.size(); ++i) {
-            ItemStack icon = this.kitIcon(page.kits.get(i), chosen);
+            if (KIT_SLOTS[i] > last) break;
+            ItemStack icon = this.kitIcon(gui, page.kits.get(i), chosen);
             if (icon != null) {
                 this.inventory.setItem(KIT_SLOTS[i], icon);
             }
@@ -140,30 +155,38 @@ extends Menu {
         // Picking a kit is the middle of a flow, not the start of one: Duels
         // came here from the party picker, the other two from the mode menu,
         // so back goes wherever this window was opened from.
-        this.inventory.setItem(SLOT_BACK, Style.back(this.plugin.keyButton(), "kit-back"));
+        this.inventory.setItem(Math.min(last, gui.slot(MENU, "back", SLOT_BACK, rows)),
+                gui.back(MENU, "back").tag(this.plugin.keyButton(), "kit-back").build());
         if (pages.size() > 1) {
-            this.inventory.setItem(SLOT_ARROW, Items.of(Material.ARROW)
-                    .rawName(Style.VALUE + "\u0274\u1d07x\u1d1b \u1d04\u1d00\u1d1b\u1d07\u0262\u1d0f\u0280\u028f")
-                    .rawLore("", Style.HINT + "\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \u1d04\u028f\u1d04\u029f\u1d07")
-                    .hideTooltip()
-                    .tag(this.plugin.keyButton(), "next-cat").build());
+            this.inventory.setItem(Math.min(last, gui.slot(MENU, "next-category", SLOT_ARROW, rows)),
+                    gui.face(MENU, "next-category", null,
+                             Face.of(Material.ARROW,
+                                     "{value}\u0274\u1d07x\u1d1b \u1d04\u1d00\u1d1b\u1d07\u0262\u1d0f\u0280\u028f",
+                                     "",
+                                     "{hint}\u1d04\u029f\u026a\u1d04\u1d0b \u1d1b\u1d0f \u1d04\u028f\u1d04\u029f\u1d07"))
+                            .hideTooltip()
+                            .tag(this.plugin.keyButton(), "next-cat").build());
         }
         player.openInventory(this.inventory);
     }
 
-    private ItemStack kitIcon(String name, String chosen) {
+    private ItemStack kitIcon(GuiConfigManager gui, String name, String chosen) {
         Kit kit = this.plugin.getKitManager().get(name);
         if (kit == null) {
             return null;
         }
-        Items item = Items.of(kit.getIcon())
-                .glow(kit.getName().equalsIgnoreCase(chosen))
+        Map<String, String> tokens = new HashMap<String, String>();
+        tokens.put("kit", kit.getName());
+        Items item = gui.toggle(MENU, "kit", kit.getName().equalsIgnoreCase(chosen), tokens,
+                        Face.of(gui.material(MENU, "kit", kit.getIcon()), "&e{kit}").glow(),
+                        Face.of(gui.material(MENU, "kit", kit.getIcon()), "&e{kit}"))
                 .hideTooltip()
                 .tag(this.plugin.keyKit(), kit.getName());
-        if (kit.getDisplayName() != null && !kit.getDisplayName().isEmpty()) {
+        // As on the other kit lists: with no name: in the file, a kit with a
+        // display name keeps it as a parsed component.
+        if (gui.name(MENU, "kit", tokens) == null
+                && kit.getDisplayName() != null && !kit.getDisplayName().isEmpty()) {
             item.miniName(kit.getDisplayName());
-        } else {
-            item.name("&e" + kit.getName());
         }
         return item.build();
     }

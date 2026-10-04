@@ -277,6 +277,25 @@ NOTES = {
          "start": "Its off face is a side with nobody on it.",
          "back": "Returns to the mode picker."},
     ),
+    "partykit": (
+        "/party start > the kit for the match. Paged by category; kits outside\n"
+        "a category are not offered.",
+        {"kit": "the kit's id", "mode": "the mode being started",
+         "category": "the category being shown"},
+        {"kit": "One icon per kit. Its on face is the kit currently chosen.",
+         "next-category": "Pages to the next category.",
+         "back": "Returns wherever this was opened from - the opponent picker\n"
+                 "# for Party Duels, the mode picker otherwise."},
+    ),
+    "queuepick": (
+        "/queue - the kits you can queue for. Each tile's stack size is how\n"
+        "many fights are running in that kit, so a busy kit reads as a tall\n"
+        "stack.",
+        {"kit": "the kit's id", "queued": "how many are waiting",
+         "fights": "how many duels are running", "category": "the category shown"},
+        {"kit": "One tile per kit. Its on face is a kit you are queued for.",
+         "next-category": "Pages to the next category."},
+    ),
     "editkitlist": (
         "/editkit - pick a kit to edit its start-of-match potion effects.",
         {"kit": "the kit's id", "effects": "how many start effects it has"},
