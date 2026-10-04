@@ -12,8 +12,10 @@ package com.meowduels.gui;
 import com.meowduels.MeowDuels;
 import com.meowduels.gui.KitItemsEditMenu;
 import com.meowduels.gui.Menu;
+import com.meowduels.managers.GuiConfigManager;
 import com.meowduels.model.Kit;
 import com.meowduels.util.Items;
+import java.util.HashMap;
 import java.util.List;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -37,33 +39,65 @@ extends Menu {
         this.plugin = plugin;
     }
 
+    /** The name of this screen's file: {@code gui/kiteditor.yml}. */
+    private static final String MENU = "kiteditor";
+
+    private static final int ROWS = 6;
+
     @Override
     public void build() {
-        this.create(6, this.personal
-                ? "&d&lYour Kits &7- pick a gamemode"
-                : "&d&lKit Editor &7- pick a gamemode");
-        ItemStack filler = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
-        for (int i = 0; i < 54; ++i) {
-            this.inventory.setItem(i, filler);
-        }
+        GuiConfigManager gui = this.plugin.gui();
+        int rows = gui.rows(MENU, ROWS);
+        this.createRaw(rows, this.personal
+                ? gui.titleOf(MENU, "personal", "&d&lʏᴏᴜʀ ᴋɪᴛꜱ &7- ᴘɪᴄᴋ ᴀ ɢᴀᴍᴇᴍᴏᴅᴇ", null)
+                : gui.titleOf(MENU, "global", "&d&lᴋɪᴛ ᴇᴅɪᴛᴏʀ &7- ᴘɪᴄᴋ ᴀ ɢᴀᴍᴇᴍᴏᴅᴇ", null));
+        gui.frame(MENU, this.inventory, rows);
+        int size = rows * 9;
         List<Kit> kits = this.plugin.getKitManager().all();
         if (kits.isEmpty()) {
-            this.inventory.setItem(22, Items.of(Material.BARRIER).name("&cNo kits yet").lore("&7Create one with &e/kitcreate <name>&7.").build());
+            this.inventory.setItem(Math.min(size - 1, gui.slot(MENU, "empty", 22, rows)),
+                    gui.item(MENU, "empty", Material.BARRIER,
+                             "&cɴᴏ ᴋɪᴛꜱ ʏᴇᴛ",
+                             "&7ᴄʀᴇᴀᴛᴇ ᴏɴᴇ ᴡɪᴛʜ &e/ᴋɪᴛᴄʀᴇᴀᴛᴇ <ɴᴀᴍᴇ>&7.").build());
             return;
         }
         for (int i = 0; i < SLOTS.length && i < kits.size(); ++i) {
-            this.inventory.setItem(SLOTS[i], this.icon(kits.get(i)));
+            if (SLOTS[i] >= size) break;
+            this.inventory.setItem(SLOTS[i], this.icon(gui, kits.get(i)));
         }
     }
 
-    private ItemStack icon(Kit kit) {
+    /**
+     * One kit's row, worded for whichever mode the window is in.
+     *
+     * <p>Two items rather than one with two faces: the personal and global
+     * rows are read by different people - a player arranging their own
+     * layout, an admin changing the kit for everyone - and a server will want
+     * to word the warning on the second one without touching the first.
+     */
+    private ItemStack icon(GuiConfigManager gui, Kit kit) {
+        HashMap<String, String> tokens = new HashMap<String, String>();
+        tokens.put("kit", kit.getName());
         Items item = this.personal
-                ? Items.of(kit.getIcon()).lore("", "&7Click to arrange this kit", "&7the way YOU want it.").hideTooltip().tag(this.plugin.keyKit(), kit.getName())
-                : Items.of(kit.getIcon()).lore("", "&7Click to edit this gamemode's items,", "&7armor and offhand item.", "&cChanges apply to everyone.").hideTooltip().tag(this.plugin.keyKit(), kit.getName());
-        if (kit.getDisplayName() != null && !kit.getDisplayName().isEmpty()) {
+                ? gui.item(MENU, "kit-personal", tokens, gui.material(MENU, "kit-personal", kit.getIcon()),
+                           "&d{kit}",
+                           "",
+                           "&7ᴄʟɪᴄᴋ ᴛᴏ ᴀʀʀᴀɴɢᴇ ᴛʜɪꜱ ᴋɪᴛ",
+                           "&7ᴛʜᴇ ᴡᴀʏ ʏᴏᴜ ᴡᴀɴᴛ ɪᴛ.")
+                : gui.item(MENU, "kit-global", tokens, gui.material(MENU, "kit-global", kit.getIcon()),
+                           "&d{kit}",
+                           "",
+                           "&7ᴄʟɪᴄᴋ ᴛᴏ ᴇᴅɪᴛ ᴛʜɪꜱ ɢᴀᴍᴇᴍᴏᴅᴇ'ꜱ ɪᴛᴇᴍꜱ,",
+                           "&7ᴀʀᴍᴏʀ ᴀɴᴅ ᴏꜰꜰʜᴀɴᴅ ɪᴛᴇᴍ.",
+                           "&cᴄʜᴀɴɢᴇꜱ ᴀᴘᴘʟʏ ᴛᴏ ᴇᴠᴇʀʏᴏɴᴇ.");
+        item.hideTooltip().tag(this.plugin.keyKit(), kit.getName());
+        // The file's name: wins; with none set, a kit with a display name keeps
+        // it as a parsed component rather than becoming a section string.
+        String override = this.personal
+                ? gui.name(MENU, "kit-personal", tokens)
+                : gui.name(MENU, "kit-global", tokens);
+        if (override == null && kit.getDisplayName() != null && !kit.getDisplayName().isEmpty()) {
             item.miniName(kit.getDisplayName());
-        } else {
-            item.name("&d" + kit.getName());
         }
         return item.build();
     }

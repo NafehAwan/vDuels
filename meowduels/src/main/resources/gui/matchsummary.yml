@@ -1,0 +1,117 @@
+# -------------------------------------------------------------------------
+# The scoreboard shown to both players when a duel ends.
+#
+# Every value here is the one the plugin uses when the key is missing, so you
+# can delete any line, any item, or this whole file: the menu goes back to
+# looking exactly as it ships. There is no reset command because deleting IS
+# the reset.
+#
+# Each item takes:
+#   slot      0-based, counting left to right then down (row 1 is 0-8)
+#   material  any Minecraft item id, e.g. CLOCK, PAPER, LIME_DYE
+#   amount    stack size shown on the icon, 1-64
+#   name      the item's title
+#   lore      the lines under it; "" is a blank spacer line
+#   glow      true to force the enchanted shimmer, false to force it off
+#
+# An item with lore-on and lore-off has two faces - one for when the thing
+# it controls is on, one for when it is off. name-on/name-off and
+# material-on/material-off work the same way, and a plain name:/material:
+# covers both states.
+#
+# Colours: <yellow>, <gold>, <#FF2E55> for a custom colour, or
+# <gradient:#7CFF6B:#1FA32F>text</gradient>. Legacy &e codes work too.
+#
+# Placeholders usable in any name or lore on this screen:
+#   {you}        the viewer's name
+#   {opponent}   the other player
+#   {kit}        the kit played
+#   {score}      the viewer's rounds won
+#   {oppscore}   the opponent's rounds won
+#   {hits}       the viewer's hits
+#   {opphits}    the opponent's hits
+#   {damage}     damage the viewer dealt
+#   {oppdamage}  damage the opponent dealt
+#   {rounds}     rounds needed to win
+#   {duration}   how long the match ran
+#   {streak}     the viewer's win streak
+#   {wins}       the viewer's total wins
+#
+# The text below is written in small capitals (ᴛʜɪꜱ ꜱᴛʏʟᴇ). That is just what
+# the characters are - type ordinary letters if you would rather have them.
+# -------------------------------------------------------------------------
+
+title: "ᴍᴀᴛᴄʜ ʀᴇѕᴜʟᴛ"
+rows: 3
+
+# Uncomment to give this one screen a different frame from the rest of the
+# plugin. Leave it out and it follows theme.filler in config.yml.
+#filler: "GRAY_STAINED_GLASS_PANE"
+#filler-name: " "
+
+items:
+
+  # The viewer's own column, when they won.
+  result-won:
+    slot: 11
+    material: LIME_DYE
+    name: "<bold><gradient:#8BF58B:#2EB82E>ᴠɪᴄᴛᴏʀʏ</gradient></bold>"
+    lore:
+      - "&7ʏᴏᴜ: &f{you}"
+      - ""
+      - "&7ꜱᴄᴏʀᴇ: &f{score}"
+      - "&7ʜɪᴛꜱ: &f{hits}"
+      - "&7ᴅᴀᴍᴀɢᴇ: &f{damage} &c❤"
+      - ""
+      - "&7ꜱᴛʀᴇᴀᴋ: &6{streak}"
+      - "&7ᴡɪɴꜱ: &b{wins}"
+
+  # The same column, when they lost. Its lore is shared with
+  # result-won in the code, so both ship the same lines.
+  result-lost:
+    slot: 11
+    material: RED_DYE
+    name: "<bold><gradient:#FF6B6B:#8B0000>ᴅᴇꜰᴇᴀᴛ</gradient></bold>"
+    lore:
+      - "&7ʏᴏᴜ: &f{you}"
+      - ""
+      - "&7ꜱᴄᴏʀᴇ: &f{score}"
+      - "&7ʜɪᴛꜱ: &f{hits}"
+      - "&7ᴅᴀᴍᴀɢᴇ: &f{damage} &c❤"
+      - ""
+      - "&7ꜱᴛʀᴇᴀᴋ: &6{streak}"
+      - "&7ᴡɪɴꜱ: &b{wins}"
+
+  # The match itself: kit, final score, length.
+  match:
+    slot: 13
+    material: PAPER
+    name: "<gradient:#FFE08A:#E0A13B>ᴍᴀᴛᴄʜ ɪɴꜰᴏ</gradient>"
+    lore:
+      - "&7ᴋɪᴛ: &f{kit}"
+      - "&7ꜰɪɴᴀʟ: &a{score} &7- &c{oppscore}"
+      - "&7ʀᴏᴜɴᴅꜱ: &f{rounds} ᴛᴏ ᴡɪɴ"
+      - "&7ᴅᴜʀᴀᴛɪᴏɴ: &f{duration}"
+
+  # The other player's column.
+  opponent:
+    slot: 15
+    material: PLAYER_HEAD
+    name: "<gradient:#C0C0C0:#6E6E6E>ᴏᴘᴘᴏɴᴇɴᴛ</gradient>"
+    lore:
+      - "&7{opponent}"
+      - ""
+      - "&7ꜱᴄᴏʀᴇ: &f{oppscore}"
+      - "&7ʜɪᴛꜱ: &f{opphits}"
+      - "&7ᴅᴀᴍᴀɢᴇ: &f{oppdamage} &c❤"
+
+  # Sends a fresh duel request to the same opponent.
+  # These four names are MiniMessage, so gradients work.
+  rematch:
+    slot: 22
+    material: NETHER_STAR
+    name: "<bold><gradient:#FF5C5C:#8B0000>ʀᴇᴍᴀᴛᴄʜ ⚔️</gradient></bold>"
+    lore:
+      - "&7ᴄʜᴀʟʟᴇɴɢᴇ &f{opponent} &7ᴀɢᴀɪɴ"
+      - ""
+      - "&eᴄʟɪᴄᴋ ᴛᴏ ꜱᴇɴᴅ ᴀ ʀᴇᴍᴀᴛᴄʜ."

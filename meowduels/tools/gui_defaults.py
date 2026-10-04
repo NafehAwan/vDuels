@@ -199,6 +199,31 @@ def constants(src):
         out[m.group(1)] = ("@gl", m.group(2))
     for m in re.finditer(r"static\s+final\s+int\s+(\w+)\s*=\s*(-?\d+)", src):
         out[m.group(1)] = int(m.group(2))
+    # String[] constants, so a lore block shared between two items can be
+    # named once in the Java and still be read here.
+    for m in re.finditer(r"static\s+final\s+String\[\]\s+(\w+)\s*=\s*new String\[\]\{", src):
+        open_brace = src.index("{", m.end() - 1)
+        depth, i = 0, open_brace
+        while i < len(src):
+            c = src[i]
+            if c == '"':
+                i += 1
+                while True:
+                    if src[i] == "\\":
+                        i += 2
+                        continue
+                    if src[i] == '"':
+                        break
+                    i += 1
+            elif c == "{":
+                depth += 1
+            elif c == "}":
+                depth -= 1
+                if depth == 0:
+                    break
+            i += 1
+        parts = split_args(src[open_brace + 1:i])
+        out[m.group(1)] = ("@arr", [decode(a[1:-1]) for a in parts if a.startswith('"')])
     return out
 
 
@@ -219,6 +244,8 @@ def resolve(arg, consts):
         value = consts[arg]
         if isinstance(value, tuple) and value[0] == "@gl":
             return glm_consts.get(value[1])
+        if isinstance(value, tuple) and value[0] == "@arr":
+            return list(value[1])
         return value
     return None
 
@@ -226,7 +253,7 @@ def resolve(arg, consts):
 # --------------------------------------------------------------------------
 # Every gui.<call>(...) in the menu sources.
 # --------------------------------------------------------------------------
-CALL = re.compile(r"\bgui\.(item|title|rows|slot|frame|name|lore|material|amount|toggle|face|titleOf)\s*\(")
+CALL = re.compile(r"\bgui\.(item|title|rows|slot|frame|name|lore|material|amount|toggle|face|titleOf|miniName)\s*\(")
 
 reads = {}          # menuId -> {"title":str, "rows":int, "items":{id:{...}}}
 item_count = 0
@@ -276,21 +303,45 @@ for name in sorted(os.listdir(GUI_SRC)):
             fail("%s: gui.%s's item id is not a literal (%s)" % (name, kind, args[1]))
             continue
         slot_entry = entry["items"].setdefault(item_id, {})
+        if kind == "miniName":
+            # gui.miniName(menu, id, default, tokens) - the default IS a
+            # literal, so it is checked like any other name.
+            value = resolve(args[2], consts)
+            if not isinstance(value, str):
+                fail("%s: gui.miniName(%s) default is not a literal" % (name, item_id))
+                continue
+            slot_entry["name"] = value
+            item_count += 1
+            continue
         if kind in ("name", "material", "amount"):
-            # Dynamic by design: the code works these out per entry, so there
-            # is no literal to ship and nothing for the checker to compare.
-            # Recorded only so the item is known to exist.
-            slot_entry.setdefault("dynamic", []).append(kind)
+            # These are read on their own where the code decides the rest of
+            # the item. The default may still be a literal - gui.material with
+            # Material.LIME_DYE - and where it is, it is checked like any
+            # other; only a value worked out at runtime is left unchecked.
+            default = resolve(args[2], consts) if len(args) > 2 else None
+            if default is None:
+                slot_entry.setdefault("dynamic", []).append(kind)
+            elif not (kind == "amount" and default == 1):
+                # An amount of 1 is what an item is anyway, so shipping it
+                # would put `amount: 1` in every file for nothing.
+                slot_entry[kind] = default
             continue
         if kind == "lore":
             # gui.lore(menu, id, tokens, line...) - the lines are the default.
             rest = args[2:]
             while rest and resolve(rest[0], consts) is None:
                 rest = rest[1:]
-            values = [resolve(a, consts) for a in rest]
-            if any(v is None for v in values):
-                fail("%s: gui.lore(%s) has a non-literal line; pass it as a "
-                     "{token} so the default stays checkable" % (name, item_id))
+            values = []
+            broken = False
+            for a in rest:
+                r = resolve(a, consts)
+                if r is None:
+                    fail("%s: gui.lore(%s) has a non-literal line; pass it as a "
+                         "{token} so the default stays checkable" % (name, item_id))
+                    broken = True
+                    break
+                values.extend(r) if isinstance(r, list) else values.append(r)
+            if broken:
                 continue
             if values:
                 slot_entry["lore"] = values
@@ -385,23 +436,37 @@ for name in sorted(os.listdir(GUI_SRC)):
             slot_entry["lore-on"], slot_entry["lore-off"] = faces
             item_count += 1
             continue
-        # gui.item: [menu, id, (on)?, (tokens)?, Material, name, lore...]
-        rest = args[2:]
-        while rest and resolve(rest[0], consts) is None and not rest[0].startswith("Material."):
-            rest = rest[1:]          # skips the boolean and the tokens map
-        if not rest:
-            fail("%s: gui.item(%s) has no material argument" % (name, item_id))
+        # gui.item: [menu, id, (tokens)?, material, name, lore...]
+        #
+        # The material is found by position - the argument just before the
+        # first string literal - rather than by trying to resolve it. It is
+        # often an expression (gui.material(...) for a row that uses the
+        # kit's own icon), and a scan that skipped anything unresolvable
+        # walked straight past it and read the name as the material.
+        first_string = None
+        for i, a in enumerate(args[2:], start=2):
+            if a.startswith('"'):
+                first_string = i
+                break
+        if first_string is None or first_string < 3:
+            fail("%s: gui.item(%s) has no material followed by a name" % (name, item_id))
             continue
-        material = resolve(rest[0], consts)
-        values = [resolve(a, consts) for a in rest[1:]]
+        material = resolve(args[first_string - 1], consts)
+        if material is None:
+            # Worked out at runtime, so there is no default to ship. Recorded
+            # so the generator can offer the key as a comment.
+            slot_entry.setdefault("dynamic", []).append("material")
+        values = [resolve(a, consts) for a in args[first_string:]]
         if any(v is None for v in values):
             # A name assembled at runtime cannot be compared, and must not
             # be silently treated as absent either.
             fail("%s: gui.item(%s) has a non-literal name or lore line; pass it "
                  "as a {token} instead so the default stays checkable" % (name, item_id))
             continue
-        slot_entry["material"] = material
+        if material is not None:
+            slot_entry["material"] = material
         if values:
             slot_entry["name"] = values[0]
-            slot_entry["lore"] = values[1:]
+            if values[1:]:
+                slot_entry["lore"] = values[1:]
         item_count += 1

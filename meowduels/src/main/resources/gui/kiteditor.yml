@@ -1,0 +1,71 @@
+# -------------------------------------------------------------------------
+# /kiteditor and /mykits - pick a kit to edit. Opened in two modes: a
+# player arranging their own layout, or an admin changing the kit for
+# everyone, each with its own title and row wording.
+#
+# Every value here is the one the plugin uses when the key is missing, so you
+# can delete any line, any item, or this whole file: the menu goes back to
+# looking exactly as it ships. There is no reset command because deleting IS
+# the reset.
+#
+# Each item takes:
+#   slot      0-based, counting left to right then down (row 1 is 0-8)
+#   material  any Minecraft item id, e.g. CLOCK, PAPER, LIME_DYE
+#   amount    stack size shown on the icon, 1-64
+#   name      the item's title
+#   lore      the lines under it; "" is a blank spacer line
+#   glow      true to force the enchanted shimmer, false to force it off
+#
+# An item with lore-on and lore-off has two faces - one for when the thing
+# it controls is on, one for when it is off. name-on/name-off and
+# material-on/material-off work the same way, and a plain name:/material:
+# covers both states.
+#
+# Colours: <yellow>, <gold>, <#FF2E55> for a custom colour, or
+# <gradient:#7CFF6B:#1FA32F>text</gradient>. Legacy &e codes work too.
+#
+# Placeholders usable in any name or lore on this screen:
+#   {kit}  the kit's id
+#
+# The text below is written in small capitals (ᴛʜɪꜱ ꜱᴛʏʟᴇ). That is just what
+# the characters are - type ordinary letters if you would rather have them.
+# -------------------------------------------------------------------------
+
+title-global: "&d&lᴋɪᴛ ᴇᴅɪᴛᴏʀ &7- ᴘɪᴄᴋ ᴀ ɢᴀᴍᴇᴍᴏᴅᴇ"
+title-personal: "&d&lʏᴏᴜʀ ᴋɪᴛꜱ &7- ᴘɪᴄᴋ ᴀ ɢᴀᴍᴇᴍᴏᴅᴇ"
+rows: 6
+
+# Uncomment to give this one screen a different frame from the rest of the
+# plugin. Leave it out and it follows theme.filler in config.yml.
+#filler: "GRAY_STAINED_GLASS_PANE"
+#filler-name: " "
+
+items:
+
+  # Shown instead when no kits exist yet.
+  empty:
+    slot: 22
+    material: BARRIER
+    name: "&cɴᴏ ᴋɪᴛꜱ ʏᴇᴛ"
+    lore:
+      - "&7ᴄʀᴇᴀᴛᴇ ᴏɴᴇ ᴡɪᴛʜ &e/ᴋɪᴛᴄʀᴇᴀᴛᴇ <ɴᴀᴍᴇ>&7."
+
+  # One row per kit, as a player sees it.
+  kit-personal:
+    # material: STONE   # each row uses its own icon unless you set this
+    name: "&d{kit}"
+    lore:
+      - ""
+      - "&7ᴄʟɪᴄᴋ ᴛᴏ ᴀʀʀᴀɴɢᴇ ᴛʜɪꜱ ᴋɪᴛ"
+      - "&7ᴛʜᴇ ᴡᴀʏ ʏᴏᴜ ᴡᴀɴᴛ ɪᴛ."
+
+  # The same row as an admin sees it - this one carries the
+  # warning that a change hits every player.
+  kit-global:
+    # material: STONE   # each row uses its own icon unless you set this
+    name: "&d{kit}"
+    lore:
+      - ""
+      - "&7ᴄʟɪᴄᴋ ᴛᴏ ᴇᴅɪᴛ ᴛʜɪꜱ ɢᴀᴍᴇᴍᴏᴅᴇ'ꜱ ɪᴛᴇᴍꜱ,"
+      - "&7ᴀʀᴍᴏʀ ᴀɴᴅ ᴏꜰꜰʜᴀɴᴅ ɪᴛᴇᴍ."
+      - "&cᴄʜᴀɴɢᴇꜱ ᴀᴘᴘʟʏ ᴛᴏ ᴇᴠᴇʀʏᴏɴᴇ."

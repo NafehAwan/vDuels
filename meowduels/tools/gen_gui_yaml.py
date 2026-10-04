@@ -101,6 +101,51 @@ NOTES = {
          "arena-busy": "The same row for an arena already in use. Not clickable.",
          "empty": "Shown instead when no arena has an event spawn set yet."},
     ),
+    "kiteditor": (
+        "/kiteditor and /mykits - pick a kit to edit. Opened in two modes: a\n"
+        "player arranging their own layout, or an admin changing the kit for\n"
+        "everyone, each with its own title and row wording.",
+        {"kit": "the kit's id"},
+        {"kit-personal": "One row per kit, as a player sees it.",
+         "kit-global": "The same row as an admin sees it - this one carries the\n"
+                       "# warning that a change hits every player.",
+         "empty": "Shown instead when no kits exist yet."},
+    ),
+    "mapselect": (
+        "The map picker, opened from the duel confirm screen.",
+        {"arena": "the map's name", "target": "who the duel is being sent to"},
+        {"arena-selected": "The map currently chosen.",
+         "arena-free": "A map that can be picked. These fill the window in order,\n"
+                       "# so they take no slot of their own.",
+         "arena-incompatible": "A map the chosen kit cannot be played on.",
+         "random": "Leaves the choice open, and any free compatible map is used.\n"
+                   "# Its on face is the one shown while no map is picked."},
+    ),
+    "kitpick": (
+        "The kit picker, the first screen of /duel <player>.",
+        {"kit": "the kit's id", "category": "the category being shown"},
+        {"kit": "One row per kit. With no name: set, a kit with a display name\n"
+                "# keeps it and one without is titled by its id.",
+         "next-category": "Pages to the next category. Only shown when more than\n"
+                          "# one category exists."},
+    ),
+    "matchsummary": (
+        "The scoreboard shown to both players when a duel ends.",
+        {"you": "the viewer's name", "opponent": "the other player",
+         "kit": "the kit played", "score": "the viewer's rounds won",
+         "oppscore": "the opponent's rounds won", "hits": "the viewer's hits",
+         "opphits": "the opponent's hits", "damage": "damage the viewer dealt",
+         "oppdamage": "damage the opponent dealt", "rounds": "rounds needed to win",
+         "duration": "how long the match ran", "streak": "the viewer's win streak",
+         "wins": "the viewer's total wins"},
+        {"result-won": "The viewer's own column, when they won.",
+         "result-lost": "The same column, when they lost. Its lore is shared with\n"
+                        "# result-won in the code, so both ship the same lines.",
+         "match": "The match itself: kit, final score, length.",
+         "opponent": "The other player's column.",
+         "rematch": "Sends a fresh duel request to the same opponent.\n"
+                    "# These four names are MiniMessage, so gradients work."},
+    ),
     "editkitlist": (
         "/editkit - pick a kit to edit its start-of-match potion effects.",
         {"kit": "the kit's id", "effects": "how many start effects it has"},

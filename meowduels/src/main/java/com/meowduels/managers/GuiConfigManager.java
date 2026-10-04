@@ -382,6 +382,23 @@ public class GuiConfigManager {
         return Tokens.apply(section.getString("name"), tokens);
     }
 
+    /**
+     * A title that stays MiniMessage, for the items built with
+     * {@code miniName}.
+     *
+     * <p>The match summary titles its panels with real components -
+     * {@code <bold><gradient:#8BF58B:#2EB82E>ᴠɪᴄᴛᴏʀʏ</gradient></bold>} - and
+     * {@code miniName} also clears the italic that a component display name
+     * is given by default. Sending those through the section-code translator
+     * instead would come close but not exactly, so the call site keeps
+     * {@code miniName} and this only decides what string goes into it.
+     */
+    public String miniName(String menuId, String itemId, String def, Map<String, String> tokens) {
+        ConfigurationSection section = this.itemSection(menuId, itemId);
+        String value = section == null ? def : section.getString("name", def);
+        return Tokens.apply(value, tokens);
+    }
+
     /** Lore for an entry whose other properties the code decides. */
     public List<String> lore(String menuId, String itemId, Map<String, String> tokens, String... defLore) {
         List<String> lore = this.lore(this.itemSection(menuId, itemId), defLore);

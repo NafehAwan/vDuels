@@ -1,0 +1,87 @@
+# -------------------------------------------------------------------------
+# The map picker, opened from the duel confirm screen.
+#
+# Every value here is the one the plugin uses when the key is missing, so you
+# can delete any line, any item, or this whole file: the menu goes back to
+# looking exactly as it ships. There is no reset command because deleting IS
+# the reset.
+#
+# Each item takes:
+#   slot      0-based, counting left to right then down (row 1 is 0-8)
+#   material  any Minecraft item id, e.g. CLOCK, PAPER, LIME_DYE
+#   amount    stack size shown on the icon, 1-64
+#   name      the item's title
+#   lore      the lines under it; "" is a blank spacer line
+#   glow      true to force the enchanted shimmer, false to force it off
+#
+# An item with lore-on and lore-off has two faces - one for when the thing
+# it controls is on, one for when it is off. name-on/name-off and
+# material-on/material-off work the same way, and a plain name:/material:
+# covers both states.
+#
+# Colours: <yellow>, <gold>, <#FF2E55> for a custom colour, or
+# <gradient:#7CFF6B:#1FA32F>text</gradient>. Legacy &e codes work too.
+#
+# Placeholders usable in any name or lore on this screen:
+#   {arena}   the map's name
+#   {target}  who the duel is being sent to
+#
+# The text below is written in small capitals (ᴛʜɪꜱ ꜱᴛʏʟᴇ). That is just what
+# the characters are - type ordinary letters if you would rather have them.
+#
+# NOTE ON SLOTS: /editgui can also arrange this menu, and a layout saved there
+# wins over the slot values below. The editor saves when you close it even if
+# you changed nothing, so opening it once will pin these slots and make edits
+# here look ignored. Run `/editgui mapselect reset` to clear that stored
+# layout and hand control back to this file.
+# -------------------------------------------------------------------------
+
+title: "&8ᴅᴜᴇʟ ᴍᴀᴘ: &d{target}"
+rows: 4
+
+# Uncomment to give this one screen a different frame from the rest of the
+# plugin. Leave it out and it follows theme.filler in config.yml.
+#filler: "GRAY_STAINED_GLASS_PANE"
+#filler-name: " "
+
+items:
+
+  # Leaves the choice open, and any free compatible map is used.
+  # Its on face is the one shown while no map is picked.
+  random:
+    material: ENDER_PEARL
+    name-on: "&aʀᴀɴᴅᴏᴍ"
+    name-off: "&eʀᴀɴᴅᴏᴍ"
+    glow-on: true
+    lore-on:
+      - ""
+      - "&aꜱᴇʟᴇᴄᴛᴇᴅ"
+    lore-off:
+      - ""
+      - "&fᴘɪᴄᴋ ᴀɴʏ ꜰʀᴇᴇ ᴄᴏᴍᴘᴀᴛɪʙʟᴇ ᴀʀᴇɴᴀ"
+
+  # The map currently chosen.
+  arena-selected:
+    material: FILLED_MAP
+    name: "&a{arena}"
+    glow: true
+    lore:
+      - ""
+      - "&aꜱᴇʟᴇᴄᴛᴇᴅ"
+
+  # A map that can be picked. These fill the window in order,
+  # so they take no slot of their own.
+  arena-free:
+    material: FILLED_MAP
+    name: "&e{arena}"
+    lore:
+      - ""
+      - "&fᴄʟɪᴄᴋ ᴛᴏ ᴘɪᴄᴋ ᴛʜɪꜱ ᴍᴀᴘ"
+
+  # A map the chosen kit cannot be played on.
+  arena-incompatible:
+    material: FILLED_MAP
+    name: "&c{arena}"
+    lore:
+      - ""
+      - "&cɪɴᴄᴏᴍᴘᴀᴛɪʙʟᴇ ᴡɪᴛʜ ᴛʜɪꜱ ᴋɪᴛ"

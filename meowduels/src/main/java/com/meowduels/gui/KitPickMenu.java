@@ -13,10 +13,13 @@ import com.meowduels.MeowDuels;
 import com.meowduels.gui.DuelConfirmMenu;
 import com.meowduels.gui.Menu;
 import com.meowduels.managers.CategoryManager;
+import com.meowduels.managers.GuiConfigManager;
 import com.meowduels.model.Kit;
 import com.meowduels.util.Items;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -24,6 +27,10 @@ import org.bukkit.inventory.ItemStack;
 
 public class KitPickMenu
 extends Menu {
+    /** The name of this screen's file: {@code gui/kitpick.yml}. */
+    private static final String MENU = "kitpick";
+
+    private static final int ROWS = 4;
     private static final int ARROW_SLOT = 35;
     private static final int[] KIT_SLOTS = new int[]{10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25};
     private final MeowDuels plugin;
@@ -39,10 +46,14 @@ extends Menu {
     public void build() {
         int i;
         List<String> kitNames;
+        GuiConfigManager gui = this.plugin.gui();
+        int rows = gui.rows(MENU, ROWS);
+        int size = rows * 9;
         List<CategoryManager.Category> categories = this.plugin.getCategoryManager().all();
         boolean multi = false;
         if (categories.isEmpty()) {
-            this.create(4, "&7&lDuel Request");
+            this.createRaw(rows, gui.titleOf(MENU, "plain",
+                    "&7&l\u1d05\u1d1c\u1d07\u029f \u0280\u1d07\ua7af\u1d1c\u1d07\ua731\u1d1b", null));
             kitNames = new ArrayList<String>();
             for (Kit kit : this.plugin.getKitManager().all()) {
                 kitNames.add(kit.getName());
@@ -53,39 +64,50 @@ extends Menu {
             }
             CategoryManager.Category category = categories.get(this.categoryIndex);
             multi = categories.size() > 1;
-            this.create(4, "&7&lDuel Request&r &7" + category.getHeader());
+            Map<String, String> titleTokens = new HashMap<String, String>();
+            titleTokens.put("category", category.getHeader());
+            this.createRaw(rows, gui.titleOf(MENU, "category",
+                    "&7&l\u1d05\u1d1c\u1d07\u029f \u0280\u1d07\ua7af\u1d1c\u1d07\ua731\u1d1b&r &7{category}", titleTokens));
             kitNames = this.plugin.getCategoryManager().kitsFor(category);
         }
-        ItemStack filler = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
-        for (i = 0; i < 36; ++i) {
-            this.inventory.setItem(i, filler);
-        }
+        gui.frame(MENU, this.inventory, rows);
         for (i = 0; i < KIT_SLOTS.length && i < kitNames.size(); ++i) {
-            ItemStack icon = this.kitIcon((String)kitNames.get(i));
+            if (KIT_SLOTS[i] >= size) break;
+            ItemStack icon = this.kitIcon(gui, (String)kitNames.get(i));
             if (icon == null) continue;
             this.inventory.setItem(KIT_SLOTS[i], icon);
         }
         if (multi) {
-            this.inventory.setItem(35, this.arrowItem());
+            this.inventory.setItem(Math.min(size - 1, gui.slot(MENU, "next-category", ARROW_SLOT, rows)),
+                                   this.arrowItem(gui));
         }
     }
 
-    private ItemStack kitIcon(String name) {
+    private ItemStack kitIcon(GuiConfigManager gui, String name) {
         Kit kit = this.plugin.getKitManager().get(name);
         if (kit == null) {
             return null;
         }
-        Items item = Items.of(kit.getIcon()).hideTooltip().tag(this.plugin.keyKit(), kit.getName());
-        if (kit.getDisplayName() != null && !kit.getDisplayName().isEmpty()) {
+        HashMap<String, String> tokens = new HashMap<String, String>();
+        tokens.put("kit", kit.getName());
+        Items item = gui.item(MENU, "kit", tokens, gui.material(MENU, "kit", kit.getIcon()),
+                              "&e{kit}")
+                .hideTooltip()
+                .tag(this.plugin.keyKit(), kit.getName());
+        // As on the other kit lists: with no name: in the file, a kit with a
+        // display name keeps it as a parsed component.
+        if (gui.name(MENU, "kit", tokens) == null
+                && kit.getDisplayName() != null && !kit.getDisplayName().isEmpty()) {
             item.miniName(kit.getDisplayName());
-        } else {
-            item.name("&e" + kit.getName());
         }
         return item.build();
     }
 
-    private ItemStack arrowItem() {
-        return Items.of(Material.ARROW).name("&eNext Category").lore("&f\u2192 another category").tag(this.plugin.keyButton(), "next-cat").build();
+    private ItemStack arrowItem(GuiConfigManager gui) {
+        return gui.item(MENU, "next-category", Material.ARROW,
+                        "&e\u0274\u1d07x\u1d1b \u1d04\u1d00\u1d1b\u1d07\u0262\u1d0f\u0280\u028f",
+                        "&f\u2192 \u1d00\u0274\u1d0f\u1d1b\u029c\u1d07\u0280 \u1d04\u1d00\u1d1b\u1d07\u0262\u1d0f\u0280\u028f")
+                .tag(this.plugin.keyButton(), "next-cat").build();
     }
 
     @Override

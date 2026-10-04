@@ -12,8 +12,12 @@ package com.meowduels.gui;
 import com.meowduels.MeowDuels;
 import com.meowduels.gui.DuelConfirmMenu;
 import com.meowduels.gui.Menu;
+import com.meowduels.managers.GuiConfigManager;
+import com.meowduels.managers.GuiConfigManager.Face;
+import com.meowduels.managers.GuiLayoutManager;
 import com.meowduels.model.Arena;
 import com.meowduels.util.Items;
+import java.util.HashMap;
 import java.util.Map;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -30,13 +34,24 @@ extends Menu {
         this.confirm = confirm;
     }
 
+    /** The name of this screen's file: {@code gui/mapselect.yml}. */
+    private static final String MENU = GuiLayoutManager.MAP_SELECT;
+
+    private static final int ROWS = 4;
+    private static final int SLOT_RANDOM = 35;
+
     @Override
     public void build() {
-        this.create(4, "&8DUEL MAP: &d" + this.confirm.getTarget().getName());
+        GuiConfigManager gui = this.plugin.gui();
+        int rows = gui.rows(MENU, ROWS);
+        int size = rows * 9;
+        Map<String, String> titleTokens = new HashMap<String, String>();
+        titleTokens.put("target", this.confirm.getTarget().getName());
+        this.createRaw(rows, gui.title(MENU, "&8ᴅᴜᴇʟ ᴍᴀᴘ: &d{target}", titleTokens));
         String kit = this.confirm.getSelectedKit();
-        if (this.plugin.getGuiLayoutManager().has("mapselect")) {
-            for (Map.Entry<Integer, ItemStack> e : this.plugin.getGuiLayoutManager().get("mapselect").entrySet()) {
-                if (e.getKey() >= 36) continue;
+        if (this.plugin.getGuiLayoutManager().has(MENU)) {
+            for (Map.Entry<Integer, ItemStack> e : this.plugin.getGuiLayoutManager().get(MENU).entrySet()) {
+                if (e.getKey() >= size) continue;
                 if ("random".equals(Items.readTag(e.getValue(), this.plugin.keyButton()))) {
                     this.inventory.setItem(e.getKey().intValue(), this.randomButton());
                     continue;
@@ -51,33 +66,72 @@ extends Menu {
                 this.inventory.setItem(e.getKey().intValue(), e.getValue());
             }
         } else {
-            ItemStack filler = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
-            for (int i = 0; i < 36; ++i) {
-                this.inventory.setItem(i, filler);
-            }
+            int rowsNow = this.inventory.getSize() / 9;
+            this.plugin.gui().frame(MENU, this.inventory, rowsNow);
             int slot = 0;
+            int last = this.inventory.getSize() - 1;
             for (Arena arena : this.plugin.getArenaManager().all()) {
-                if (slot >= 35) break;
+                if (slot >= last) break;
                 if (!arena.isConfigured() || kit != null && !arena.supportsKit(kit)) continue;
                 this.inventory.setItem(slot++, this.liveArenaIcon(arena.getName(), kit));
             }
-            this.inventory.setItem(35, this.randomButton());
+            this.inventory.setItem(Math.min(last, this.plugin.gui().slot(MENU, "random", SLOT_RANDOM, rowsNow)),
+                                   this.randomButton());
         }
     }
 
     private ItemStack randomButton() {
+        GuiConfigManager gui = this.plugin.gui();
         boolean sel = this.confirm.getSelectedArena() == null;
-        return Items.of(Material.ENDER_PEARL).name((sel ? "&a" : "&e") + "Random").lore("", sel ? "&aSelected" : "&fPick any free compatible arena").glow(sel).tag(this.plugin.keyButton(), "random").build();
+        return gui.toggle(MENU, "random", sel, null,
+                          Face.of(Material.ENDER_PEARL,
+                                  "&aʀᴀɴᴅᴏᴍ",
+                                  "",
+                                  "&aꜱᴇʟᴇᴄᴛᴇᴅ").glow(),
+                          Face.of(Material.ENDER_PEARL,
+                                  "&eʀᴀɴᴅᴏᴍ",
+                                  "",
+                                  "&fᴘɪᴄᴋ ᴀɴʏ ꜰʀᴇᴇ ᴄᴏᴍᴘᴀᴛɪʙʟᴇ ᴀʀᴇɴᴀ"))
+                .tag(this.plugin.keyButton(), "random").build();
     }
 
+    /**
+     * One map's icon, in whichever of its three states applies.
+     *
+     * <p>Selected, pickable and incompatible are three items in the file
+     * rather than one with faces: a two-state toggle cannot say three things,
+     * and a server that wants an incompatible map to look plainly unavailable
+     * should be able to give it its own icon.
+     */
     private ItemStack liveArenaIcon(String name, String kit) {
         Arena arena = this.plugin.getArenaManager().get(name);
         if (arena == null || !arena.isConfigured()) {
             return null;
         }
-        boolean sel = name.equalsIgnoreCase(this.confirm.getSelectedArena());
-        boolean compatible = kit == null || arena.supportsKit(kit);
-        return Items.of(Material.FILLED_MAP).name((sel ? "&a" : (compatible ? "&e" : "&c")) + arena.getName()).lore("", sel ? "&aSelected" : (compatible ? "&fClick to pick this map" : "&cIncompatible with this kit")).glow(sel).tag(this.plugin.keyArena(), arena.getName()).build();
+        GuiConfigManager gui = this.plugin.gui();
+        Map<String, String> tokens = new HashMap<String, String>();
+        tokens.put("arena", arena.getName());
+        Items item;
+        if (name.equalsIgnoreCase(this.confirm.getSelectedArena())) {
+            item = gui.face(MENU, "arena-selected", tokens,
+                            Face.of(Material.FILLED_MAP,
+                                    "&a{arena}",
+                                    "",
+                                    "&aꜱᴇʟᴇᴄᴛᴇᴅ").glow());
+        } else if (kit == null || arena.supportsKit(kit)) {
+            item = gui.face(MENU, "arena-free", tokens,
+                            Face.of(Material.FILLED_MAP,
+                                    "&e{arena}",
+                                    "",
+                                    "&fᴄʟɪᴄᴋ ᴛᴏ ᴘɪᴄᴋ ᴛʜɪꜱ ᴍᴀᴘ"));
+        } else {
+            item = gui.face(MENU, "arena-incompatible", tokens,
+                            Face.of(Material.FILLED_MAP,
+                                    "&c{arena}",
+                                    "",
+                                    "&cɪɴᴄᴏᴍᴘᴀᴛɪʙʟᴇ ᴡɪᴛʜ ᴛʜɪꜱ ᴋɪᴛ"));
+        }
+        return item.tag(this.plugin.keyArena(), arena.getName()).build();
     }
 
     @Override
