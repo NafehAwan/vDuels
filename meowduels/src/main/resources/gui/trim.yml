@@ -1,0 +1,111 @@
+# -------------------------------------------------------------------------
+# /trims <kit> - the armour trim a player wants on one kit. The four
+# armour slots show the kit's real pieces wearing the chosen trim, so
+# only the lines added under them are editable.
+#
+# Every value here is the one the plugin uses when the key is missing, so you
+# can delete any line, any item, or this whole file: the menu goes back to
+# looking exactly as it ships. There is no reset command because deleting IS
+# the reset.
+#
+# Each item takes:
+#   slot      0-based, counting left to right then down (row 1 is 0-8)
+#   material  any Minecraft item id, e.g. CLOCK, PAPER, LIME_DYE
+#   amount    stack size shown on the icon, 1-64
+#   name      the item's title
+#   lore      the lines under it; "" is a blank spacer line
+#   glow      true to force the enchanted shimmer, false to force it off
+#
+# An item with lore-on and lore-off has two faces - one for when the thing
+# it controls is on, one for when it is off. name-on/name-off and
+# material-on/material-off work the same way, and a plain name:/material:
+# covers both states.
+#
+# Theme placeholders, usable in any name or lore in any menu. These follow
+# theme: in config.yml, so one edit there restyles every screen:
+#   {value} {label} {muted} {good} {bad} {warn}   colours
+#   {tick} {cross} {sep} {hint}                   the house symbols
+# Write a colour out instead if you want one line to ignore the theme.
+#
+# Colours: <yellow>, <gold>, <#FF2E55> for a custom colour, or
+# <gradient:#7CFF6B:#1FA32F>text</gradient>. Legacy &e codes work too.
+#
+# Placeholders usable in any name or lore on this screen:
+#   {kit}       the kit's name
+#   {pattern}   the selected trim pattern
+#   {material}  the selected trim material
+#   {index}     which option is shown
+#   {total}     how many options there are
+#   {piece}     the armour slot's name
+#   {trim}      the trim currently saved for that piece
+#
+# The text below is written in small capitals (ᴛʜɪꜱ ꜱᴛʏʟᴇ). That is just what
+# the characters are - type ordinary letters if you would rather have them.
+#
+# THIS MENU HAS NO slot: OR rows: KEYS, ON PURPOSE. It decides what a click
+# did by which slot was clicked, and its height is counted into those
+# numbers, so moving an item or resizing the window would run the wrong
+# action. Material, name and lore are all still yours to change.
+# -------------------------------------------------------------------------
+
+title: "&d&lᴛʀɪᴍꜱ &7- &f{kit}"
+
+# Uncomment to give this one screen a different frame from the rest of the
+# plugin. Leave it out and it follows theme.filler in config.yml.
+#filler: "GRAY_STAINED_GLASS_PANE"
+#filler-name: " "
+
+items:
+
+  # Not an item of its own - the named lines added under each
+  # real armour piece. piece-helmet, piece-chestplate,
+  # piece-leggings and piece-boots name the four slots.
+  armor:
+    apply-hint: "&eᴄʟɪᴄᴋ ᴛᴏ ᴀᴘᴘʟʏ ᴛʜᴇ ꜱᴇʟᴇᴄᴛᴇᴅ ᴛʀɪᴍ."
+    no-trim: "&8ɴᴏ ᴛʀɪᴍ ꜱᴇᴛ."
+    piece-boots: "ʙᴏᴏᴛꜱ"
+    piece-chestplate: "ᴄʜᴇꜱᴛᴘʟᴀᴛᴇ"
+    piece-helmet: "ʜᴇʟᴍᴇᴛ"
+    piece-leggings: "ʟᴇɢɢɪɴɢꜱ"
+    your-trim: "&7ʏᴏᴜʀ ᴛʀɪᴍ&8: &f{trim}"
+
+  # Cycles the trim pattern.
+  pattern:
+    material: PAPER
+    name: "&d&lᴘᴀᴛᴛᴇʀɴ&7: &f{pattern}"
+    lore:
+      - "&7ʟᴇꜰᴛ-ᴄʟɪᴄᴋ &8- &fɴᴇxᴛ"
+      - "&7ʀɪɢʜᴛ-ᴄʟɪᴄᴋ &8- &fᴘʀᴇᴠɪᴏᴜꜱ"
+      - ""
+      - "&8{index}/{total}"
+
+  # Cycles the trim material; wears that material's icon.
+  material:
+    # material: STONE   # each row uses its own icon unless you set this
+    name: "&d&lᴍᴀᴛᴇʀɪᴀʟ&7: &f{material}"
+    lore:
+      - "&7ʟᴇꜰᴛ-ᴄʟɪᴄᴋ &8- &fɴᴇxᴛ"
+      - "&7ʀɪɢʜᴛ-ᴄʟɪᴄᴋ &8- &fᴘʀᴇᴠɪᴏᴜꜱ"
+      - ""
+      - "&8{index}/{total}"
+
+  # Puts the selected trim on every piece.
+  apply-all:
+    material: LIME_DYE
+    name: "&a&lᴀᴘᴘʟʏ ᴛᴏ ᴀʟʟ ᴘɪᴇᴄᴇꜱ"
+    lore:
+      - "&7ꜱᴇᴛ ᴛʜᴇ ꜱᴇʟᴇᴄᴛᴇᴅ ᴛʀɪᴍ ᴏɴ ᴇᴠᴇʀʏ ᴀʀᴍᴏʀ ᴘɪᴇᴄᴇ."
+
+  # Removes every trim.
+  clear:
+    material: BARRIER
+    name: "&c&lᴄʟᴇᴀʀ ᴀʟʟ ᴛʀɪᴍꜱ"
+    lore:
+      - "&7ʀᴇᴍᴏᴠᴇ ᴛʀɪᴍꜱ ꜰʀᴏᴍ ᴇᴠᴇʀʏ ᴀʀᴍᴏʀ ᴘɪᴇᴄᴇ."
+
+  # Shown where the kit has no piece in that slot.
+  armor-missing:
+    material: GRAY_STAINED_GLASS_PANE
+    name: "&7ɴᴏ {piece}"
+    lore:
+      - "&8ᴛʜɪꜱ ᴋɪᴛ ʜᴀꜱ ɴᴏ {piece}."

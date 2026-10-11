@@ -45,9 +45,10 @@ COMMON = """\
 
 FIXED_SLOT_NOTE = """\
 #
-# THIS MENU HAS NO slot: KEYS, ON PURPOSE. It decides what a click did by
-# which slot was clicked, so moving an item here would run the wrong action.
-# Material, name and lore are all still yours to change.\
+# THIS MENU HAS NO slot: OR rows: KEYS, ON PURPOSE. It decides what a click
+# did by which slot was clicked, and its height is counted into those
+# numbers, so moving an item or resizing the window would run the wrong
+# action. Material, name and lore are all still yours to change.\
 """
 
 EDITGUI_NOTE = """\
@@ -296,6 +297,69 @@ NOTES = {
         {"kit": "One tile per kit. Its on face is a kit you are queued for.",
          "next-category": "Pages to the next category."},
     ),
+    "arena": (
+        "/arena <name> - everything about one arena. The longest screen in the\n"
+        "plugin; every toggle shares one pair of panes, set by ON_MATERIAL and\n"
+        "OFF_MATERIAL in the code, so material-on/material-off here override\n"
+        "them per item.",
+        {"arena": "the arena's name", "kits": "how many kits are allowed here",
+         "world": "the world it is in", "region": "its corner coordinates",
+         "description": "its description, or the none-set line",
+         "value": "a number item's current value",
+         "state": "from that item's state-set / state-unset line",
+         "blocks": "the border's starting size"},
+        {"setup-first": "Shown alone when the arena has never been set up.",
+         "setup": "Re-runs the position wizard.",
+         "event-spawn": "Where FFA and party matches drop players in. Its\n"
+                        "# state-set / state-unset lines are the 'Current:' value.",
+         "border-area": "The starting border box, with its own state lines.",
+         "tp-spawn1": "Teleports to player 1's spawn.",
+         "tp-spawn2": "Teleports to player 2's spawn.",
+         "tp-event": "Teleports to the event spawn.",
+         "description": "The arena's description, or none-set when it has none."},
+    ),
+    "guieditor": (
+        "/editgui <menu> - the drag-and-drop layout editor. The four buttons\n"
+        "along the bottom are this screen's own; everything above them is the\n"
+        "menu being edited.",
+        {"menu": "the menu being edited"},
+        {"locked": "Fills the slots past the edited menu's size.",
+         "cancel": "Closes without saving.",
+         "decoration": "Hands the admin a stack of panes to place.",
+         "save": "Writes the arrangement to gui-layouts.yml.",
+         "reset": "Clears the stored layout and redraws the defaults."},
+    ),
+    "kititems": (
+        "/kiteditor <kit> - the kit's item grid, armour and offhand.",
+        {"kit": "the kit's name"},
+        {},
+    ),
+    "kitselect": (
+        "/arena <name> > Compatible Kits - which kits may be played here.\n"
+        "A click is read as an index into the kit list, so these slots are\n"
+        "fixed.",
+        {"arena": "the arena's name", "kit": "the kit's id"},
+        {"kit": "One icon per kit. Its on face is a kit allowed here.",
+         "empty": "Shown when no kits exist yet.",
+         "back": "Returns to the arena menu."},
+    ),
+    "trim": (
+        "/trims <kit> - the armour trim a player wants on one kit. The four\n"
+        "armour slots show the kit's real pieces wearing the chosen trim, so\n"
+        "only the lines added under them are editable.",
+        {"kit": "the kit's name", "pattern": "the selected trim pattern",
+         "material": "the selected trim material", "index": "which option is shown",
+         "total": "how many options there are", "piece": "the armour slot's name",
+         "trim": "the trim currently saved for that piece"},
+        {"pattern": "Cycles the trim pattern.",
+         "material": "Cycles the trim material; wears that material's icon.",
+         "apply-all": "Puts the selected trim on every piece.",
+         "clear": "Removes every trim.",
+         "armor-missing": "Shown where the kit has no piece in that slot.",
+         "armor": "Not an item of its own - the named lines added under each\n"
+                  "# real armour piece. piece-helmet, piece-chestplate,\n"
+                  "# piece-leggings and piece-boots name the four slots."},
+    ),
     "editkitlist": (
         "/editkit - pick a kit to edit its start-of-match potion effects.",
         {"kit": "the kit's id", "effects": "how many start effects it has"},
@@ -364,7 +428,7 @@ def render(menu):
 
     for key in sorted(k for k in code if k == "title" or k.startswith("title-")):
         lines.append("%s: %s" % (key, scalar(code[key])))
-    if "rows" in code:
+    if "rows" in code and menu not in G.FIXED:
         lines.append("rows: %d" % code["rows"])
     lines.append("")
     lines.append("# Uncomment to give this one screen a different frame from the rest of the")

@@ -14,9 +14,12 @@ import com.meowduels.MeowDuels;
 import com.meowduels.gui.Menu;
 import com.meowduels.managers.GuiLayoutManager;
 import com.meowduels.model.Arena;
+import com.meowduels.managers.GuiConfigManager;
+import com.meowduels.managers.GuiConfigManager.Face;
 import com.meowduels.util.Items;
 import com.meowduels.util.Text;
 import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -51,9 +54,17 @@ extends Menu {
         return rawSlot >= this.editableSize;
     }
 
+    /** The name of this screen's file: {@code gui/guieditor.yml}. */
+    private static final String MENU = "guieditor";
+
     @Override
     public void build() {
-        this.create(6, "&8Editing: &d" + this.menuId);
+        GuiConfigManager gui = this.plugin.gui();
+        Map<String, String> menuToken = new HashMap<String, String>();
+        menuToken.put("menu", this.menuId);
+        // Six rows and these slots are fixed: this screen reads a click by its
+        // raw slot, so a moved button would run another button's action.
+        this.createRaw(6, gui.title(MENU, "&8\u1d07\u1d05\u026a\u1d1b\u026a\u0274\u0262: &d{menu}", menuToken));
         if (this.plugin.getGuiLayoutManager().has(this.menuId)) {
             for (Map.Entry<Integer, ItemStack> entry : this.plugin.getGuiLayoutManager().get(this.menuId).entrySet()) {
                 if (entry.getKey() >= this.editableSize) continue;
@@ -62,18 +73,32 @@ extends Menu {
         } else {
             this.fillDefaults();
         }
-        ItemStack locked = Items.of(Material.GRAY_STAINED_GLASS_PANE).name("&8(outside the menu)").build();
+        ItemStack locked = gui.face(MENU, "locked", null,
+                Face.of(Material.GRAY_STAINED_GLASS_PANE,
+                        "&8(\u1d0f\u1d1c\u1d1b\ua731\u026a\u1d05\u1d07 \u1d1b\u029c\u1d07 \u1d0d\u1d07\u0274\u1d1c)")).build();
         for (int i = this.editableSize; i < 45; ++i) {
             this.inventory.setItem(i, locked);
         }
-        ItemStack bar = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
+        ItemStack bar = gui.pane(MENU);
         for (int i = 45; i < 54; ++i) {
             this.inventory.setItem(i, bar);
         }
-        this.inventory.setItem(45, Items.of(Material.BARRIER).name("&cCancel").lore("&7Close without saving.").build());
-        this.inventory.setItem(47, Items.of(Material.GRAY_STAINED_GLASS_PANE).name("&8Decoration").lore("&7Click for decoration panes to place.").build());
-        this.inventory.setItem(49, Items.of(Material.LIME_DYE).name("&a&lSave Layout").lore("&7Save this arrangement.").build());
-        this.inventory.setItem(51, Items.of(Material.TNT).name("&cReset to Default").lore("&7Restore the default layout.").build());
+        this.inventory.setItem(45, gui.face(MENU, "cancel", null,
+                Face.of(Material.BARRIER,
+                        "&c\u1d04\u1d00\u0274\u1d04\u1d07\u029f",
+                        "&7\u1d04\u029f\u1d0f\ua731\u1d07 \u1d21\u026a\u1d1b\u029c\u1d0f\u1d1c\u1d1b \ua731\u1d00\u1d20\u026a\u0274\u0262.")).build());
+        this.inventory.setItem(47, gui.face(MENU, "decoration", null,
+                Face.of(Material.GRAY_STAINED_GLASS_PANE,
+                        "&8\u1d05\u1d07\u1d04\u1d0f\u0280\u1d00\u1d1b\u026a\u1d0f\u0274",
+                        "&7\u1d04\u029f\u026a\u1d04\u1d0b \ua730\u1d0f\u0280 \u1d05\u1d07\u1d04\u1d0f\u0280\u1d00\u1d1b\u026a\u1d0f\u0274 \u1d18\u1d00\u0274\u1d07\ua731 \u1d1b\u1d0f \u1d18\u029f\u1d00\u1d04\u1d07.")).build());
+        this.inventory.setItem(49, gui.face(MENU, "save", null,
+                Face.of(Material.LIME_DYE,
+                        "&a&l\ua731\u1d00\u1d20\u1d07 \u029f\u1d00\u028f\u1d0f\u1d1c\u1d1b",
+                        "&7\ua731\u1d00\u1d20\u1d07 \u1d1b\u029c\u026a\ua731 \u1d00\u0280\u0280\u1d00\u0274\u0262\u1d07\u1d0d\u1d07\u0274\u1d1b.")).build());
+        this.inventory.setItem(51, gui.face(MENU, "reset", null,
+                Face.of(Material.TNT,
+                        "&c\u0280\u1d07\ua731\u1d07\u1d1b \u1d1b\u1d0f \u1d05\u1d07\ua730\u1d00\u1d1c\u029f\u1d1b",
+                        "&7\u0280\u1d07\ua731\u1d1b\u1d0f\u0280\u1d07 \u1d1b\u029c\u1d07 \u1d05\u1d07\ua730\u1d00\u1d1c\u029f\u1d1b \u029f\u1d00\u028f\u1d0f\u1d1c\u1d1b.")).build());
     }
 
     private void fillDefaults() {

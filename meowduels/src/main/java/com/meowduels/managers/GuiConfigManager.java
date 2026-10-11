@@ -185,6 +185,27 @@ public class GuiConfigManager {
         return all;
     }
 
+    /**
+     * The filler pane on its own, for a screen that floors only part of
+     * itself.
+     *
+     * <p>{@link #frame} fills a window edge to edge, which is right for most
+     * of them and wrong for the arena and kit grids: those pane only their
+     * bottom bar and leave the unused grid slots empty. Flooring those would
+     * turn every empty slot into a pane, which is a visible change rather
+     * than a setting.
+     */
+    public org.bukkit.inventory.ItemStack pane(String menuId) {
+        YamlConfiguration file = this.files.get(menuId);
+        if (file == null || !file.contains("filler")) {
+            return com.meowduels.gui.Style.filler(com.meowduels.gui.Style.FILLER,
+                                                  com.meowduels.gui.Style.FILLER_NAME);
+        }
+        return com.meowduels.gui.Style.filler(
+                file.getString("filler"),
+                file.getString("filler-name", com.meowduels.gui.Style.FILLER_NAME));
+    }
+
     private ConfigurationSection itemSection(String menuId, String itemId) {
         YamlConfiguration file = this.files.get(menuId);
         return file == null ? null : file.getConfigurationSection("items." + itemId);
@@ -232,7 +253,11 @@ public class GuiConfigManager {
      */
     public int rows(String menuId, int def) {
         YamlConfiguration file = this.files.get(menuId);
-        if (file == null) {
+        if (file == null || GuiConfigManager.slotsAreFixed(menuId)) {
+            // A menu that routes clicks by slot number has its height welded
+            // in too: its grid and its buttons are both counted from the
+            // window size, so shortening it moves items under handlers that
+            // are still looking at the old numbers.
             return def;
         }
         int value = file.getInt("rows", def);

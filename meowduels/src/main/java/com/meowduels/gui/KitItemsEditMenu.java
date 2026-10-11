@@ -13,8 +13,12 @@ package com.meowduels.gui;
 import com.meowduels.MeowDuels;
 import com.meowduels.gui.EditKitEffectsMenu;
 import com.meowduels.gui.Menu;
+import com.meowduels.managers.GuiConfigManager;
+import com.meowduels.managers.GuiConfigManager.Face;
 import com.meowduels.model.Kit;
 import com.meowduels.util.Items;
+import java.util.HashMap;
+import java.util.Map;
 import com.meowduels.util.Text;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -49,12 +53,22 @@ extends Menu {
         this.owner = owner;
     }
 
+    /** The name of this screen's file: {@code gui/kititems.yml}. */
+    private static final String MENU = "kititems";
+
     @Override
     public void build() {
-        this.create(6, this.personal
-                ? "&d&lYour Layout \u2192 &5" + this.kit.getName()
-                : "&d&lEdit Items \u2192 &5" + this.kit.getName());
-        ItemStack filler = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
+        GuiConfigManager gui = this.plugin.gui();
+        Map<String, String> tokens = new HashMap<String, String>();
+        tokens.put("kit", this.kit.getName());
+        // Six rows and these slots are fixed: the grid above is the kit itself
+        // and the buttons are matched by slot number, so nothing here can move.
+        this.createRaw(6, this.personal
+                ? gui.titleOf(MENU, "personal",
+                        "&d&l\u028f\u1d0f\u1d1c\u0280 \u029f\u1d00\u028f\u1d0f\u1d1c\u1d1b \u2192 &5{kit}", tokens)
+                : gui.titleOf(MENU, "global",
+                        "&d&l\u1d07\u1d05\u026a\u1d1b \u026a\u1d1b\u1d07\u1d0d\ua731 \u2192 &5{kit}", tokens));
+        ItemStack filler = gui.pane(MENU);
         for (int i = 36; i < 54; ++i) {
             this.inventory.setItem(i, filler);
         }
@@ -62,17 +76,44 @@ extends Menu {
         if (this.personal) {
             // Start effects are part of the kit itself, not a personal layout,
             // so the button is admin-only and simply absent here.
-            this.inventory.setItem(43, Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build());
-            this.inventory.setItem(44, Items.of(Material.NAME_TAG).name("&f" + this.kit.getName()).lore("&7Arrange the kit however you like.", "&7Only YOU get this layout.", "&8Items are set by the server.").build());
-            this.inventory.setItem(51, Items.of(Material.RED_STAINED_GLASS_PANE).name("&c&lReset").lore("&7Back to the server's default layout.").build());
-            this.inventory.setItem(52, Items.of(Material.LIME_STAINED_GLASS_PANE).name("&a&lSave").lore("&7Save this layout for yourself.").build());
+            this.inventory.setItem(43, filler);
+            this.inventory.setItem(44, gui.face(MENU, "about-personal", tokens,
+                    Face.of(Material.NAME_TAG, "&f{kit}",
+                            "&7\u1d00\u0280\u0280\u1d00\u0274\u0262\u1d07 \u1d1b\u029c\u1d07 \u1d0b\u026a\u1d1b \u029c\u1d0f\u1d21\u1d07\u1d20\u1d07\u0280 \u028f\u1d0f\u1d1c \u029f\u026a\u1d0b\u1d07.",
+                            "&7\u1d0f\u0274\u029f\u028f \u028f\u1d0f\u1d1c \u0262\u1d07\u1d1b \u1d1b\u029c\u026a\ua731 \u029f\u1d00\u028f\u1d0f\u1d1c\u1d1b.",
+                            "&8\u026a\u1d1b\u1d07\u1d0d\ua731 \u1d00\u0280\u1d07 \ua731\u1d07\u1d1b \u0299\u028f \u1d1b\u029c\u1d07 \ua731\u1d07\u0280\u1d20\u1d07\u0280.")).build());
+            this.inventory.setItem(51, gui.face(MENU, "reset-personal", tokens,
+                    Face.of(Material.RED_STAINED_GLASS_PANE,
+                            "&c&l\u0280\u1d07\ua731\u1d07\u1d1b",
+                            "&7\u0299\u1d00\u1d04\u1d0b \u1d1b\u1d0f \u1d1b\u029c\u1d07 \ua731\u1d07\u0280\u1d20\u1d07\u0280'\ua731 \u1d05\u1d07\ua730\u1d00\u1d1c\u029f\u1d1b \u029f\u1d00\u028f\u1d0f\u1d1c\u1d1b.")).build());
+            this.inventory.setItem(52, gui.face(MENU, "save-personal", tokens,
+                    Face.of(Material.LIME_STAINED_GLASS_PANE,
+                            "&a&l\ua731\u1d00\u1d20\u1d07",
+                            "&7\ua731\u1d00\u1d20\u1d07 \u1d1b\u029c\u026a\ua731 \u029f\u1d00\u028f\u1d0f\u1d1c\u1d1b \ua730\u1d0f\u0280 \u028f\u1d0f\u1d1c\u0280\ua731\u1d07\u029f\ua730.")).build());
         } else {
-            this.inventory.setItem(43, Items.of(Material.POTION).name("&d&lStart Effects").lore("&7Configure potion effects applied", "&7at the start of the fight.").build());
-            this.inventory.setItem(44, Items.of(Material.NAME_TAG).name("&f" + this.kit.getName()).lore("&7Drag items into the grid above,", "&7fill armor + offhand below.", "&cThis changes the kit for everyone.").build());
-            this.inventory.setItem(51, Items.of(Material.RED_STAINED_GLASS_PANE).name("&c&lReset").lore("&7Restores the kit's saved layout.").build());
-            this.inventory.setItem(52, Items.of(Material.LIME_STAINED_GLASS_PANE).name("&a&lSave").lore("&7Save this layout to the kit.").build());
+            this.inventory.setItem(43, gui.face(MENU, "start-effects", tokens,
+                    Face.of(Material.POTION,
+                            "&d&l\ua731\u1d1b\u1d00\u0280\u1d1b \u1d07\ua730\ua730\u1d07\u1d04\u1d1b\ua731",
+                            "&7\u1d04\u1d0f\u0274\ua730\u026a\u0262\u1d1c\u0280\u1d07 \u1d18\u1d0f\u1d1b\u026a\u1d0f\u0274 \u1d07\ua730\ua730\u1d07\u1d04\u1d1b\ua731 \u1d00\u1d18\u1d18\u029f\u026a\u1d07\u1d05",
+                            "&7\u1d00\u1d1b \u1d1b\u029c\u1d07 \ua731\u1d1b\u1d00\u0280\u1d1b \u1d0f\ua730 \u1d1b\u029c\u1d07 \ua730\u026a\u0262\u029c\u1d1b.")).build());
+            this.inventory.setItem(44, gui.face(MENU, "about-global", tokens,
+                    Face.of(Material.NAME_TAG, "&f{kit}",
+                            "&7\u1d05\u0280\u1d00\u0262 \u026a\u1d1b\u1d07\u1d0d\ua731 \u026a\u0274\u1d1b\u1d0f \u1d1b\u029c\u1d07 \u0262\u0280\u026a\u1d05 \u1d00\u0299\u1d0f\u1d20\u1d07,",
+                            "&7\ua730\u026a\u029f\u029f \u1d00\u0280\u1d0d\u1d0f\u0280 + \u1d0f\ua730\ua730\u029c\u1d00\u0274\u1d05 \u0299\u1d07\u029f\u1d0f\u1d21.",
+                            "&c\u1d1b\u029c\u026a\ua731 \u1d04\u029c\u1d00\u0274\u0262\u1d07\ua731 \u1d1b\u029c\u1d07 \u1d0b\u026a\u1d1b \ua730\u1d0f\u0280 \u1d07\u1d20\u1d07\u0280\u028f\u1d0f\u0274\u1d07.")).build());
+            this.inventory.setItem(51, gui.face(MENU, "reset-global", tokens,
+                    Face.of(Material.RED_STAINED_GLASS_PANE,
+                            "&c&l\u0280\u1d07\ua731\u1d07\u1d1b",
+                            "&7\u0280\u1d07\ua731\u1d1b\u1d0f\u0280\u1d07\ua731 \u1d1b\u029c\u1d07 \u1d0b\u026a\u1d1b'\ua731 \ua731\u1d00\u1d20\u1d07\u1d05 \u029f\u1d00\u028f\u1d0f\u1d1c\u1d1b.")).build());
+            this.inventory.setItem(52, gui.face(MENU, "save-global", tokens,
+                    Face.of(Material.LIME_STAINED_GLASS_PANE,
+                            "&a&l\ua731\u1d00\u1d20\u1d07",
+                            "&7\ua731\u1d00\u1d20\u1d07 \u1d1b\u029c\u026a\ua731 \u029f\u1d00\u028f\u1d0f\u1d1c\u1d1b \u1d1b\u1d0f \u1d1b\u029c\u1d07 \u1d0b\u026a\u1d1b.")).build());
         }
-        this.inventory.setItem(53, Items.of(Material.BARRIER).name("&c&lExit").lore("&7Close without saving.").build());
+        this.inventory.setItem(53, gui.face(MENU, "exit", tokens,
+                Face.of(Material.BARRIER,
+                        "&c&l\u1d07x\u026a\u1d1b",
+                        "&7\u1d04\u029f\u1d0f\ua731\u1d07 \u1d21\u026a\u1d1b\u029c\u1d0f\u1d1c\u1d1b \ua731\u1d00\u1d20\u026a\u0274\u0262.")).build());
     }
 
     @Override

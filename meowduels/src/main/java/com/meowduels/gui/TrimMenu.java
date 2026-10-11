@@ -12,11 +12,16 @@ package com.meowduels.gui;
 
 import com.meowduels.MeowDuels;
 import com.meowduels.gui.Menu;
+import com.meowduels.managers.GuiConfigManager;
+import com.meowduels.managers.GuiConfigManager.Face;
 import com.meowduels.model.Kit;
+import com.meowduels.util.Colors;
 import com.meowduels.util.Items;
 import com.meowduels.util.Text;
 import com.meowduels.util.Trims;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -46,10 +51,26 @@ extends Menu {
         this.owner = owner;
     }
 
+    /** The name of this screen's file: {@code gui/trim.yml}. */
+    private static final String MENU = "trim";
+
+    /** The two lines both cycling buttons share. */
+    private static final String[] CYCLE_LORE = new String[]{
+            "&7ʟᴇꜰᴛ-ᴄʟɪᴄᴋ &8- &fɴᴇxᴛ",
+            "&7ʀɪɢʜᴛ-ᴄʟɪᴄᴋ &8- &fᴘʀᴇᴠɪᴏᴜꜱ",
+            "",
+            "&8{index}/{total}"};
+
     @Override
     public void build() {
-        this.create(6, "&d&lTrims &7- &f" + this.kitName);
-        ItemStack filler = Items.of(Material.GRAY_STAINED_GLASS_PANE).name(" ").build();
+        GuiConfigManager gui = this.plugin.gui();
+        Map<String, String> kitToken = new HashMap<String, String>();
+        kitToken.put("kit", this.kitName);
+        // Six rows and these slots are fixed: a click here is matched against
+        // the numbers below, so a moved item would run the wrong action.
+        this.createRaw(6, gui.title(MENU,
+                "&d&lᴛʀɪᴍꜱ &7- &f{kit}", kitToken));
+        ItemStack filler = gui.pane(MENU);
         for (int i = 0; i < 54; ++i) {
             this.inventory.setItem(i, filler);
         }
@@ -58,21 +79,65 @@ extends Menu {
             return;
         }
         ItemStack[] armor = kit.getArmor();
-        this.inventory.setItem(20, this.armorDisplay(armor, 3, "Helmet"));
-        this.inventory.setItem(21, this.armorDisplay(armor, 2, "Chestplate"));
-        this.inventory.setItem(22, this.armorDisplay(armor, 1, "Leggings"));
-        this.inventory.setItem(23, this.armorDisplay(armor, 0, "Boots"));
-        this.inventory.setItem(38, Items.of(Material.PAPER).name("&d&lPattern&7: &f" + Trims.pretty(Trims.PATTERN_KEYS[this.patternIndex])).lore("&7Left-click &8- &fnext", "&7Right-click &8- &fprevious", "", "&8" + (this.patternIndex + 1) + "/" + Trims.PATTERN_KEYS.length).tag(this.plugin.keyButton(), "trim-pattern").build());
-        this.inventory.setItem(42, Items.of(this.materialIcon()).name("&d&lMaterial&7: &f" + Trims.pretty(Trims.MATERIAL_KEYS[this.materialIndex])).lore("&7Left-click &8- &fnext", "&7Right-click &8- &fprevious", "", "&8" + (this.materialIndex + 1) + "/" + Trims.MATERIAL_KEYS.length).tag(this.plugin.keyButton(), "trim-material").build());
-        this.inventory.setItem(48, Items.of(Material.LIME_DYE).name("&a&lApply to ALL pieces").lore("&7Set the selected trim on every armor piece.").tag(this.plugin.keyButton(), "trim-apply-all").build());
-        this.inventory.setItem(50, Items.of(Material.BARRIER).name("&c&lClear all trims").lore("&7Remove trims from every armor piece.").tag(this.plugin.keyButton(), "trim-clear").build());
+        this.inventory.setItem(20, this.armorDisplay(gui, armor, 3,
+                gui.line(MENU, "armor", "piece-helmet", "ʜᴇʟᴍᴇᴛ", null)));
+        this.inventory.setItem(21, this.armorDisplay(gui, armor, 2,
+                gui.line(MENU, "armor", "piece-chestplate", "ᴄʜᴇꜱᴛᴘʟᴀᴛᴇ", null)));
+        this.inventory.setItem(22, this.armorDisplay(gui, armor, 1,
+                gui.line(MENU, "armor", "piece-leggings", "ʟᴇɢɢɪɴɢꜱ", null)));
+        this.inventory.setItem(23, this.armorDisplay(gui, armor, 0,
+                gui.line(MENU, "armor", "piece-boots", "ʙᴏᴏᴛꜱ", null)));
+        Map<String, String> pattern = new HashMap<String, String>();
+        pattern.put("pattern", Trims.pretty(Trims.PATTERN_KEYS[this.patternIndex]));
+        pattern.put("index", String.valueOf(this.patternIndex + 1));
+        pattern.put("total", String.valueOf(Trims.PATTERN_KEYS.length));
+        this.inventory.setItem(38,
+                gui.face(MENU, "pattern", pattern,
+                         Face.of(Material.PAPER,
+                                 "&d&lᴘᴀᴛᴛᴇʀɴ&7: &f{pattern}",
+                                 CYCLE_LORE))
+                        .tag(this.plugin.keyButton(), "trim-pattern").build());
+        Map<String, String> material = new HashMap<String, String>();
+        material.put("material", Trims.pretty(Trims.MATERIAL_KEYS[this.materialIndex]));
+        material.put("index", String.valueOf(this.materialIndex + 1));
+        material.put("total", String.valueOf(Trims.MATERIAL_KEYS.length));
+        this.inventory.setItem(42,
+                gui.face(MENU, "material", material,
+                         Face.of(gui.material(MENU, "material", this.materialIcon()),
+                                 "&d&lᴍᴀᴛᴇʀɪᴀʟ&7: &f{material}",
+                                 CYCLE_LORE))
+                        .tag(this.plugin.keyButton(), "trim-material").build());
+        this.inventory.setItem(48,
+                gui.face(MENU, "apply-all", null,
+                         Face.of(Material.LIME_DYE,
+                                 "&a&lᴀᴘᴘʟʏ ᴛᴏ ᴀʟʟ ᴘɪᴇᴄᴇꜱ",
+                                 "&7ꜱᴇᴛ ᴛʜᴇ ꜱᴇʟᴇᴄᴛᴇᴅ ᴛʀɪᴍ ᴏɴ ᴇᴠᴇʀʏ ᴀʀᴍᴏʀ ᴘɪᴇᴄᴇ."))
+                        .tag(this.plugin.keyButton(), "trim-apply-all").build());
+        this.inventory.setItem(50,
+                gui.face(MENU, "clear", null,
+                         Face.of(Material.BARRIER,
+                                 "&c&lᴄʟᴇᴀʀ ᴀʟʟ ᴛʀɪᴍꜱ",
+                                 "&7ʀᴇᴍᴏᴠᴇ ᴛʀɪᴍꜱ ꜰʀᴏᴍ ᴇᴠᴇʀʏ ᴀʀᴍᴏʀ ᴘɪᴇᴄᴇ."))
+                        .tag(this.plugin.keyButton(), "trim-clear").build());
     }
 
-    private ItemStack armorDisplay(ItemStack[] armor, int idx, String label) {
-        ItemStack piece;
-        ItemStack itemStack = piece = idx >= 0 && idx < armor.length ? armor[idx] : null;
+    /**
+     * One armour slot: the kit's real piece, wearing the player's trim.
+     *
+     * <p>The item itself is the kit's, so there is no material or name to
+     * configure - only the two lore lines added underneath, and the
+     * placeholder shown where the kit has no such piece.
+     */
+    private ItemStack armorDisplay(GuiConfigManager gui, ItemStack[] armor, int idx,
+                                   String pieceLabel) {
+        Map<String, String> tokens = new HashMap<String, String>();
+        tokens.put("piece", pieceLabel);
+        ItemStack piece = idx >= 0 && idx < armor.length ? armor[idx] : null;
         if (piece == null || piece.getType() == Material.AIR) {
-            return Items.of(Material.GRAY_STAINED_GLASS_PANE).name("&7No " + label).lore("&8This kit has no " + label.toLowerCase() + ".").build();
+            return gui.face(MENU, "armor-missing", tokens,
+                            Face.of(Material.GRAY_STAINED_GLASS_PANE,
+                                    "&7ɴᴏ {piece}",
+                                    "&8ᴛʜɪꜱ ᴋɪᴛ ʜᴀꜱ ɴᴏ {piece}.")).build();
         }
         ItemStack show = piece.clone();
         String[] saved = this.plugin.getTrimPreferences().get(this.owner, this.kitName, idx);
@@ -84,11 +149,16 @@ extends Menu {
             if (meta != null) {
                 ArrayList<String> lore = new ArrayList<String>();
                 if (saved != null) {
-                    lore.add(Text.color("&7Your trim&8: &f" + Trims.pretty(saved[1]) + " " + Trims.pretty(saved[0])));
+                    Map<String, String> trim = new HashMap<String, String>();
+                    trim.put("trim", Trims.pretty(saved[1]) + " " + Trims.pretty(saved[0]));
+                    lore.add(Colors.toSection(gui.line(MENU, "armor", "your-trim",
+                            "&7ʏᴏᴜʀ ᴛʀɪᴍ&8: &f{trim}", trim)));
                 } else {
-                    lore.add(Text.color("&8No trim set."));
+                    lore.add(Colors.toSection(gui.line(MENU, "armor", "no-trim",
+                            "&8ɴᴏ ᴛʀɪᴍ ꜱᴇᴛ.", null)));
                 }
-                lore.add(Text.color("&eClick to apply the selected trim."));
+                lore.add(Colors.toSection(gui.line(MENU, "armor", "apply-hint",
+                        "&eᴄʟɪᴄᴋ ᴛᴏ ᴀᴘᴘʟʏ ᴛʜᴇ ꜱᴇʟᴇᴄᴛᴇᴅ ᴛʀɪᴍ.", null)));
                 meta.setLore(lore);
                 show.setItemMeta(meta);
             }

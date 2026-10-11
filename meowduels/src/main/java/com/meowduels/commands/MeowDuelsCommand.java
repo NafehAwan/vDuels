@@ -452,10 +452,26 @@ TabCompleter {
             return;
         }
         if (args.length < 1 || !GuiLayoutManager.isValidMenu(args[0].toLowerCase(Locale.ROOT))) {
-            sender.sendMessage(Text.prefixed("&cUsage: /editgui <duelconfirm|mapselect>"));
+            sender.sendMessage(Text.prefixed("&cUsage: /editgui <duelconfirm|mapselect> [reset]"));
             return;
         }
-        new GuiEditorMenu(this.plugin, args[0].toLowerCase(Locale.ROOT)).open((Player)sender);
+        String menuId = args[0].toLowerCase(Locale.ROOT);
+        // A layout saved here wins over the slot values in gui/<menu>.yml, and
+        // the editor saves on close even when nothing was moved - so opening it
+        // once is enough to pin every slot and make edits to the file look
+        // ignored. This is the way back out.
+        if (args.length >= 2 && args[1].equalsIgnoreCase("reset")) {
+            if (!this.plugin.getGuiLayoutManager().has(menuId)) {
+                sender.sendMessage(Text.prefixed("&7No saved layout for &f" + menuId
+                        + "&7 - gui/" + menuId + ".yml is already in charge."));
+                return;
+            }
+            this.plugin.getGuiLayoutManager().clear(menuId);
+            sender.sendMessage(Text.prefixed("&aCleared the saved &f" + menuId
+                    + "&a layout. The slots in gui/" + menuId + ".yml are in charge again."));
+            return;
+        }
+        new GuiEditorMenu(this.plugin, menuId).open((Player)sender);
     }
 
     private void scoreboardIp(CommandSender sender, String[] args) {
@@ -1165,7 +1181,7 @@ TabCompleter {
             sender.sendMessage(Text.color("&d/kiteditor &7- GUI item editor for every kit/gamemode"));
             sender.sendMessage(Text.color("&d/deletekit <name> &7- delete a kit"));
             sender.sendMessage(Text.color("&d/kiticon <name> &7- set a kit's icon to your held item"));
-            sender.sendMessage(Text.color("&d/editgui <menu> &7- customise a GUI layout"));
+            sender.sendMessage(Text.color("&d/editgui <menu> [reset] &7- arrange a GUI, or clear it back to gui/<menu>.yml"));
             sender.sendMessage(Text.color("&d/category ... &7- manage kit-menu categories"));
             sender.sendMessage(Text.color("&d/scoreboardip <ip> &7- set scoreboard IP"));
         }
@@ -1302,10 +1318,16 @@ TabCompleter {
                                 }
                                 break block39;
                             }
-                            if (!name.equals("editgui") || args.length != 1) break block41;
-                            for (String menu : List.of("duelconfirm", "mapselect")) {
-                                if (!this.startsWith(menu, args[0])) continue;
-                                out.add(menu);
+                            if (!name.equals("editgui")) break block41;
+                            if (args.length == 1) {
+                                for (String menu : List.of("duelconfirm", "mapselect")) {
+                                    if (!this.startsWith(menu, args[0])) continue;
+                                    out.add(menu);
+                                }
+                                break block39;
+                            }
+                            if (args.length == 2 && this.startsWith("reset", args[1])) {
+                                out.add("reset");
                             }
                             break block39;
                         }

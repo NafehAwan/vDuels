@@ -1,0 +1,440 @@
+# -------------------------------------------------------------------------
+# /arena <name> - everything about one arena. The longest screen in the
+# plugin; every toggle shares one pair of panes, set by ON_MATERIAL and
+# OFF_MATERIAL in the code, so material-on/material-off here override
+# them per item.
+#
+# Every value here is the one the plugin uses when the key is missing, so you
+# can delete any line, any item, or this whole file: the menu goes back to
+# looking exactly as it ships. There is no reset command because deleting IS
+# the reset.
+#
+# Each item takes:
+#   slot      0-based, counting left to right then down (row 1 is 0-8)
+#   material  any Minecraft item id, e.g. CLOCK, PAPER, LIME_DYE
+#   amount    stack size shown on the icon, 1-64
+#   name      the item's title
+#   lore      the lines under it; "" is a blank spacer line
+#   glow      true to force the enchanted shimmer, false to force it off
+#
+# An item with lore-on and lore-off has two faces - one for when the thing
+# it controls is on, one for when it is off. name-on/name-off and
+# material-on/material-off work the same way, and a plain name:/material:
+# covers both states.
+#
+# Theme placeholders, usable in any name or lore in any menu. These follow
+# theme: in config.yml, so one edit there restyles every screen:
+#   {value} {label} {muted} {good} {bad} {warn}   colours
+#   {tick} {cross} {sep} {hint}                   the house symbols
+# Write a colour out instead if you want one line to ignore the theme.
+#
+# Colours: <yellow>, <gold>, <#FF2E55> for a custom colour, or
+# <gradient:#7CFF6B:#1FA32F>text</gradient>. Legacy &e codes work too.
+#
+# Placeholders usable in any name or lore on this screen:
+#   {arena}        the arena's name
+#   {kits}         how many kits are allowed here
+#   {world}        the world it is in
+#   {region}       its corner coordinates
+#   {description}  its description, or the none-set line
+#   {value}        a number item's current value
+#   {state}        from that item's state-set / state-unset line
+#   {blocks}       the border's starting size
+#
+# The text below is written in small capitals (ᴛʜɪꜱ ꜱᴛʏʟᴇ). That is just what
+# the characters are - type ordinary letters if you would rather have them.
+#
+# THIS MENU HAS NO slot: OR rows: KEYS, ON PURPOSE. It decides what a click
+# did by which slot was clicked, and its height is counted into those
+# numbers, so moving an item or resizing the window would run the wrong
+# action. Material, name and lore are all still yours to change.
+# -------------------------------------------------------------------------
+
+title: "&d&lᴀʀᴇɴᴀ: &5{arena}"
+
+# Uncomment to give this one screen a different frame from the rest of the
+# plugin. Leave it out and it follows theme.filler in config.yml.
+#filler: "GRAY_STAINED_GLASS_PANE"
+#filler-name: " "
+
+items:
+
+  # Shown alone when the arena has never been set up.
+  setup-first:
+    material: MAGENTA_STAINED_GLASS_PANE
+    name: "&d&lꜱᴇᴛᴜᴘ"
+    lore:
+      - "&7ᴄʟɪᴄᴋ ᴛᴏ ꜱᴛᴀʀᴛ ᴀʀᴇɴᴀ ꜱᴇᴛᴜᴘ."
+      - "&7ʏᴏᴜ'ʟʟ ʙᴇ ᴀꜱᴋᴇᴅ ᴛᴏ ᴡᴀʟᴋ ᴛᴏ ᴇᴀᴄʜ"
+      - "&7ꜱᴘᴀᴡɴ ᴀɴᴅ ᴄᴏʀɴᴇʀ ᴀɴᴅ ᴛʏᴘᴇ &eᴅᴏɴᴇ&7."
+
+  auto-regenerate:
+    # material: STONE   # each row uses its own icon unless you set this
+    name: "&dᴀᴜᴛᴏ-ʀᴇɢᴇɴᴇʀᴀᴛᴇ"
+    lore-on:
+      - "&7ʀᴇꜱᴛᴏʀᴇ ᴛʜᴇ ᴀʀᴇɴᴀ ᴀꜰᴛᴇʀ ᴇᴀᴄʜ ꜰɪɢʜᴛ."
+      - ""
+      - "&dᴇɴᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴅɪꜱᴀʙʟᴇ)"
+    lore-off:
+      - "&7ʀᴇꜱᴛᴏʀᴇ ᴛʜᴇ ᴀʀᴇɴᴀ ᴀꜰᴛᴇʀ ᴇᴀᴄʜ ꜰɪɢʜᴛ."
+      - ""
+      - "&7ᴅɪꜱᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴇɴᴀʙʟᴇ)"
+
+  enabled:
+    # material: STONE   # each row uses its own icon unless you set this
+    name: "&dᴇɴᴀʙʟᴇᴅ (ɪɴ ʀᴏᴛᴀᴛɪᴏɴ)"
+    lore-on:
+      - "&7ᴛᴜʀɴ ᴏꜰꜰ ᴛᴏ ʜɪᴅᴇ ꜰʀᴏᴍ ᴍᴀᴛᴄʜᴍᴀᴋɪɴɢ"
+      - "&7ᴡɪᴛʜᴏᴜᴛ ᴅᴇʟᴇᴛɪɴɢ ᴛʜᴇ ᴀʀᴇɴᴀ."
+      - ""
+      - "&dᴇɴᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴅɪꜱᴀʙʟᴇ)"
+    lore-off:
+      - "&7ᴛᴜʀɴ ᴏꜰꜰ ᴛᴏ ʜɪᴅᴇ ꜰʀᴏᴍ ᴍᴀᴛᴄʜᴍᴀᴋɪɴɢ"
+      - "&7ᴡɪᴛʜᴏᴜᴛ ᴅᴇʟᴇᴛɪɴɢ ᴛʜᴇ ᴀʀᴇɴᴀ."
+      - ""
+      - "&7ᴅɪꜱᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴇɴᴀʙʟᴇ)"
+
+  allow-building:
+    # material: STONE   # each row uses its own icon unless you set this
+    name: "&dᴀʟʟᴏᴡ ʙᴜɪʟᴅɪɴɢ"
+    lore-on:
+      - "&7ᴘʟᴀʏᴇʀꜱ ᴄᴀɴ ᴘʟᴀᴄᴇ ʙʟᴏᴄᴋꜱ"
+      - "&7ᴀɴʏᴡʜᴇʀᴇ ɪɴꜱɪᴅᴇ ᴛʜᴇ ᴀʀᴇɴᴀ."
+      - ""
+      - "&dᴇɴᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴅɪꜱᴀʙʟᴇ)"
+    lore-off:
+      - "&7ᴘʟᴀʏᴇʀꜱ ᴄᴀɴ ᴘʟᴀᴄᴇ ʙʟᴏᴄᴋꜱ"
+      - "&7ᴀɴʏᴡʜᴇʀᴇ ɪɴꜱɪᴅᴇ ᴛʜᴇ ᴀʀᴇɴᴀ."
+      - ""
+      - "&7ᴅɪꜱᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴇɴᴀʙʟᴇ)"
+
+  allow-breaking:
+    # material: STONE   # each row uses its own icon unless you set this
+    name: "&dᴀʟʟᴏᴡ ʙʀᴇᴀᴋɪɴɢ"
+    lore-on:
+      - "&7ᴘʟᴀʏᴇʀꜱ ᴄᴀɴ ʙʀᴇᴀᴋ ʙʟᴏᴄᴋꜱ"
+      - "&7ᴀɴʏᴡʜᴇʀᴇ ɪɴꜱɪᴅᴇ ᴛʜᴇ ᴀʀᴇɴᴀ."
+      - ""
+      - "&dᴇɴᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴅɪꜱᴀʙʟᴇ)"
+    lore-off:
+      - "&7ᴘʟᴀʏᴇʀꜱ ᴄᴀɴ ʙʀᴇᴀᴋ ʙʟᴏᴄᴋꜱ"
+      - "&7ᴀɴʏᴡʜᴇʀᴇ ɪɴꜱɪᴅᴇ ᴛʜᴇ ᴀʀᴇɴᴀ."
+      - ""
+      - "&7ᴅɪꜱᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴇɴᴀʙʟᴇ)"
+
+  break-self-placed:
+    # material: STONE   # each row uses its own icon unless you set this
+    name: "&dʙʀᴇᴀᴋ ꜱᴇʟꜰ-ᴘʟᴀᴄᴇᴅ ᴏɴʟʏ"
+    lore-on:
+      - "&7ᴇᴠᴇɴ ᴡɪᴛʜ ʙʀᴇᴀᴋɪɴɢ ᴏꜰꜰ, ᴘʟᴀʏᴇʀꜱ"
+      - "&7ᴄᴀɴ ꜱᴛɪʟʟ ʙʀᴇᴀᴋ ʙʟᴏᴄᴋꜱ ᴛʜᴇʏ"
+      - "&7ᴘʟᴀᴄᴇᴅ ᴛʜɪꜱ ᴍᴀᴛᴄʜ."
+      - ""
+      - "&dᴇɴᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴅɪꜱᴀʙʟᴇ)"
+    lore-off:
+      - "&7ᴇᴠᴇɴ ᴡɪᴛʜ ʙʀᴇᴀᴋɪɴɢ ᴏꜰꜰ, ᴘʟᴀʏᴇʀꜱ"
+      - "&7ᴄᴀɴ ꜱᴛɪʟʟ ʙʀᴇᴀᴋ ʙʟᴏᴄᴋꜱ ᴛʜᴇʏ"
+      - "&7ᴘʟᴀᴄᴇᴅ ᴛʜɪꜱ ᴍᴀᴛᴄʜ."
+      - ""
+      - "&7ᴅɪꜱᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴇɴᴀʙʟᴇ)"
+
+  cloning:
+    # material: STONE   # each row uses its own icon unless you set this
+    name: "&dᴄʟᴏɴɪɴɢ ᴇɴᴀʙʟᴇᴅ"
+    lore-on:
+      - "&7ᴀʟʟᴏᴡ &e/ᴀʀᴇɴᴀ {arena} ᴄᴏᴘʏ&7 ᴀɴᴅ"
+      - "&e/ᴀʀᴇɴᴀ {arena} ᴘᴀꜱᴛᴇ&7."
+      - ""
+      - "&dᴇɴᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴅɪꜱᴀʙʟᴇ)"
+    lore-off:
+      - "&7ᴀʟʟᴏᴡ &e/ᴀʀᴇɴᴀ {arena} ᴄᴏᴘʏ&7 ᴀɴᴅ"
+      - "&e/ᴀʀᴇɴᴀ {arena} ᴘᴀꜱᴛᴇ&7."
+      - ""
+      - "&7ᴅɪꜱᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴇɴᴀʙʟᴇ)"
+
+  allow-spectators:
+    # material: STONE   # each row uses its own icon unless you set this
+    name: "&dᴀʟʟᴏᴡ ꜱᴘᴇᴄᴛᴀᴛᴏʀꜱ"
+    lore-on:
+      - "&7ᴄᴀɴ ᴘʟᴀʏᴇʀꜱ /ꜱᴘᴇᴄᴛᴀᴛᴇ ᴛʜɪꜱ ꜰɪɢʜᴛ?"
+      - ""
+      - "&dᴇɴᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴅɪꜱᴀʙʟᴇ)"
+    lore-off:
+      - "&7ᴄᴀɴ ᴘʟᴀʏᴇʀꜱ /ꜱᴘᴇᴄᴛᴀᴛᴇ ᴛʜɪꜱ ꜰɪɢʜᴛ?"
+      - ""
+      - "&7ᴅɪꜱᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴇɴᴀʙʟᴇ)"
+
+  allow-explosions:
+    # material: STONE   # each row uses its own icon unless you set this
+    name: "&dᴀʟʟᴏᴡ ᴇxᴘʟᴏꜱɪᴏɴꜱ"
+    lore-on:
+      - "&7ᴛɴᴛ / ᴄʀᴇᴇᴘᴇʀ ᴇxᴘʟᴏꜱɪᴏɴꜱ."
+      - ""
+      - "&dᴇɴᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴅɪꜱᴀʙʟᴇ)"
+    lore-off:
+      - "&7ᴛɴᴛ / ᴄʀᴇᴇᴘᴇʀ ᴇxᴘʟᴏꜱɪᴏɴꜱ."
+      - ""
+      - "&7ᴅɪꜱᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴇɴᴀʙʟᴇ)"
+
+  allow-fire-spread:
+    # material: STONE   # each row uses its own icon unless you set this
+    name: "&dᴀʟʟᴏᴡ ꜰɪʀᴇ ꜱᴘʀᴇᴀᴅ"
+    lore-on:
+      - "&7ꜰɪʀᴇ ꜱᴘʀᴇᴀᴅɪɴɢ / ʙᴜʀɴɪɴɢ ʙʟᴏᴄᴋꜱ."
+      - ""
+      - "&dᴇɴᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴅɪꜱᴀʙʟᴇ)"
+    lore-off:
+      - "&7ꜰɪʀᴇ ꜱᴘʀᴇᴀᴅɪɴɢ / ʙᴜʀɴɪɴɢ ʙʟᴏᴄᴋꜱ."
+      - ""
+      - "&7ᴅɪꜱᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴇɴᴀʙʟᴇ)"
+
+  allow-liquid-flow:
+    # material: STONE   # each row uses its own icon unless you set this
+    name: "&dᴀʟʟᴏᴡ ʟɪꞯᴜɪᴅ ꜰʟᴏᴡ"
+    lore-on:
+      - "&7ᴡᴀᴛᴇʀ / ʟᴀᴠᴀ ꜰʟᴏᴡɪɴɢ."
+      - ""
+      - "&dᴇɴᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴅɪꜱᴀʙʟᴇ)"
+    lore-off:
+      - "&7ᴡᴀᴛᴇʀ / ʟᴀᴠᴀ ꜰʟᴏᴡɪɴɢ."
+      - ""
+      - "&7ᴅɪꜱᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴇɴᴀʙʟᴇ)"
+
+  allow-mob-spawns:
+    # material: STONE   # each row uses its own icon unless you set this
+    name: "&dᴀʟʟᴏᴡ ᴍᴏʙ ꜱᴘᴀᴡɴꜱ"
+    lore-on:
+      - "&7ɴᴀᴛᴜʀᴀʟ ᴍᴏʙ ꜱᴘᴀᴡɴɪɴɢ."
+      - ""
+      - "&dᴇɴᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴅɪꜱᴀʙʟᴇ)"
+    lore-off:
+      - "&7ɴᴀᴛᴜʀᴀʟ ᴍᴏʙ ꜱᴘᴀᴡɴɪɴɢ."
+      - ""
+      - "&7ᴅɪꜱᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴇɴᴀʙʟᴇ)"
+
+  allow-fall-damage:
+    # material: STONE   # each row uses its own icon unless you set this
+    name: "&dᴀʟʟᴏᴡ ꜰᴀʟʟ ᴅᴀᴍᴀɢᴇ"
+    lore-on:
+      - "&7ꜰᴀʟʟ ᴅᴀᴍᴀɢᴇ ᴡʜɪʟᴇ ꜰɪɢʜᴛɪɴɢ."
+      - ""
+      - "&dᴇɴᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴅɪꜱᴀʙʟᴇ)"
+    lore-off:
+      - "&7ꜰᴀʟʟ ᴅᴀᴍᴀɢᴇ ᴡʜɪʟᴇ ꜰɪɢʜᴛɪɴɢ."
+      - ""
+      - "&7ᴅɪꜱᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴇɴᴀʙʟᴇ)"
+
+  allow-hunger-loss:
+    # material: STONE   # each row uses its own icon unless you set this
+    name: "&dᴀʟʟᴏᴡ ʜᴜɴɢᴇʀ ʟᴏꜱꜱ"
+    lore-on:
+      - "&7ʜᴜɴɢᴇʀ ᴅʀᴀɪɴꜱ ᴅᴜʀɪɴɢ ᴀ ꜰɪɢʜᴛ."
+      - ""
+      - "&dᴇɴᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴅɪꜱᴀʙʟᴇ)"
+    lore-off:
+      - "&7ʜᴜɴɢᴇʀ ᴅʀᴀɪɴꜱ ᴅᴜʀɪɴɢ ᴀ ꜰɪɢʜᴛ."
+      - ""
+      - "&7ᴅɪꜱᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴇɴᴀʙʟᴇ)"
+
+  lock-clear-weather:
+    # material: STONE   # each row uses its own icon unless you set this
+    name: "&dʟᴏᴄᴋ ᴄʟᴇᴀʀ ᴡᴇᴀᴛʜᴇʀ"
+    lore-on:
+      - "&7ᴋᴇᴇᴘ ᴛʜᴇ ꜱᴋʏ ᴄʟᴇᴀʀ ᴅᴜʀɪɴɢ ꜰɪɢʜᴛꜱ."
+      - ""
+      - "&dᴇɴᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴅɪꜱᴀʙʟᴇ)"
+    lore-off:
+      - "&7ᴋᴇᴇᴘ ᴛʜᴇ ꜱᴋʏ ᴄʟᴇᴀʀ ᴅᴜʀɪɴɢ ꜰɪɢʜᴛꜱ."
+      - ""
+      - "&7ᴅɪꜱᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴇɴᴀʙʟᴇ)"
+
+  lock-day-time:
+    # material: STONE   # each row uses its own icon unless you set this
+    name: "&dʟᴏᴄᴋ ᴅᴀʏ ᴛɪᴍᴇ"
+    lore-on:
+      - "&7ᴋᴇᴇᴘ ɪᴛ ᴅᴀʏᴛɪᴍᴇ ᴅᴜʀɪɴɢ ꜰɪɢʜᴛꜱ."
+      - ""
+      - "&dᴇɴᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴅɪꜱᴀʙʟᴇ)"
+    lore-off:
+      - "&7ᴋᴇᴇᴘ ɪᴛ ᴅᴀʏᴛɪᴍᴇ ᴅᴜʀɪɴɢ ꜰɪɢʜᴛꜱ."
+      - ""
+      - "&7ᴅɪꜱᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴇɴᴀʙʟᴇ)"
+
+  border-particles:
+    # material: STONE   # each row uses its own icon unless you set this
+    name: "&dʙᴏʀᴅᴇʀ ᴘᴀʀᴛɪᴄʟᴇꜱ"
+    lore-on:
+      - "&7ᴄᴏꜱᴍᴇᴛɪᴄ ᴘᴀʀᴛɪᴄʟᴇ ᴏᴜᴛʟɪɴᴇ (ᴄᴏᴍɪɴɢ ꜱᴏᴏɴ)."
+      - ""
+      - "&dᴇɴᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴅɪꜱᴀʙʟᴇ)"
+    lore-off:
+      - "&7ᴄᴏꜱᴍᴇᴛɪᴄ ᴘᴀʀᴛɪᴄʟᴇ ᴏᴜᴛʟɪɴᴇ (ᴄᴏᴍɪɴɢ ꜱᴏᴏɴ)."
+      - ""
+      - "&7ᴅɪꜱᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴇɴᴀʙʟᴇ)"
+
+  glowing-opponent:
+    # material: STONE   # each row uses its own icon unless you set this
+    name: "&dɢʟᴏᴡɪɴɢ ᴏᴘᴘᴏɴᴇɴᴛ"
+    lore-on:
+      - "&7ʙᴏᴛʜ ꜰɪɢʜᴛᴇʀꜱ ɢʟᴏᴡ ᴅᴜʀɪɴɢ ᴛʜᴇ ᴍᴀᴛᴄʜ."
+      - ""
+      - "&dᴇɴᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴅɪꜱᴀʙʟᴇ)"
+    lore-off:
+      - "&7ʙᴏᴛʜ ꜰɪɢʜᴛᴇʀꜱ ɢʟᴏᴡ ᴅᴜʀɪɴɢ ᴛʜᴇ ᴍᴀᴛᴄʜ."
+      - ""
+      - "&7ᴅɪꜱᴀʙʟᴇᴅ &8(ᴄʟɪᴄᴋ ᴛᴏ ᴇɴᴀʙʟᴇ)"
+
+  regen-delay:
+    material: CLOCK
+    name: "&dʀᴇɢᴇɴ ᴅᴇʟᴀʏ"
+    lore:
+      - "&7ᴅᴇʟᴀʏ ʙᴇꜰᴏʀᴇ ʀᴇɢᴇɴᴇʀᴀᴛɪɴɢ."
+      - ""
+      - "&fᴄᴜʀʀᴇɴᴛ: &d{value} ᴛɪᴄᴋꜱ"
+      - "&7ʟᴇꜰᴛ-ᴄʟɪᴄᴋ: &a+1 &8| &7ʀɪɢʜᴛ-ᴄʟɪᴄᴋ: &c-1"
+
+  countdown-override:
+    material: CLOCK
+    name: "&dᴄᴏᴜɴᴛᴅᴏᴡɴ ᴏᴠᴇʀʀɪᴅᴇ"
+    lore:
+      - "&7ᴄᴜꜱᴛᴏᴍ ꜰɪɢʜᴛ ᴄᴏᴜɴᴛᴅᴏᴡɴ ʟᴇɴɢᴛʜ."
+      - ""
+      - "&fᴄᴜʀʀᴇɴᴛ: &d{value} ꜱ (-1 = ᴅᴇꜰᴀᴜʟᴛ)"
+      - "&7ʟᴇꜰᴛ-ᴄʟɪᴄᴋ: &a+1 &8| &7ʀɪɢʜᴛ-ᴄʟɪᴄᴋ: &c-1"
+
+  event-border-end:
+    material: CLOCK
+    name: "&eᴇᴠᴇɴᴛ ʙᴏʀᴅᴇʀ ᴇɴᴅ"
+    lore:
+      - "&7ᴛʜᴇ ʙᴏʀᴅᴇʀ ꜱᴛᴏᴘꜱ ꜱʜʀɪɴᴋɪɴɢ ʜᴇʀᴇ."
+      - ""
+      - "&fᴄᴜʀʀᴇɴᴛ: &d{value} ʙʟᴏᴄᴋꜱ"
+      - "&7ʟᴇꜰᴛ-ᴄʟɪᴄᴋ: &a+1 &8| &7ʀɪɢʜᴛ-ᴄʟɪᴄᴋ: &c-1"
+
+  event-shrink-interval:
+    material: CLOCK
+    name: "&eᴇᴠᴇɴᴛ ꜱʜʀɪɴᴋ ɪɴᴛᴇʀᴠᴀʟ"
+    lore:
+      - "&7ᴛɪᴍᴇ ʙᴇᴛᴡᴇᴇɴ ᴇᴀᴄʜ ꜱʜʀɪɴᴋ ꜱᴛᴇᴘ."
+      - ""
+      - "&fᴄᴜʀʀᴇɴᴛ: &d{value} ꜱᴇᴄᴏɴᴅꜱ"
+      - "&7ʟᴇꜰᴛ-ᴄʟɪᴄᴋ: &a+1 &8| &7ʀɪɢʜᴛ-ᴄʟɪᴄᴋ: &c-1"
+
+  event-shrink-step:
+    material: CLOCK
+    name: "&eᴇᴠᴇɴᴛ ꜱʜʀɪɴᴋ ꜱᴛᴇᴘ"
+    lore:
+      - "&7ʜᴏᴡ ᴍᴜᴄʜ ꜱᴍᴀʟʟᴇʀ ᴇᴀᴄʜ ꜱʜʀɪɴᴋ."
+      - ""
+      - "&fᴄᴜʀʀᴇɴᴛ: &d{value} ʙʟᴏᴄᴋꜱ"
+      - "&7ʟᴇꜰᴛ-ᴄʟɪᴄᴋ: &a+1 &8| &7ʀɪɢʜᴛ-ᴄʟɪᴄᴋ: &c-1"
+
+  # Re-runs the position wizard.
+  setup:
+    material: MAGENTA_STAINED_GLASS_PANE
+    name: "&d&lꜱᴇᴛᴜᴘ"
+    lore:
+      - "&7ʀᴇ-ʀᴜɴ ᴛʜᴇ ᴘᴏꜱɪᴛɪᴏɴ ꜱᴇᴛᴜᴘ ᴡɪᴢᴀʀᴅ."
+
+  regen-now:
+    material: NETHER_STAR
+    name: "&d&lʀᴇɢᴇɴ ɴᴏᴡ"
+    lore:
+      - "&7ꜰᴏʀᴄᴇ-ʀᴇꜱᴛᴏʀᴇ ᴛʜᴇ ᴀʀᴇɴᴀ ᴛᴏ ɪᴛꜱ"
+      - "&7ꜱᴀᴠᴇᴅ ꜱɴᴀᴘꜱʜᴏᴛ ʀɪɢʜᴛ ɴᴏᴡ."
+
+  snapshot-now:
+    material: ENDER_EYE
+    name: "&d&lꜱɴᴀᴘꜱʜᴏᴛ ɴᴏᴡ"
+    lore:
+      - "&7ꜱᴀᴠᴇ ᴛʜᴇ ᴀʀᴇɴᴀ'ꜱ ᴄᴜʀʀᴇɴᴛ ʙʟᴏᴄᴋꜱ"
+      - "&7ᴀꜱ ᴛʜᴇ ɴᴇᴡ ʀᴇɢᴇɴ ʙᴀꜱᴇʟɪɴᴇ."
+
+  kits:
+    material: CHEST
+    name: "&e&lᴄᴏᴍᴘᴀᴛɪʙʟᴇ ᴋɪᴛꜱ"
+    lore:
+      - "&7ᴄʜᴏᴏꜱᴇ ᴡʜɪᴄʜ ᴋɪᴛꜱ ᴄᴀɴ ʙᴇ ᴜꜱᴇᴅ ʜᴇʀᴇ."
+      - "&7ᴄᴜʀʀᴇɴᴛʟʏ: &f{kits} ᴋɪᴛ(ꜱ)"
+      - "&8(ɴᴏɴᴇ = ᴀʟʟ ᴋɪᴛꜱ ᴀʟʟᴏᴡᴇᴅ)"
+
+  info:
+    material: BOOK
+    name: "&7ᴀʀᴇɴᴀ ɪɴꜰᴏ"
+    lore:
+      - "&7ᴡᴏʀʟᴅ: &f{world}"
+      - "&7ʀᴇɢɪᴏɴ: &f{region}"
+      - "&8ᴄʜᴀɴɢᴇꜱ ꜱᴀᴠᴇ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ."
+
+  # Where FFA and party matches drop players in. Its
+  # state-set / state-unset lines are the 'Current:' value.
+  event-spawn:
+    material: BEACON
+    name: "&e&lꜰꜰᴀ / ᴇᴠᴇɴᴛ ꜱᴘᴀᴡɴ"
+    state-set: "&aꜱᴇᴛ"
+    state-unset: "&cɴᴏᴛ ꜱᴇᴛ"
+    lore:
+      - "&7ᴡʜᴇʀᴇ ꜰꜰᴀ ᴇᴠᴇɴᴛ ᴀɴᴅ ᴘᴀʀᴛʏ ᴍᴀᴛᴄʜ"
+      - "&7ᴘʟᴀʏᴇʀꜱ ᴀʀᴇ ᴛᴇʟᴇᴘᴏʀᴛᴇᴅ ɪɴ."
+      - "&7ᴄᴜʀʀᴇɴᴛ: {state}"
+      - ""
+      - "&cʀᴇꞯᴜɪʀᴇᴅ&7 - ᴀɴ ᴀʀᴇɴᴀ ᴡɪᴛʜᴏᴜᴛ ᴛʜɪꜱ"
+      - "&7ᴄᴀɴ'ᴛ ʜᴏꜱᴛ ꜰꜰᴀ ᴏʀ ᴘᴀʀᴛʏ ᴍᴀᴛᴄʜᴇꜱ."
+      - ""
+      - "&eᴄʟɪᴄᴋ&7, ᴡᴀʟᴋ ᴛᴏ ᴛʜᴇ ꜱᴘᴏᴛ, ᴛʏᴘᴇ &eᴅᴏɴᴇ&7."
+
+  # The starting border box, with its own state lines.
+  border-area:
+    material: FILLED_MAP
+    name: "&e&lᴇᴠᴇɴᴛ ʙᴏʀᴅᴇʀ ᴀʀᴇᴀ"
+    state-set: "&aꜱᴇᴛ &7({blocks} ʙʟᴏᴄᴋꜱ)"
+    state-unset: "&cɴᴏᴛ ꜱᴇᴛ &7(ᴀᴜᴛᴏ-ꜰɪᴛ)"
+    lore:
+      - "&7ᴛʜᴇ ꜱᴛᴀʀᴛɪɴɢ ʙᴏʀᴅᴇʀ ʙᴏx."
+      - "&7ᴄᴜʀʀᴇɴᴛ: {state}"
+      - ""
+      - "&eᴄʟɪᴄᴋ&7, ᴡᴀʟᴋ ᴛᴏ &fᴄᴏʀɴᴇʀ 1&7 ᴛʏᴘᴇ &eᴅᴏɴᴇ&7,"
+      - "&7ᴛʜᴇɴ &fᴄᴏʀɴᴇʀ 2&7 ᴛʏᴘᴇ &eᴅᴏɴᴇ&7."
+
+  void-rescue:
+    material: BLUE_STAINED_GLASS_PANE
+    name: "&bᴠᴏɪᴅ ʀᴇꜱᴄᴜᴇ"
+    lore:
+      - "&7ꜰᴀʟʟɪɴɢ ɪɴᴛᴏ ᴛʜᴇ ᴠᴏɪᴅ ᴛᴇʟᴇᴘᴏʀᴛꜱ"
+      - "&7ᴘʟᴀʏᴇʀꜱ ʙᴀᴄᴋ ᴛᴏ ᴛʜᴇɪʀ ꜱᴘᴀᴡɴ."
+      - "&8ᴀʟᴡᴀʏꜱ ᴏɴ."
+
+  # The arena's description, or none-set when it has none.
+  description:
+    material: NAME_TAG
+    name: "&7ᴅᴇꜱᴄʀɪᴘᴛɪᴏɴ"
+    none-set: "&8(ɴᴏɴᴇ ꜱᴇᴛ)"
+    lore:
+      - "&7{description}"
+
+  # Teleports to player 1's spawn.
+  tp-spawn1:
+    material: ENDER_PEARL
+    name: "&b&lᴛᴘ → ᴘʟᴀʏᴇʀ 1 ꜱᴘᴀᴡɴ"
+    state-set: "&7ᴄʟɪᴄᴋ ᴛᴏ ᴛᴇʟᴇᴘᴏʀᴛ ᴛʜᴇʀᴇ."
+    state-unset: "&8ɴᴏᴛ ꜱᴇᴛ."
+    lore:
+      - "{state}"
+
+  # Teleports to player 2's spawn.
+  tp-spawn2:
+    material: ENDER_PEARL
+    name: "&b&lᴛᴘ → ᴘʟᴀʏᴇʀ 2 ꜱᴘᴀᴡɴ"
+    state-set: "&7ᴄʟɪᴄᴋ ᴛᴏ ᴛᴇʟᴇᴘᴏʀᴛ ᴛʜᴇʀᴇ."
+    state-unset: "&8ɴᴏᴛ ꜱᴇᴛ."
+    lore:
+      - "{state}"
+
+  # Teleports to the event spawn.
+  tp-event:
+    material: ENDER_EYE
+    name: "&b&lᴛᴘ → ᴇᴠᴇɴᴛ ꜱᴘᴀᴡɴ"
+    state-set: "&7ᴄʟɪᴄᴋ ᴛᴏ ᴛᴇʟᴇᴘᴏʀᴛ ᴛʜᴇʀᴇ."
+    state-unset: "&8ɴᴏᴛ ꜱᴇᴛ."
+    lore:
+      - "{state}"

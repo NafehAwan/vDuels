@@ -149,6 +149,10 @@ for menu in sorted(reads):
         elif doc[key] != code[key]:
             fail("gui/%s.yml: %s is %r, the code default is %r"
                  % (menu, key, doc[key], code[key]))
+    if menu in FIXED and "rows" in doc:
+        fail("gui/%s.yml: rows is shipped, but this menu dispatches clicks by "
+             "slot number - its height is counted into those numbers, so the "
+             "key would do nothing" % menu)
     if "rows" in code:
         if doc.get("rows") is None:
             fail("gui/%s.yml: no rows, but the code has %d" % (menu, code["rows"]))

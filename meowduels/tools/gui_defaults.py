@@ -451,8 +451,13 @@ for name in sorted(os.listdir(GUI_SRC)):
                          % (name, kind, item_id))
                     parsed = None
                     break
+                # A String[] constant passed as the varargs tail contributes
+                # all of its lines, not one list-shaped "line".
+                lore = []
+                for v in values[2:]:
+                    lore.extend(v) if isinstance(v, list) else lore.append(v)
                 parsed.append({"material": values[0], "name": values[1],
-                               "lore": values[2:],
+                               "lore": lore,
                                "glow": ".glow()" in face[inner_close:]})
             if parsed is None:
                 continue
@@ -556,6 +561,9 @@ for name in sorted(os.listdir(GUI_SRC)):
             slot_entry["material"] = material
         if values:
             slot_entry["name"] = values[0]
-            if values[1:]:
-                slot_entry["lore"] = values[1:]
+            lore = []
+            for v in values[1:]:
+                lore.extend(v) if isinstance(v, list) else lore.append(v)
+            if lore:
+                slot_entry["lore"] = lore
         item_count += 1
