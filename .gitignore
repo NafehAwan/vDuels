@@ -16,6 +16,7 @@ brag-output*/composition/assets/
 # The built plugin. Produced by "mvn package" in meowduels/ and handed over
 # per turn; it is a build output, not source.
 /MeowDuels.jar
+/delivery/
 
 # Python bytecode from the tools/ checkers
 __pycache__/
