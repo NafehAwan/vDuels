@@ -73,7 +73,7 @@ extends Menu {
     public void open(Player player) {
         Party party = this.plugin.getPartyManager().partyOf(player.getUniqueId());
         if (party == null || !party.isLeader(player.getUniqueId())) {
-            player.sendMessage(Text.prefixed("&cOnly the party leader can set the teams."));
+            player.sendMessage(this.plugin.messages().get("notice.party.only-party-leader-set"));
             return;
         }
         // First open of a match: give them two fair sides rather than an empty

@@ -60,12 +60,12 @@ extends Menu {
     public void open(Player player) {
         Party party = this.plugin.getPartyManager().partyOf(player.getUniqueId());
         if (party == null || !party.isLeader(player.getUniqueId())) {
-            player.sendMessage(Text.prefixed("&cOnly the party leader can start a match."));
+            player.sendMessage(this.plugin.messages().get("notice.party.only-party-leader-start"));
             return;
         }
         Party target = this.plugin.getPartyManager().partyLedBy(party.getDuelTarget());
         if (target == null) {
-            player.sendMessage(Text.prefixed("&cThat party is gone - pick another."));
+            player.sendMessage(this.plugin.messages().get("notice.party.party-gone-pick-another"));
             new PartyOpponentMenu(this.plugin).open(player);
             return;
         }

@@ -447,7 +447,7 @@ implements Listener {
         }
         if (this.countingDown(p) && DuelListener.isPotion(event.getItem())) {
             event.setCancelled(true);
-            p.sendMessage(Text.prefixed("&cNo potions until the fight starts."));
+            p.sendMessage(this.plugin.messages().get("notice.duel.no-potions-until-fight-2"));
             Sounds.deny(p);
             return;
         }
@@ -470,7 +470,7 @@ implements Listener {
         }
         if (this.countingDown(p) && event.getEntity() instanceof ThrownPotion) {
             event.setCancelled(true);
-            p.sendMessage(Text.prefixed("&cNo potions until the fight starts."));
+            p.sendMessage(this.plugin.messages().get("notice.duel.no-potions-until-fight"));
             Sounds.deny(p);
             return;
         }

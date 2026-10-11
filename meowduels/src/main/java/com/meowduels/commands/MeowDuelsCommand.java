@@ -198,16 +198,16 @@ TabCompleter {
             return;
         }
         if (args.length < 1) {
-            sender.sendMessage(Text.prefixed("&cUsage: /createarena <name>"));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.usage-createarena-name"));
             return;
         }
         String name = args[0];
         if (this.plugin.getArenaManager().exists(name)) {
-            sender.sendMessage(Text.prefixed("&cAn arena named &f" + name + "&c already exists."));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.arena-named-already-exists", "name", name));
             return;
         }
         this.plugin.getArenaManager().create(name);
-        sender.sendMessage(Text.prefixed("&aArena &d" + name + "&a created. Open &e/arena " + name + "&a to set it up."));
+        sender.sendMessage(this.plugin.messages().get("notice.admin.arena-created-open-arena", "name", name, "name2", name));
     }
 
     private void openArena(CommandSender sender, String[] args) {
@@ -216,7 +216,7 @@ TabCompleter {
             return;
         }
         if (args.length < 1) {
-            sender.sendMessage(Text.prefixed("&cUsage: /arena <name> [tp|copy|paste|regen|snapshot]"));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.usage-arena-name-tp"));
             return;
         }
         if (args.length >= 2) {
@@ -239,7 +239,7 @@ TabCompleter {
             }
         }
         if ((arena = this.plugin.getArenaManager().get(args[0])) == null) {
-            sender.sendMessage(Text.prefixed("&cNo arena named &f" + args[0] + "&c."));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.no-arena-named-2", "name", args[0]));
             return;
         }
         new ArenaMenu(this.plugin, arena).open((Player)sender);
@@ -252,27 +252,27 @@ TabCompleter {
         Player player = (Player)sender;
         Arena arena = this.plugin.getArenaManager().get(arenaName);
         if (arena == null || !arena.isConfigured()) {
-            sender.sendMessage(Text.prefixed("&cNo configured arena named &f" + arenaName + "&c."));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.no-configured-arena-named-4", "arenaname", arenaName));
             return;
         }
         if (!arena.isCloningEnabled()) {
-            sender.sendMessage(Text.prefixed("&cCloning is disabled for this arena. Enable it in &e/arena " + arenaName + "&c."));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.cloning-disabled-arena-enable", "arenaname", arenaName));
             return;
         }
         if (action.equalsIgnoreCase("copy")) {
             this.plugin.getArenaManager().copyToClipboard(player.getUniqueId(), arena);
-            sender.sendMessage(Text.prefixed("&aCopied arena &d" + arena.getName() + "&a to your clipboard. Walk to a new spot and run &e/arena " + arenaName + " paste&a."));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.copied-arena-clipboard-walk", "arena", arena.getName(), "arenaname", arenaName));
         } else {
             if (!this.plugin.getArenaManager().hasClipboard(player.getUniqueId())) {
-                sender.sendMessage(Text.prefixed("&cYour clipboard is empty. Run &e/arena " + arenaName + " copy&c first."));
+                sender.sendMessage(this.plugin.messages().get("notice.admin.clipboard-empty-run-arena-2", "arenaname", arenaName));
                 return;
             }
             ArenaManager.PasteResult result = this.plugin.getArenaManager().pasteAsNewArena(player.getUniqueId(), player.getLocation());
             if (result == null) {
-                sender.sendMessage(Text.prefixed("&cYour clipboard is empty. Run &e/arena " + arenaName + " copy&c first."));
+                sender.sendMessage(this.plugin.messages().get("notice.admin.clipboard-empty-run-arena", "arenaname", arenaName));
                 return;
             }
-            sender.sendMessage(Text.prefixed("&aPasted &d" + result.blocksWritten + "&a block(s) and registered the new arena &d" + result.arenaName + "&a - it's ready to use immediately."));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.pasted-block-s-registered", "value", String.valueOf(result.blocksWritten), "value2", String.valueOf(result.arenaName)));
         }
     }
 
@@ -282,14 +282,14 @@ TabCompleter {
         }
         Arena arena = this.plugin.getArenaManager().get(arenaName);
         if (arena == null || !arena.isConfigured()) {
-            sender.sendMessage(Text.prefixed("&cNo configured arena named &f" + arenaName + "&c."));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.no-configured-arena-named-3", "arenaname", arenaName));
             return;
         }
         int written = this.plugin.getArenaManager().regenArena(arena);
         if (written < 0) {
-            sender.sendMessage(Text.prefixed("&cNo snapshot saved yet for &f" + arenaName + "&c. Run &e/arena " + arenaName + " snapshot&c first."));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.no-snapshot-saved-yet", "arenaname", arenaName, "arenaname2", arenaName));
         } else {
-            sender.sendMessage(Text.prefixed("&aRegenerated &d" + written + "&a block(s) in &d" + arenaName + "&a."));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.regenerated-block-s", "written", String.valueOf(written), "arenaname", arenaName));
         }
     }
 
@@ -299,11 +299,11 @@ TabCompleter {
         }
         Arena arena = this.plugin.getArenaManager().get(arenaName);
         if (arena == null || !arena.isConfigured()) {
-            sender.sendMessage(Text.prefixed("&cNo configured arena named &f" + arenaName + "&c."));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.no-configured-arena-named-2", "arenaname", arenaName));
             return;
         }
         this.plugin.getArenaManager().snapshotArena(arena);
-        sender.sendMessage(Text.prefixed("&aSnapshot saved for &d" + arenaName + "&a. This is now the regen baseline."));
+        sender.sendMessage(this.plugin.messages().get("notice.admin.snapshot-saved-now-regen", "arenaname", arenaName));
     }
 
     private void arenaTeleport(CommandSender sender, String arenaName, String which) {
@@ -315,7 +315,7 @@ TabCompleter {
         Player player = (Player)sender;
         Arena arena = this.plugin.getArenaManager().get(arenaName);
         if (arena == null || !arena.isConfigured()) {
-            sender.sendMessage(Text.prefixed("&cNo configured arena named &f" + arenaName + "&c."));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.no-configured-arena-named", "arenaname", arenaName));
             return;
         }
         if (which.equalsIgnoreCase("2")) {
@@ -329,11 +329,11 @@ TabCompleter {
             label = "Player 1 spawn";
         }
         if (dest == null) {
-            sender.sendMessage(Text.prefixed("&cThe " + label + " of &f" + arenaName + "&c isn't set."));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.isn-t-set", "label", label, "arenaname", arenaName));
             return;
         }
         player.teleport(dest);
-        sender.sendMessage(Text.prefixed("&aTeleported to the " + label + " of &d" + arenaName + "&a."));
+        sender.sendMessage(this.plugin.messages().get("notice.admin.teleported", "label", label, "arenaname", arenaName));
     }
 
     private void setDuelSpawn(CommandSender sender) {
@@ -342,7 +342,7 @@ TabCompleter {
         }
         Player player = (Player)sender;
         this.plugin.setDuelSpawn(player.getLocation());
-        sender.sendMessage(Text.prefixed("&aDuel spawn set to your current location. Players will be teleported here whenever a duel finishes."));
+        sender.sendMessage(this.plugin.messages().get("notice.admin.duel-spawn-set-current"));
     }
 
     /** Everyone's personal kit editor: rearrange the kits you get in a duel.
@@ -359,15 +359,15 @@ TabCompleter {
             return;
         }
         if (args.length < 1) {
-            sender.sendMessage(Text.prefixed("&cUsage: /deletearena <name>"));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.usage-deletearena-name"));
             return;
         }
         if (!this.plugin.getArenaManager().exists(args[0])) {
-            sender.sendMessage(Text.prefixed("&cNo arena named &f" + args[0] + "&c."));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.no-arena-named", "name", args[0]));
             return;
         }
         this.plugin.getArenaManager().delete(args[0]);
-        sender.sendMessage(Text.prefixed("&aArena &d" + args[0] + "&a deleted."));
+        sender.sendMessage(this.plugin.messages().get("notice.admin.arena-deleted", "name", args[0]));
     }
 
     private void createKit(CommandSender sender, String[] args) {
@@ -375,18 +375,18 @@ TabCompleter {
             return;
         }
         if (args.length < 1) {
-            sender.sendMessage(Text.prefixed("&cUsage: /kitcreate <name>"));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.usage-kitcreate-name"));
             return;
         }
         String name = args[0];
         if (this.plugin.getKitManager().exists(name)) {
-            sender.sendMessage(Text.prefixed("&cA kit named &f" + name + "&c already exists."));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.kit-named-already-exists", "name", name));
             return;
         }
         Kit kit = new Kit(name);
         kit.captureFrom((Player)sender);
         this.plugin.getKitManager().put(kit);
-        sender.sendMessage(Text.prefixed("&aKit &d" + name + "&a saved from your current inventory."));
+        sender.sendMessage(this.plugin.messages().get("notice.admin.kit-saved-from-current", "name", name));
     }
 
     private void deleteKit(CommandSender sender, String[] args) {
@@ -394,15 +394,15 @@ TabCompleter {
             return;
         }
         if (args.length < 1) {
-            sender.sendMessage(Text.prefixed("&cUsage: /deletekit <name>"));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.usage-deletekit-name"));
             return;
         }
         if (!this.plugin.getKitManager().exists(args[0])) {
-            sender.sendMessage(Text.prefixed("&cNo kit named &f" + args[0] + "&c."));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.no-kit-named-6", "name", args[0]));
             return;
         }
         this.plugin.getKitManager().delete(args[0]);
-        sender.sendMessage(Text.prefixed("&aKit &d" + args[0] + "&a deleted."));
+        sender.sendMessage(this.plugin.messages().get("notice.admin.kit-deleted", "name", args[0]));
     }
 
     private void kitIcon(CommandSender sender, String[] args) {
@@ -410,22 +410,22 @@ TabCompleter {
             return;
         }
         if (args.length < 1) {
-            sender.sendMessage(Text.prefixed("&cUsage: /kiticon <name>"));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.usage-kiticon-name"));
             return;
         }
         Kit kit = this.plugin.getKitManager().get(args[0]);
         if (kit == null) {
-            sender.sendMessage(Text.prefixed("&cNo kit named &f" + args[0] + "&c."));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.no-kit-named-5", "name", args[0]));
             return;
         }
         ItemStack held = ((Player)sender).getInventory().getItemInMainHand();
         if (held == null || held.getType() == Material.AIR) {
-            sender.sendMessage(Text.prefixed("&cHold the item you want to use as the icon."));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.hold-item-want-use"));
             return;
         }
         kit.setIcon(held.getType());
         this.plugin.getKitManager().save();
-        sender.sendMessage(Text.prefixed("&aKit &d" + kit.getName() + "&a icon set to &f" + held.getType().name() + "&a."));
+        sender.sendMessage(this.plugin.messages().get("notice.admin.kit-icon-set", "kit", kit.getName(), "value", String.valueOf(held.getType().name())));
     }
 
     private void kitDisplayName(CommandSender sender, String[] args) {
@@ -433,18 +433,18 @@ TabCompleter {
             return;
         }
         if (args.length < 2) {
-            sender.sendMessage(Text.prefixed("&cUsage: /kitdisplayname <name> <display...>"));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.usage-kitdisplayname-name-display"));
             return;
         }
         Kit kit = this.plugin.getKitManager().get(args[0]);
         if (kit == null) {
-            sender.sendMessage(Text.prefixed("&cNo kit named &f" + args[0] + "&c."));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.no-kit-named-4", "name", args[0]));
             return;
         }
         String display = this.joinFrom(args, 1);
         kit.setDisplayName(display);
         this.plugin.getKitManager().save();
-        sender.sendMessage(Text.prefixed("&aKit &d" + kit.getName() + "&a display name set."));
+        sender.sendMessage(this.plugin.messages().get("notice.admin.kit-display-name-set", "kit", kit.getName()));
     }
 
     private void editGui(CommandSender sender, String[] args) {
@@ -452,7 +452,7 @@ TabCompleter {
             return;
         }
         if (args.length < 1 || !GuiLayoutManager.isValidMenu(args[0].toLowerCase(Locale.ROOT))) {
-            sender.sendMessage(Text.prefixed("&cUsage: /editgui <duelconfirm|mapselect> [reset]"));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.usage-editgui-duelconfirm-mapselect"));
             return;
         }
         String menuId = args[0].toLowerCase(Locale.ROOT);
@@ -462,13 +462,11 @@ TabCompleter {
         // ignored. This is the way back out.
         if (args.length >= 2 && args[1].equalsIgnoreCase("reset")) {
             if (!this.plugin.getGuiLayoutManager().has(menuId)) {
-                sender.sendMessage(Text.prefixed("&7No saved layout for &f" + menuId
-                        + "&7 - gui/" + menuId + ".yml is already in charge."));
+                sender.sendMessage(this.plugin.messages().get("notice.admin.no-saved-layout-gui", "menuid", menuId, "menuid2", menuId));
                 return;
             }
             this.plugin.getGuiLayoutManager().clear(menuId);
-            sender.sendMessage(Text.prefixed("&aCleared the saved &f" + menuId
-                    + "&a layout. The slots in gui/" + menuId + ".yml are in charge again."));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.cleared-saved-layout-slots", "menuid", menuId, "menuid2", menuId));
             return;
         }
         new GuiEditorMenu(this.plugin, menuId).open((Player)sender);
@@ -479,9 +477,9 @@ TabCompleter {
             return;
         }
         if (args.length < 1) {
-            sender.sendMessage(Text.prefixed("&7Current scoreboard IP: &f" + this.plugin.getScoreboardIp()));
-            sender.sendMessage(Text.prefixed("&cUsage: /scoreboardip <ip> [color]"));
-            sender.sendMessage(Text.prefixed("&7[color] is MiniMessage, e.g. &f<dark_red> &7or &f<#8B0000>"));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.current-scoreboard-ip", "scoreboardip", String.valueOf(this.plugin.getScoreboardIp())));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.usage-scoreboardip-ip-color"));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.color-minimessage-e-g"));
             return;
         }
         this.plugin.setScoreboardIp(args[0]);
@@ -496,9 +494,9 @@ TabCompleter {
             this.plugin.getConfig().set("scoreboard-ip-color", (Object)color.toString());
             this.plugin.saveConfig();
             this.plugin.getScoreboardService().reload();
-            sender.sendMessage(Text.prefixed("&aScoreboard IP set to &f" + args[0] + " &7(" + String.valueOf(color) + "&7)."));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.scoreboard-ip-set-2", "name", args[0], "value", String.valueOf(color)));
         } else {
-            sender.sendMessage(Text.prefixed("&aScoreboard IP set to &f" + args[0] + "&a."));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.scoreboard-ip-set", "name", args[0]));
         }
     }
 
@@ -508,16 +506,16 @@ TabCompleter {
         }
         Player player = (Player)sender;
         if (!player.hasPermission("meowduels.trims")) {
-            player.sendMessage(Text.prefixed("&cYou don't have permission to do that."));
+            player.sendMessage(this.plugin.messages().get("notice.admin.don-t-have-permission-2"));
             return;
         }
         if (!Trims.available()) {
-            player.sendMessage(Text.prefixed("&cArmor trims aren't supported on this server version."));
+            player.sendMessage(this.plugin.messages().get("notice.admin.armor-trims-aren-t"));
             return;
         }
         if (args.length >= 1) {
             if (!this.plugin.getKitManager().exists(args[0])) {
-                player.sendMessage(Text.prefixed("&cNo kit named &f" + args[0] + "&c."));
+                player.sendMessage(this.plugin.messages().get("notice.admin.no-kit-named-3", "name", args[0]));
                 return;
             }
             new TrimMenu(this.plugin, this.plugin.getKitManager().get(args[0]).getName(), player.getUniqueId()).open(player);
@@ -531,8 +529,8 @@ TabCompleter {
             return;
         }
         if (args.length < 1) {
-            sender.sendMessage(Text.prefixed("&7Current scoreboard server name: &f" + this.plugin.getServerName()));
-            sender.sendMessage(Text.prefixed("&cUsage: /meowduelsserver <name...>"));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.current-scoreboard-server-name", "servername", String.valueOf(this.plugin.getServerName())));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.usage-meowduelsserver-name"));
             return;
         }
         StringBuilder name = new StringBuilder();
@@ -544,7 +542,7 @@ TabCompleter {
         }
         this.plugin.setServerName(name.toString());
         this.plugin.getScoreboardService().reload();
-        sender.sendMessage(Text.prefixed("&aScoreboard server name set to &f" + String.valueOf(name) + "&a."));
+        sender.sendMessage(this.plugin.messages().get("notice.admin.scoreboard-server-name-set", "value", String.valueOf(name)));
     }
 
     private void duel(CommandSender sender, String[] args) {
@@ -588,7 +586,7 @@ TabCompleter {
                     rounds = Integer.parseInt(args[2]);
                 }
                 catch (NumberFormatException ex) {
-                    sender.sendMessage(Text.prefixed("&cRounds must be a number, e.g. /duel " + target.getName() + " " + kit.getName() + " 3"));
+                    sender.sendMessage(this.plugin.messages().get("notice.admin.rounds-must-number-e", "target", target.getName(), "kit", kit.getName()));
                     return;
                 }
                 if (rounds < 1) {
@@ -613,19 +611,19 @@ TabCompleter {
             return true;
         }
         if (this.plugin.getEventManager().isInvolved(id)) {
-            player.sendMessage(Text.prefixed("&cYou're in an event - type &f/leave&c first."));
+            player.sendMessage(this.plugin.messages().get("notice.admin.re-event-type-leave"));
             return true;
         }
         if (spectate && this.plugin.getSpectateManager().isSpectating(id)) {
-            player.sendMessage(Text.prefixed("&cYou're spectating - type &f/leave&c first."));
+            player.sendMessage(this.plugin.messages().get("notice.admin.re-spectating-type-leave"));
             return true;
         }
         if (queue && this.plugin.getQueueManager().isQueued(id)) {
-            player.sendMessage(Text.prefixed("&cYou're in a queue - type &f/leave&c first."));
+            player.sendMessage(this.plugin.messages().get("notice.admin.re-queue-type-leave-2"));
             return true;
         }
         if (duel && this.plugin.getDuelManager().isInDuel(id)) {
-            player.sendMessage(Text.prefixed("&cYou're in a duel - type &f/leave&c or &f/ff&c first."));
+            player.sendMessage(this.plugin.messages().get("notice.admin.re-duel-type-leave-2"));
             return true;
         }
         return false;
@@ -666,7 +664,7 @@ TabCompleter {
                 minutes = Integer.parseInt(args[2]);
             }
             catch (NumberFormatException ex) {
-                player.sendMessage(Text.prefixed("&cMinutes must be a number, e.g. /event host " + args[1] + " 5 8"));
+                player.sendMessage(this.plugin.messages().get("notice.admin.minutes-must-number-e", "name", args[1]));
                 return;
             }
             if (minutes < 1) {
@@ -678,7 +676,7 @@ TabCompleter {
                     slots = Integer.parseInt(args[3]);
                 }
                 catch (NumberFormatException ex) {
-                    player.sendMessage(Text.prefixed("&cSlots must be a number, e.g. /event host " + args[1] + " 5 8"));
+                    player.sendMessage(this.plugin.messages().get("notice.admin.slots-must-number-e", "name", args[1]));
                     return;
                 }
                 if (slots < 0) {
@@ -702,15 +700,15 @@ TabCompleter {
         Player player = (Player)sender;
         UUID id = player.getUniqueId();
         if (this.plugin.getDuelManager().isInDuel(id)) {
-            player.sendMessage(Text.prefixed("&cYou're in a duel - type &f/leave&c or &f/ff&c first."));
+            player.sendMessage(this.plugin.messages().get("notice.admin.re-duel-type-leave"));
             return;
         }
         if (this.plugin.getSpectateManager().isSpectating(id)) {
-            player.sendMessage(Text.prefixed("&cYou're already spectating - type &f/leave&c first."));
+            player.sendMessage(this.plugin.messages().get("notice.admin.re-already-spectating-type"));
             return;
         }
         if (this.plugin.getQueueManager().isQueued(id)) {
-            player.sendMessage(Text.prefixed("&cYou're in a queue - type &f/leave&c first."));
+            player.sendMessage(this.plugin.messages().get("notice.admin.re-queue-type-leave"));
             return;
         }
         this.plugin.getEventManager().spectate(player);
@@ -724,7 +722,7 @@ TabCompleter {
         if (this.plugin.getEventManager().isInvolved(player.getUniqueId())) {
             this.plugin.getEventManager().leave(player);
         } else {
-            player.sendMessage(Text.prefixed("&cYou aren't in an event."));
+            player.sendMessage(this.plugin.messages().get("notice.admin.aren-t-event"));
         }
     }
 
@@ -736,7 +734,7 @@ TabCompleter {
         if (this.plugin.getDuelManager().isInDuel(player.getUniqueId())) {
             this.plugin.getDuelManager().leave(player);
         } else {
-            player.sendMessage(Text.prefixed("&cYou aren't in a duel."));
+            player.sendMessage(this.plugin.messages().get("notice.admin.aren-t-duel"));
         }
     }
 
@@ -833,12 +831,12 @@ TabCompleter {
         if (sub.equals("duel")) {
             String action = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "";
             if (args.length < 3 || !action.equals("accept") && !action.equals("decline")) {
-                player.sendMessage(Text.prefixed("&cUsage: &f/party duel <accept|decline> <leader>"));
+                player.sendMessage(this.plugin.messages().get("notice.admin.usage-party-duel-accept"));
                 return;
             }
             Player from = this.plugin.getServer().getPlayerExact(args[2]);
             if (from == null) {
-                player.sendMessage(Text.prefixed("&c" + args[2] + " isn't online."));
+                player.sendMessage(this.plugin.messages().get("notice.admin.isn-t-online-2", "name", args[2]));
                 return;
             }
             if (action.equals("accept")) {
@@ -856,12 +854,12 @@ TabCompleter {
         // been sent, and those are already in people's chat history.
         if (sub.equals("invite") || sub.equals("join") || sub.equals("accept") || sub.equals("decline")) {
             if (args.length < 2) {
-                player.sendMessage(Text.prefixed("&cUsage: &f/party " + sub + " <player>"));
+                player.sendMessage(this.plugin.messages().get("notice.admin.usage-party-player", "sub", sub));
                 return;
             }
             Player target = this.plugin.getServer().getPlayerExact(args[1]);
             if (target == null) {
-                player.sendMessage(Text.prefixed("&c" + args[1] + " isn't online."));
+                player.sendMessage(this.plugin.messages().get("notice.admin.isn-t-online", "name", args[1]));
                 return;
             }
             if (sub.equals("invite")) {
@@ -881,7 +879,7 @@ TabCompleter {
             new PartyMenu(this.plugin).openFor(player);
             return;
         }
-        player.sendMessage(Text.prefixed("&7You aren't in a party. &f/party create&7 to start one."));
+        player.sendMessage(this.plugin.messages().get("notice.admin.aren-t-party-party"));
     }
 
     private void leave(CommandSender sender) {
@@ -918,10 +916,10 @@ TabCompleter {
             return;
         }
         if (this.plugin.getPartyManager().inParty(id)) {
-            player.sendMessage(Text.prefixed("&7You're in a party - use the &fLeave Party&7 item, or &f/party leave&7."));
+            player.sendMessage(this.plugin.messages().get("notice.admin.re-party-use-leave"));
             return;
         }
-        player.sendMessage(Text.prefixed("&7You aren't in an event, duel, queue, or spectating."));
+        player.sendMessage(this.plugin.messages().get("notice.admin.aren-t-event-duel"));
     }
 
     private void vduelsTab(CommandSender sender) {
@@ -939,7 +937,7 @@ TabCompleter {
         if (args.length >= 1) {
             Kit kit = this.plugin.getKitManager().get(args[0]);
             if (kit == null) {
-                sender.sendMessage(Text.prefixed("&cNo kit named &f" + args[0] + "&c."));
+                sender.sendMessage(this.plugin.messages().get("notice.admin.no-kit-named-2", "name", args[0]));
                 return;
             }
             new EditKitEffectsMenu(this.plugin, kit).open(player);
@@ -1032,7 +1030,7 @@ TabCompleter {
         switch (sub = args.length >= 1 ? args[0].toLowerCase(Locale.ROOT) : "list") {
             case "list": {
                 if (cats.all().isEmpty()) {
-                    sender.sendMessage(Text.prefixed("&7No categories yet. Create one with &e/" + cmd + " create <id>&7."));
+                    sender.sendMessage(this.plugin.messages().get("notice.admin.no-categories-yet-create", "cmd", cmd));
                     return;
                 }
                 sender.sendMessage(Text.color("&dKit categories:"));
@@ -1044,63 +1042,63 @@ TabCompleter {
             case "create": {
                 String header;
                 if (args.length < 2) {
-                    sender.sendMessage(Text.prefixed("&cUsage: /" + cmd + " create <id> [header]"));
+                    sender.sendMessage(this.plugin.messages().get("notice.admin.usage-create-id-header", "cmd", cmd));
                     return;
                 }
                 String string = header = args.length >= 3 ? this.joinFrom(args, 2) : args[1].toUpperCase(Locale.ROOT);
                 if (cats.create(args[1], header)) {
-                    sender.sendMessage(Text.prefixed("&aCreated category &d" + args[1] + "&a."));
+                    sender.sendMessage(this.plugin.messages().get("notice.admin.created-category", "name", args[1]));
                     break;
                 }
-                sender.sendMessage(Text.prefixed("&cA category with that id already exists."));
+                sender.sendMessage(this.plugin.messages().get("notice.admin.category-id-already-exists"));
                 break;
             }
             case "delete": {
                 if (args.length < 2) {
-                    sender.sendMessage(Text.prefixed("&cUsage: /" + cmd + " delete <id>"));
+                    sender.sendMessage(this.plugin.messages().get("notice.admin.usage-delete-id", "cmd", cmd));
                     return;
                 }
                 cats.delete(args[1]);
-                sender.sendMessage(Text.prefixed("&aDeleted category &d" + args[1] + "&a."));
+                sender.sendMessage(this.plugin.messages().get("notice.admin.deleted-category", "name", args[1]));
                 break;
             }
             case "header": {
                 if (args.length < 3) {
-                    sender.sendMessage(Text.prefixed("&cUsage: /" + cmd + " header <id> <text>"));
+                    sender.sendMessage(this.plugin.messages().get("notice.admin.usage-header-id-text", "cmd", cmd));
                     return;
                 }
                 CategoryManager.Category c = cats.get(args[1]);
                 if (c == null) {
-                    sender.sendMessage(Text.prefixed("&cNo category named &f" + args[1] + "&c."));
+                    sender.sendMessage(this.plugin.messages().get("notice.admin.no-category-named-2", "name", args[1]));
                     return;
                 }
                 c.setHeader(this.joinFrom(args, 2));
                 cats.save();
-                sender.sendMessage(Text.prefixed("&aHeader for &d" + c.getId() + "&a set to &f" + c.getHeader() + "&a."));
+                sender.sendMessage(this.plugin.messages().get("notice.admin.header-set", "id", String.valueOf(c.getId()), "header", c.getHeader()));
                 break;
             }
             case "addkit": 
             case "removekit": {
                 if (args.length < 3) {
-                    sender.sendMessage(Text.prefixed("&cUsage: /" + cmd + " " + sub + " <id> <kit>"));
+                    sender.sendMessage(this.plugin.messages().get("notice.admin.usage-id-kit", "cmd", cmd, "sub", sub));
                     return;
                 }
                 CategoryManager.Category c = cats.get(args[1]);
                 if (c == null) {
-                    sender.sendMessage(Text.prefixed("&cNo category named &f" + args[1] + "&c."));
+                    sender.sendMessage(this.plugin.messages().get("notice.admin.no-category-named", "name", args[1]));
                     return;
                 }
                 boolean adding = sub.equals("addkit");
                 if (adding) {
                     if (!this.plugin.getKitManager().exists(args[2])) {
-                        sender.sendMessage(Text.prefixed("&cNo kit named &f" + args[2] + "&c."));
+                        sender.sendMessage(this.plugin.messages().get("notice.admin.no-kit-named", "name", args[2]));
                         return;
                     }
                     this.addKitDedup(c, args[2]);
-                    sender.sendMessage(Text.prefixed("&aAdded &f" + args[2] + "&a to &d" + c.getId() + "&a."));
+                    sender.sendMessage(this.plugin.messages().get("notice.admin.added", "name", args[2], "id", String.valueOf(c.getId())));
                 } else {
                     c.getKits().removeIf(k -> k.equalsIgnoreCase(args[2]));
-                    sender.sendMessage(Text.prefixed("&aRemoved &f" + args[2] + "&a from &d" + c.getId() + "&a."));
+                    sender.sendMessage(this.plugin.messages().get("notice.admin.removed-from", "name", args[2], "id", String.valueOf(c.getId())));
                 }
                 cats.save();
                 CategoryManager other = cats == this.plugin.getCategoryManager() ? this.plugin.getQueueCategoryManager() : this.plugin.getCategoryManager();
@@ -1108,7 +1106,7 @@ TabCompleter {
                 break;
             }
             default: {
-                sender.sendMessage(Text.prefixed("&cSub-commands: list, create, delete, header, addkit, removekit"));
+                sender.sendMessage(this.plugin.messages().get("notice.admin.sub-commands-list-create"));
             }
         }
     }
@@ -1391,26 +1389,26 @@ TabCompleter {
         }
         this.plugin.getArenaManager().load();
         this.plugin.reloadAll();
-        sender.sendMessage(Text.prefixed("&aConfig reset to defaults and &call arenas wiped&a. &7(" + this.plugin.getArenaManager().all().size() + " arenas remain)"));
+        sender.sendMessage(this.plugin.messages().get("notice.admin.config-reset-defaults-all", "value", String.valueOf(this.plugin.getArenaManager().all().size())));
     }
 
     private void giveGoldenHead(CommandSender sender, String[] args) {
         int stack;
         Player target;
         if (!sender.hasPermission("uhc.admin.givehead")) {
-            sender.sendMessage(Text.prefixed("&cYou don't have permission to do that."));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.don-t-have-permission"));
             return;
         }
         if (args.length >= 1) {
             target = this.plugin.getServer().getPlayerExact(args[0]);
             if (target == null) {
-                sender.sendMessage(Text.prefixed("&cPlayer &f" + args[0] + " &cis not online."));
+                sender.sendMessage(this.plugin.messages().get("notice.admin.player-not-online", "name", args[0]));
                 return;
             }
         } else if (sender instanceof Player) {
             target = (Player)sender;
         } else {
-            sender.sendMessage(Text.prefixed("&cConsole must specify a player: /givegoldenhead <player> [amount]"));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.console-must-specify-player"));
             return;
         }
         int amount = 1;
@@ -1419,11 +1417,11 @@ TabCompleter {
                 amount = Integer.parseInt(args[1]);
             }
             catch (NumberFormatException e) {
-                sender.sendMessage(Text.prefixed("&cInvalid amount: &f" + args[1]));
+                sender.sendMessage(this.plugin.messages().get("notice.admin.invalid-amount", "name", args[1]));
                 return;
             }
             if (amount < 1) {
-                sender.sendMessage(Text.prefixed("&cAmount must be at least 1."));
+                sender.sendMessage(this.plugin.messages().get("notice.admin.amount-must-at-least"));
                 return;
             }
         }
@@ -1433,9 +1431,9 @@ TabCompleter {
             target.getInventory().addItem(new ItemStack[]{GoldenHead.create((Plugin)this.plugin, stack, texture)});
         }
         String plural = amount == 1 ? "" : "s";
-        target.sendMessage(Text.prefixed("&aYou received &6" + amount + " &aGolden Head" + plural + "."));
+        target.sendMessage(this.plugin.messages().get("notice.admin.received-golden-head", "amount", String.valueOf(amount), "plural", plural));
         if (sender != target) {
-            sender.sendMessage(Text.prefixed("&aGave &6" + amount + " &aGolden Head" + plural + " to &f" + target.getName() + "&a."));
+            sender.sendMessage(this.plugin.messages().get("notice.admin.gave-golden-head", "amount", String.valueOf(amount), "plural", plural, "target", target.getName()));
         }
     }
 

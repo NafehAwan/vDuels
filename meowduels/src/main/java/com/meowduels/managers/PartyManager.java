@@ -153,7 +153,7 @@ public class PartyManager {
     public void decline(Player player, Player leader) {
         Party party = this.partyOf(leader.getUniqueId());
         if (party == null || !party.getInvited().remove(player.getUniqueId())) {
-            player.sendMessage(Text.prefixed("&cYou have no invite from " + leader.getName() + "."));
+            player.sendMessage(this.plugin.messages().get("notice.party.have-no-invite-from", "leader", leader.getName()));
             return;
         }
         Sounds.deny(player);
@@ -190,7 +190,7 @@ public class PartyManager {
     public void create(Player player) {
         UUID id = player.getUniqueId();
         if (this.inParty(id)) {
-            player.sendMessage(Text.prefixed("&cYou're already in a party."));
+            player.sendMessage(this.plugin.messages().get("notice.party.re-already-party"));
             return;
         }
         if (this.busyElsewhere(player)) {
@@ -198,7 +198,7 @@ public class PartyManager {
         }
         Party party = new Party(id);
         this.byPlayer.put(id, party);
-        player.sendMessage(Text.prefixed("&aParty created. &7Invite someone with &f/party invite <player>&7."));
+        player.sendMessage(this.plugin.messages().get("notice.party.party-created-invite-someone"));
         this.refreshItems(player);
         this.plugin.getTabService().attachParty(party);
     }
@@ -206,24 +206,24 @@ public class PartyManager {
     public void invite(Player leader, Player target) {
         Party party = this.partyOf(leader.getUniqueId());
         if (party == null) {
-            leader.sendMessage(Text.prefixed("&cYou're not in a party."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.re-not-party-6"));
             return;
         }
         if (!party.isLeader(leader.getUniqueId())) {
-            leader.sendMessage(Text.prefixed("&cOnly the party leader can invite."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.only-party-leader-invite-2"));
             return;
         }
         if (party.isFighting()) {
-            leader.sendMessage(Text.prefixed("&cYou can't invite during a party match."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.t-invite-during-party"));
             return;
         }
         UUID targetId = target.getUniqueId();
         if (party.has(targetId)) {
-            leader.sendMessage(Text.prefixed("&cThey're already in your party."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.they-re-already-party"));
             return;
         }
         if (this.inParty(targetId)) {
-            leader.sendMessage(Text.prefixed("&c" + target.getName() + " is already in a party."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.already-party", "target", target.getName()));
             return;
         }
         // You cannot hand out invites from inside a duel, a queue or an event.
@@ -234,20 +234,19 @@ public class PartyManager {
             return;
         }
         if (party.isInvited(targetId)) {
-            leader.sendMessage(Text.prefixed("&c" + target.getName() + " already has your invite."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.already-invite", "target", target.getName()));
             return;
         }
         // Checked here rather than at delivery so the inviter is told no, and
         // so a refused invite never costs them the cooldown below.
         if (!this.plugin.getPlayerSettings().isPartyInvites(targetId)) {
-            leader.sendMessage(Text.prefixed("&c" + target.getName() + " has party invites turned off."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.party-invites-turned-off", "target", target.getName()));
             Sounds.deny(leader);
             return;
         }
         long left = Cooldowns.remaining(leader, INVITE_COOLDOWN);
         if (left > 0L) {
-            leader.sendMessage(Text.prefixed("&cWait &f" + Cooldowns.seconds(left)
-                    + "s&c before inviting again."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.wait-s-before-inviting", "value", String.valueOf(Cooldowns.seconds(left))));
             Sounds.deny(leader);
             return;
         }
@@ -262,19 +261,19 @@ public class PartyManager {
         Party party = this.partyOf(leader.getUniqueId());
         UUID id = player.getUniqueId();
         if (party == null) {
-            player.sendMessage(Text.prefixed("&cThat party no longer exists."));
+            player.sendMessage(this.plugin.messages().get("notice.party.party-no-longer-exists"));
             return;
         }
         if (this.inParty(id)) {
-            player.sendMessage(Text.prefixed("&cLeave your current party first."));
+            player.sendMessage(this.plugin.messages().get("notice.party.leave-current-party-first"));
             return;
         }
         if (!party.isInvited(id) && !party.isOpenToAll()) {
-            player.sendMessage(Text.prefixed("&cYou haven't been invited to that party."));
+            player.sendMessage(this.plugin.messages().get("notice.party.haven-t-been-invited"));
             return;
         }
         if (party.isFighting()) {
-            player.sendMessage(Text.prefixed("&cThat party is mid-match - try again when it ends."));
+            player.sendMessage(this.plugin.messages().get("notice.party.party-mid-match-try"));
             return;
         }
         if (this.busyElsewhere(player)) {
@@ -294,8 +293,7 @@ public class PartyManager {
         // Old spawn items out, party items in - see refreshItems.
         this.refreshItems(player);
         this.plugin.getTabService().attachParty(party);
-        player.sendMessage(Text.prefixed("&7The party is run by &f" + leader.getName()
-                + "&7 - they pick the kit and start the match."));
+        player.sendMessage(this.plugin.messages().get("notice.party.party-run-by-they", "leader", leader.getName()));
     }
 
     /**
@@ -342,7 +340,7 @@ public class PartyManager {
         UUID id = player.getUniqueId();
         Party party = this.partyOf(id);
         if (party == null) {
-            player.sendMessage(Text.prefixed("&cYou're not in a party."));
+            player.sendMessage(this.plugin.messages().get("notice.party.re-not-party-5"));
             return;
         }
         if (party.isLeader(id)) {
@@ -357,7 +355,7 @@ public class PartyManager {
         this.byPlayer.remove(id);
         this.broadcast(party, "&f" + player.getName() + "&7 left the party.");
         Sounds.leave(player);
-        player.sendMessage(Text.prefixed("&7You left the party."));
+        player.sendMessage(this.plugin.messages().get("notice.party.left-party"));
         this.refreshItems(player);
         this.plugin.getTabService().detach(id);
         this.reattachTab(party);
@@ -376,7 +374,7 @@ public class PartyManager {
             this.byPlayer.remove(id);
             Player p = Bukkit.getPlayer((UUID)id);
             if (p != null) {
-                p.sendMessage(Text.prefixed("&c" + reason));
+                p.sendMessage(this.plugin.messages().get("notice.party.message-2", "reason", reason));
                 this.refreshItems(p);
             }
         }
@@ -399,20 +397,20 @@ public class PartyManager {
     public void startMatch(Player leader, PartyMode mode) {
         Party party = this.partyOf(leader.getUniqueId());
         if (party == null || !party.isLeader(leader.getUniqueId())) {
-            leader.sendMessage(Text.prefixed("&cOnly the party leader can start a match."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.only-party-leader-start-6"));
             return;
         }
         if (party.isFighting()) {
-            leader.sendMessage(Text.prefixed("&cYour party is already fighting."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.party-already-fighting-2"));
             return;
         }
         if (party.size() < 2) {
-            leader.sendMessage(Text.prefixed("&cYou need at least &f2&c players in the party."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.need-at-least-2"));
             return;
         }
         Kit kit = party.getKit() == null ? null : this.plugin.getKitManager().get(party.getKit());
         if (kit == null) {
-            leader.sendMessage(Text.prefixed("&cPick a kit first."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.pick-kit-first-2"));
             return;
         }
         List<Player> online = new ArrayList<Player>();
@@ -423,7 +421,7 @@ public class PartyManager {
             }
         }
         if (online.size() < 2) {
-            leader.sendMessage(Text.prefixed("&cNot enough party members are online."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.not-enough-party-members"));
             return;
         }
         // isEventReady is NOT required any more. It meant "has an FFA spawn set",
@@ -434,8 +432,8 @@ public class PartyManager {
                 a -> this.plugin.getDuelManager().isArenaInUse(a.getName())
                      || !a.supportsKit(kit.getName()));
         if (arena == null) {
-            leader.sendMessage(Text.prefixed("&cNo free arena supports that kit."));
-            leader.sendMessage(Text.prefixed("&8" + this.plugin.getDuelManager().arenaAvailability(kit.getName())));
+            leader.sendMessage(this.plugin.messages().get("notice.party.no-free-arena-supports-2"));
+            leader.sendMessage(this.plugin.messages().get("notice.party.message", "value", String.valueOf(this.plugin.getDuelManager().arenaAvailability(kit.getName()))));
             return;
         }
         if (mode == PartyMode.SPLIT) {
@@ -451,7 +449,7 @@ public class PartyManager {
             }
             if (this.onlineOn(party, online, Party.Team.AQUA) == 0
                     || this.onlineOn(party, online, Party.Team.RED) == 0) {
-                leader.sendMessage(Text.prefixed("&cBoth teams need at least one online player."));
+                leader.sendMessage(this.plugin.messages().get("notice.party.both-teams-need-at"));
                 return;
             }
         }
@@ -676,7 +674,7 @@ public class PartyManager {
         Player p = Bukkit.getPlayer((UUID)id);
         if (p != null) {
             this.watchFrom(party, p);
-            p.sendMessage(Text.prefixed("&7You're out - watching the rest. &f/leave&7 to stop."));
+            p.sendMessage(this.plugin.messages().get("notice.party.re-out-watching-rest"));
         }
         String left = String.valueOf(party.getAlive().size());
         if (p != null) {
@@ -718,20 +716,20 @@ public class PartyManager {
     public void spectate(Player player) {
         Party party = this.partyOf(player.getUniqueId());
         if (party == null) {
-            player.sendMessage(Text.prefixed("&cYou're not in a party."));
+            player.sendMessage(this.plugin.messages().get("notice.party.re-not-party-4"));
             return;
         }
         if (!party.isFighting()) {
-            player.sendMessage(Text.prefixed("&cYour party isn't fighting right now."));
+            player.sendMessage(this.plugin.messages().get("notice.party.party-isn-t-fighting"));
             return;
         }
         UUID id = player.getUniqueId();
         if (party.getAlive().contains(id)) {
-            player.sendMessage(Text.prefixed("&cYou're in the match - you can't spectate it."));
+            player.sendMessage(this.plugin.messages().get("notice.party.re-match-t-spectate"));
             return;
         }
         if (!party.getWatching().add(id)) {
-            player.sendMessage(Text.prefixed("&7You're already watching. &f/leave&7 to stop."));
+            player.sendMessage(this.plugin.messages().get("notice.party.re-already-watching-leave"));
             return;
         }
         // Both rosters, and the snapshot on the host: teardown walks the host's
@@ -742,7 +740,7 @@ public class PartyManager {
         }
         this.matchHostOf(party).getSnapshots().put(id, PlayerSnapshot.capture(player));
         this.watchFrom(party, player);
-        player.sendMessage(Text.prefixed("&7Spectating the party match. &f/leave&7 to stop."));
+        player.sendMessage(this.plugin.messages().get("notice.party.spectating-party-match-leave"));
     }
 
     /** /leave for someone watching a party match: out of the match, still in
@@ -756,15 +754,15 @@ public class PartyManager {
     public void forceEnd(Player leader) {
         Party party = this.partyOf(leader.getUniqueId());
         if (party == null) {
-            leader.sendMessage(Text.prefixed("&cYou're not in a party."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.re-not-party-3"));
             return;
         }
         if (!party.isLeader(leader.getUniqueId())) {
-            leader.sendMessage(Text.prefixed("&cOnly the party leader can end the match."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.only-party-leader-end"));
             return;
         }
         if (!party.isFighting() || party.isFinished()) {
-            leader.sendMessage(Text.prefixed("&cYour party isn't in a match."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.party-isn-t-match"));
             return;
         }
         this.broadcast(party, this.msg("party.force-ended", "leader", leader.getName()));
@@ -814,49 +812,48 @@ public class PartyManager {
     public void challengeDuels(Player leader) {
         Party party = this.partyOf(leader.getUniqueId());
         if (party == null || !party.isLeader(leader.getUniqueId())) {
-            leader.sendMessage(Text.prefixed("&cOnly the party leader can start a match."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.only-party-leader-start-5"));
             return;
         }
         if (party.isFighting()) {
-            leader.sendMessage(Text.prefixed("&cYour party is already fighting."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.party-already-fighting"));
             return;
         }
         Party target = this.partyLedBy(party.getDuelTarget());
         if (target == null || target == party) {
-            leader.sendMessage(Text.prefixed("&cThat party is gone - pick another."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.party-gone-pick-another-2"));
             return;
         }
         if (target.isFighting()) {
-            leader.sendMessage(Text.prefixed("&cThat party just started a match of their own."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.party-just-started-match"));
             return;
         }
         Kit kit = party.getKit() == null ? null : this.plugin.getKitManager().get(party.getKit());
         if (kit == null) {
-            leader.sendMessage(Text.prefixed("&cPick a kit first."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.pick-kit-first"));
             return;
         }
         List<Player> mine = this.onlineMembers(party);
         List<Player> theirs = this.onlineMembers(target);
         if (mine.isEmpty() || theirs.isEmpty()) {
-            leader.sendMessage(Text.prefixed("&cBoth parties need someone online."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.both-parties-need-someone-2"));
             return;
         }
         Player targetLeader = Bukkit.getPlayer((UUID)target.getLeader());
         if (targetLeader == null) {
-            leader.sendMessage(Text.prefixed("&cTheir leader is offline."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.their-leader-offline"));
             return;
         }
         Map<UUID, PartyDuelRequest> pending = this.duelRequests.get(target.getLeader());
         PartyDuelRequest existing = pending == null ? null : pending.get(leader.getUniqueId());
         if (existing != null && !existing.isExpired(this.duelRequestTtl())) {
-            leader.sendMessage(Text.prefixed("&cThey already have your challenge - give them a moment."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.they-already-have-challenge"));
             Sounds.deny(leader);
             return;
         }
         long left = Cooldowns.remaining(leader, CHALLENGE_COOLDOWN);
         if (left > 0L) {
-            leader.sendMessage(Text.prefixed("&cWait &f" + Cooldowns.seconds(left)
-                    + "s&c before challenging again."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.wait-s-before-challenging", "value", String.valueOf(Cooldowns.seconds(left))));
             Sounds.deny(leader);
             return;
         }
@@ -892,12 +889,12 @@ public class PartyManager {
     public void declineDuels(Player leader, Player from) {
         Map<UUID, PartyDuelRequest> pending = this.duelRequests.get(leader.getUniqueId());
         if (pending == null || pending.remove(from.getUniqueId()) == null) {
-            leader.sendMessage(Text.prefixed("&cNo challenge from &f" + from.getName() + "&c."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.no-challenge-from", "from", from.getName()));
             return;
         }
         Sounds.deny(leader);
-        leader.sendMessage(Text.prefixed("&7You turned down &f" + from.getName() + "&7's party duel."));
-        from.sendMessage(Text.prefixed("&7" + leader.getName() + " &7turned down your party duel."));
+        leader.sendMessage(this.plugin.messages().get("notice.party.turned-down-s-party", "from", from.getName()));
+        from.sendMessage(this.plugin.messages().get("notice.party.turned-down-party-duel", "leader", leader.getName()));
     }
 
     /**
@@ -912,40 +909,40 @@ public class PartyManager {
         Map<UUID, PartyDuelRequest> pending = this.duelRequests.get(leader.getUniqueId());
         PartyDuelRequest request = pending == null ? null : pending.get(from.getUniqueId());
         if (request == null || request.isExpired(this.duelRequestTtl())) {
-            leader.sendMessage(Text.prefixed("&cThat challenge has expired."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.challenge-expired"));
             return;
         }
         pending.remove(from.getUniqueId());
         Party ours = this.partyLedBy(leader.getUniqueId());
         Party theirs = this.partyLedBy(from.getUniqueId());
         if (ours == null) {
-            leader.sendMessage(Text.prefixed("&cYou need to be leading a party to accept."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.need-leading-party-accept"));
             return;
         }
         if (theirs == null || theirs == ours) {
-            leader.sendMessage(Text.prefixed("&cTheir party is gone."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.their-party-gone"));
             return;
         }
         if (ours.isFighting() || theirs.isFighting()) {
-            leader.sendMessage(Text.prefixed("&cOne of the parties is already in a match."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.one-parties-already-match"));
             return;
         }
         Kit kit = this.plugin.getKitManager().get(request.getKit());
         if (kit == null) {
-            leader.sendMessage(Text.prefixed("&cThat kit no longer exists."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.kit-no-longer-exists"));
             return;
         }
         List<Player> mine = this.onlineMembers(ours);
         List<Player> yours = this.onlineMembers(theirs);
         if (mine.isEmpty() || yours.isEmpty()) {
-            leader.sendMessage(Text.prefixed("&cBoth parties need someone online."));
+            leader.sendMessage(this.plugin.messages().get("notice.party.both-parties-need-someone"));
             return;
         }
         Arena arena = this.plugin.getArenaManager().findFreeArena(
                 a -> this.plugin.getDuelManager().isArenaInUse(a.getName())
                      || !a.supportsKit(kit.getName()));
         if (arena == null) {
-            String none = Text.prefixed("&cNo free arena supports that kit right now.");
+            String none = this.plugin.messages().get("notice.party.no-free-arena-supports");
             leader.sendMessage(none);
             from.sendMessage(none);
             return;
@@ -1140,7 +1137,7 @@ public class PartyManager {
             return false;
         }
         this.dropFromMatch(party, id);
-        player.sendMessage(Text.prefixed("&7You left the party match."));
+        player.sendMessage(this.plugin.messages().get("notice.party.left-party-match"));
         this.checkWin(party);
         return true;
     }
@@ -1558,9 +1555,9 @@ public class PartyManager {
             return false;
         }
         if (party.isFighting()) {
-            player.sendMessage(Text.prefixed("&cYou're in a party match - type &f/leave&c first."));
+            player.sendMessage(this.plugin.messages().get("notice.party.re-party-match-type"));
         } else {
-            player.sendMessage(Text.prefixed("&cYou're in a party - leave it first to do that."));
+            player.sendMessage(this.plugin.messages().get("notice.party.re-party-leave-first"));
         }
         return true;
     }
@@ -1581,22 +1578,22 @@ public class PartyManager {
         if (what == null) {
             return false;
         }
-        leader.sendMessage(Text.prefixed("&c" + target.getName() + " is " + what + " - try again after."));
+        leader.sendMessage(this.plugin.messages().get("notice.party.try-again-after", "target", target.getName(), "what", what));
         return true;
     }
 
     private boolean busyElsewhere(Player player) {
         UUID id = player.getUniqueId();
         if (this.plugin.getDuelManager().isInDuel(id)) {
-            player.sendMessage(Text.prefixed("&cYou're in a duel - finish it first."));
+            player.sendMessage(this.plugin.messages().get("notice.party.re-duel-finish-first"));
             return true;
         }
         if (this.plugin.getEventManager().isInvolved(id)) {
-            player.sendMessage(Text.prefixed("&cYou're in an event - type &f/leave&c first."));
+            player.sendMessage(this.plugin.messages().get("notice.party.re-event-type-leave"));
             return true;
         }
         if (this.plugin.getSpectateManager().isSpectating(id)) {
-            player.sendMessage(Text.prefixed("&cYou're spectating - type &f/leave&c first."));
+            player.sendMessage(this.plugin.messages().get("notice.party.re-spectating-type-leave"));
             return true;
         }
         if (this.plugin.getQueueManager().isQueued(id)) {
@@ -1604,7 +1601,7 @@ public class PartyManager {
             // somebody deliberately joined is worse than refusing: you find out
             // you are not queued when the match you were waiting for goes to
             // somebody else.
-            player.sendMessage(Text.prefixed("&cYou're in a queue - type &f/queue leave&c first."));
+            player.sendMessage(this.plugin.messages().get("notice.party.re-queue-type-queue"));
             return true;
         }
         return false;

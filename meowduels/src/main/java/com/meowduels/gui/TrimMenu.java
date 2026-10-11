@@ -260,15 +260,15 @@ extends Menu {
         }
         ItemStack[] armor = kit.getArmor();
         if (armorIdx >= armor.length || armor[armorIdx] == null || armor[armorIdx].getType() == Material.AIR) {
-            player.sendMessage(Text.prefixed("&cThat kit has no armor in that slot."));
+            player.sendMessage(this.plugin.messages().get("notice.trim.kit-no-armor-slot"));
             return;
         }
         if (!Trims.available()) {
-            player.sendMessage(Text.prefixed("&cCould not apply the trim (this server may not support armor trims)."));
+            player.sendMessage(this.plugin.messages().get("notice.trim.could-not-apply-trim"));
             return;
         }
         this.plugin.getTrimPreferences().set(this.owner, this.kitName, armorIdx, Trims.PATTERN_KEYS[this.patternIndex], Trims.MATERIAL_KEYS[this.materialIndex]);
-        player.sendMessage(Text.prefixed("&aApplied &f" + Trims.pretty(Trims.MATERIAL_KEYS[this.materialIndex]) + " " + Trims.pretty(Trims.PATTERN_KEYS[this.patternIndex]) + "&a trim &7(only you will wear it)."));
+        player.sendMessage(this.plugin.messages().get("notice.trim.applied-trim-only-will", "value", String.valueOf(Trims.pretty(Trims.MATERIAL_KEYS[this.materialIndex])), "value2", String.valueOf(Trims.pretty(Trims.PATTERN_KEYS[this.patternIndex]))));
         this.reopen(player);
     }
 
@@ -278,17 +278,17 @@ extends Menu {
             return;
         }
         if (!Trims.available()) {
-            player.sendMessage(Text.prefixed("&cNo armor to trim (or trims unsupported)."));
+            player.sendMessage(this.plugin.messages().get("notice.trim.no-armor-trim-trims"));
             return;
         }
         this.plugin.getTrimPreferences().setAll(this.owner, this.kitName, Trims.PATTERN_KEYS[this.patternIndex], Trims.MATERIAL_KEYS[this.materialIndex]);
-        player.sendMessage(Text.prefixed("&aApplied the trim to all your armor pieces &7(only you will wear it)."));
+        player.sendMessage(this.plugin.messages().get("notice.trim.applied-trim-all-armor"));
         this.reopen(player);
     }
 
     private void clearAll(Player player) {
         this.plugin.getTrimPreferences().clear(this.owner, this.kitName);
-        player.sendMessage(Text.prefixed("&aCleared your trims for &f" + this.kitName + "&a."));
+        player.sendMessage(this.plugin.messages().get("notice.trim.cleared-trims", "value", String.valueOf(this.kitName)));
         this.reopen(player);
     }
 

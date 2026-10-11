@@ -70,7 +70,7 @@ extends Menu {
     public void open(Player player) {
         Party party = this.plugin.getPartyManager().partyOf(player.getUniqueId());
         if (party == null || !party.isLeader(player.getUniqueId())) {
-            player.sendMessage(Text.prefixed("&cOnly the party leader can invite."));
+            player.sendMessage(this.plugin.messages().get("notice.party.only-party-leader-invite"));
             return;
         }
         GuiConfigManager gui = this.plugin.gui();

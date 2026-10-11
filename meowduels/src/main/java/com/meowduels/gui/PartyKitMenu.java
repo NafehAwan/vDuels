@@ -122,13 +122,13 @@ extends Menu {
     public void open(Player player) {
         Party party = this.plugin.getPartyManager().partyOf(player.getUniqueId());
         if (party == null || !party.isLeader(player.getUniqueId())) {
-            player.sendMessage(Text.prefixed("&cOnly the party leader can pick the kit."));
+            player.sendMessage(this.plugin.messages().get("notice.party.only-party-leader-pick"));
             return;
         }
         List<Page> pages = this.pages();
         if (pages.isEmpty()) {
-            player.sendMessage(Text.prefixed("&cNo kits are in a category yet."));
-            player.sendMessage(Text.prefixed("&8Kits outside a category aren't offered - add them with &f/category&8."));
+            player.sendMessage(this.plugin.messages().get("notice.party.no-kits-category-yet"));
+            player.sendMessage(this.plugin.messages().get("notice.party.kits-outside-category-aren"));
             return;
         }
         if (this.step >= pages.size() || this.step < 0) {

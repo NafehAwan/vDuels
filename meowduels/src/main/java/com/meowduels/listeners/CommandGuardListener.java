@@ -54,8 +54,8 @@ implements Listener {
             return;
         }
         event.setCancelled(true);
-        player.sendMessage(Text.prefixed("&cYou can't use commands " + what + "."));
-        player.sendMessage(Text.prefixed("&7Use &f" + this.exitHint(player) + "&7 to get out first."));
+        player.sendMessage(this.plugin.messages().get("notice.guard.t-use-commands", "what", what));
+        player.sendMessage(this.plugin.messages().get("notice.guard.use-get-out-first", "value", String.valueOf(this.exitHint(player))));
     }
 
     /** What the player is in the middle of, or null if they are free. */

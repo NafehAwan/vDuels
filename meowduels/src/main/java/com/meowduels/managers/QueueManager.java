@@ -117,7 +117,7 @@ public class QueueManager {
             return;
         }
         if (this.plugin.getEventManager().isInvolved(id)) {
-            player.sendMessage(Text.prefixed("&cYou can't queue while you're in the event."));
+            player.sendMessage(this.plugin.messages().get("notice.queue.t-queue-while-re"));
             return;
         }
         if (!this.plugin.getKitManager().exists(kit)) {

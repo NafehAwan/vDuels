@@ -138,26 +138,26 @@ extends Menu {
             case 49: {
                 this.persist();
                 this.done = true;
-                player.sendMessage(Text.prefixed("&aSaved the &d" + this.menuId + "&a menu layout."));
+                player.sendMessage(this.plugin.messages().get("notice.editgui.saved-menu-layout-2", "value", String.valueOf(this.menuId)));
                 player.closeInventory();
                 break;
             }
             case 45: {
                 this.done = true;
-                player.sendMessage(Text.prefixed("&7Editor closed without saving."));
+                player.sendMessage(this.plugin.messages().get("notice.editgui.editor-closed-without-saving"));
                 player.closeInventory();
                 break;
             }
             case 47: {
                 player.getInventory().addItem(new ItemStack[]{Items.of(Material.GRAY_STAINED_GLASS_PANE, 16).name("&8Decoration").build()});
-                player.sendMessage(Text.prefixed("&7Added decoration panes to your inventory."));
+                player.sendMessage(this.plugin.messages().get("notice.editgui.added-decoration-panes-inventory"));
                 break;
             }
             case 51: {
                 this.plugin.getGuiLayoutManager().clear(this.menuId);
                 this.fillDefaultsFresh();
                 player.openInventory(this.inventory);
-                player.sendMessage(Text.prefixed("&7Reset &d" + this.menuId + "&7 to default."));
+                player.sendMessage(this.plugin.messages().get("notice.editgui.reset-default", "value", String.valueOf(this.menuId)));
             }
         }
     }
@@ -175,7 +175,7 @@ extends Menu {
             return;
         }
         this.persist();
-        player.sendMessage(Text.prefixed("&aSaved the &d" + this.menuId + "&a menu layout."));
+        player.sendMessage(this.plugin.messages().get("notice.editgui.saved-menu-layout", "value", String.valueOf(this.menuId)));
     }
 
     private void persist() {

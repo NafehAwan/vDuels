@@ -179,6 +179,19 @@ public class MessageManager {
             // the whole thing on screen as literal text.
             return value.indexOf(60) >= 0 ? Colors.toSection(value) : Text.color(value);
         }
+        if (key.startsWith("notice.")) {
+            // The 249 lines that used to be Text.prefixed literals in the
+            // code. That method stripped every colour code, every non-ASCII
+            // character and every double space, then re-prefixed &7 - so all
+            // of them have always rendered flat grey, and the &c and &a
+            // written throughout the old source never reached a screen.
+            //
+            // Their shipped defaults are that flattened form, which makes
+            // this branch render them byte for byte as before. colorNormal
+            // rather than grayEmoji because it changes nothing else: a server
+            // that wants its errors red again only has to type &c.
+            return Text.colorNormal(value);
+        }
         if (key.startsWith("party.") || key.startsWith("event.") || key.startsWith("chat.")) {
             // Colors.toSection rather than colorNormal: these lines carry hex
             // and gradients, which the &-only translator leaves as literal text.
@@ -210,6 +223,12 @@ public class MessageManager {
         DEFAULTS.put("duel.target-offline", "{prefix}&cPlayer {name} is not online.");
         DEFAULTS.put("duel.sent", "{prefix}&aChallenge sent to &e{target} &a(&e{kit}&a, first to &e{rounds}&a).");
         DEFAULTS.put("duel.starting", "{prefix}&aDuel starting against &e{opponent}&a!");
+        // These three were read but never defined, so every duel that ended
+        // with somebody quitting printed "missing message: duel.…" to both
+        // players. Worded to match the forfeit broadcast they arrive beside.
+        DEFAULTS.put("duel.victory-opponent-left", "{prefix}&aYour opponent left - you win.");
+        DEFAULTS.put("duel.victory-opponent-disconnected", "{prefix}&aYour opponent disconnected - you win.");
+        DEFAULTS.put("duel.left-confirm", "{prefix}&cYou left the duel.");
         DEFAULTS.put("duel.round", "{prefix}&fRound &d{round} &f- first to {roundsToWin}");
         DEFAULTS.put("duel.start.header", "&f&lDuel:");
         DEFAULTS.put("duel.start.opponent", "&a\u2694 &7Opponent: &f{opponent}");
@@ -367,6 +386,276 @@ public class MessageManager {
         DEFAULTS.put("titles.victory.subtitle", "&7Score &8\u00bb &a{yourScore} &7- &c{theirScore}");
         DEFAULTS.put("titles.defeat.title", "&c&lDEFEAT");
         DEFAULTS.put("titles.defeat.subtitle", "&7Score &8\u00bb &a{yourScore} &7- &c{theirScore}");
+
+        // ------------------------------------------------------------------
+        // The lines that used to be Text.prefixed literals in the code.
+        // Every default here is the flattened form that method produced,
+        // so this build renders them exactly as the last one did; see the
+        // notice. branch in get() above.
+        // ------------------------------------------------------------------
+        // ---- Admin commands: /arena, /kitcreate, /category, /givegoldenhead and friends. ----
+        DEFAULTS.put("notice.admin.gave-golden-head", "&7Gave {amount} Golden Head{plural} to {target}.");
+        DEFAULTS.put("notice.admin.received-golden-head", "&7You received {amount} Golden Head{plural}.");
+        DEFAULTS.put("notice.admin.amount-must-at-least", "&7Amount must be at least 1.");
+        DEFAULTS.put("notice.admin.invalid-amount", "&7Invalid amount: {name}");
+        DEFAULTS.put("notice.admin.console-must-specify-player", "&7Console must specify a player: /givegoldenhead <player> [amount]");
+        DEFAULTS.put("notice.admin.player-not-online", "&7Player {name} is not online.");
+        DEFAULTS.put("notice.admin.don-t-have-permission", "&7You don't have permission to do that.");
+        DEFAULTS.put("notice.admin.config-reset-defaults-all", "&7Config reset to defaults and all arenas wiped. ({value} arenas remain)");
+        DEFAULTS.put("notice.admin.sub-commands-list-create", "&7Sub-commands: list, create, delete, header, addkit, removekit");
+        DEFAULTS.put("notice.admin.removed-from", "&7Removed {name} from {id}.");
+        DEFAULTS.put("notice.admin.added", "&7Added {name} to {id}.");
+        DEFAULTS.put("notice.admin.no-kit-named", "&7No kit named {name}.");
+        DEFAULTS.put("notice.admin.no-category-named", "&7No category named {name}.");
+        DEFAULTS.put("notice.admin.usage-id-kit", "&7Usage: /{cmd} {sub} <id> <kit>");
+        DEFAULTS.put("notice.admin.header-set", "&7Header for {id} set to {header}.");
+        DEFAULTS.put("notice.admin.no-category-named-2", "&7No category named {name}.");
+        DEFAULTS.put("notice.admin.usage-header-id-text", "&7Usage: /{cmd} header <id> <text>");
+        DEFAULTS.put("notice.admin.deleted-category", "&7Deleted category {name}.");
+        DEFAULTS.put("notice.admin.usage-delete-id", "&7Usage: /{cmd} delete <id>");
+        DEFAULTS.put("notice.admin.category-id-already-exists", "&7A category with that id already exists.");
+        DEFAULTS.put("notice.admin.created-category", "&7Created category {name}.");
+        DEFAULTS.put("notice.admin.usage-create-id-header", "&7Usage: /{cmd} create <id> [header]");
+        DEFAULTS.put("notice.admin.no-categories-yet-create", "&7No categories yet. Create one with /{cmd} create <id>.");
+        DEFAULTS.put("notice.admin.no-kit-named-2", "&7No kit named {name}.");
+        DEFAULTS.put("notice.admin.aren-t-event-duel", "&7You aren't in an event, duel, queue, or spectating.");
+        DEFAULTS.put("notice.admin.re-party-use-leave", "&7You're in a party - use the Leave Party item, or /party leave.");
+        DEFAULTS.put("notice.admin.aren-t-party-party", "&7You aren't in a party. /party create to start one.");
+        DEFAULTS.put("notice.admin.isn-t-online", "&7{name} isn't online.");
+        DEFAULTS.put("notice.admin.usage-party-player", "&7Usage: /party {sub} <player>");
+        DEFAULTS.put("notice.admin.isn-t-online-2", "&7{name} isn't online.");
+        DEFAULTS.put("notice.admin.usage-party-duel-accept", "&7Usage: /party duel <accept|decline> <leader>");
+        DEFAULTS.put("notice.admin.aren-t-duel", "&7You aren't in a duel.");
+        DEFAULTS.put("notice.admin.aren-t-event", "&7You aren't in an event.");
+        DEFAULTS.put("notice.admin.re-queue-type-leave", "&7You're in a queue - type /leave first.");
+        DEFAULTS.put("notice.admin.re-already-spectating-type", "&7You're already spectating - type /leave first.");
+        DEFAULTS.put("notice.admin.re-duel-type-leave", "&7You're in a duel - type /leave or /ff first.");
+        DEFAULTS.put("notice.admin.slots-must-number-e", "&7Slots must be a number, e.g. /event host {name} 5 8");
+        DEFAULTS.put("notice.admin.minutes-must-number-e", "&7Minutes must be a number, e.g. /event host {name} 5 8");
+        DEFAULTS.put("notice.admin.re-duel-type-leave-2", "&7You're in a duel - type /leave or /ff first.");
+        DEFAULTS.put("notice.admin.re-queue-type-leave-2", "&7You're in a queue - type /leave first.");
+        DEFAULTS.put("notice.admin.re-spectating-type-leave", "&7You're spectating - type /leave first.");
+        DEFAULTS.put("notice.admin.re-event-type-leave", "&7You're in an event - type /leave first.");
+        DEFAULTS.put("notice.admin.rounds-must-number-e", "&7Rounds must be a number, e.g. /duel {target} {kit} 3");
+        DEFAULTS.put("notice.admin.scoreboard-server-name-set", "&7Scoreboard server name set to {value}.");
+        DEFAULTS.put("notice.admin.usage-meowduelsserver-name", "&7Usage: /meowduelsserver <name...>");
+        DEFAULTS.put("notice.admin.current-scoreboard-server-name", "&7Current scoreboard server name: {servername}");
+        DEFAULTS.put("notice.admin.no-kit-named-3", "&7No kit named {name}.");
+        DEFAULTS.put("notice.admin.armor-trims-aren-t", "&7Armor trims aren't supported on this server version.");
+        DEFAULTS.put("notice.admin.don-t-have-permission-2", "&7You don't have permission to do that.");
+        DEFAULTS.put("notice.admin.scoreboard-ip-set", "&7Scoreboard IP set to {name}.");
+        DEFAULTS.put("notice.admin.scoreboard-ip-set-2", "&7Scoreboard IP set to {name} ({value}).");
+        DEFAULTS.put("notice.admin.color-minimessage-e-g", "&7[color] is MiniMessage, e.g. <dark_red> or <#8B0000>");
+        DEFAULTS.put("notice.admin.usage-scoreboardip-ip-color", "&7Usage: /scoreboardip <ip> [color]");
+        DEFAULTS.put("notice.admin.current-scoreboard-ip", "&7Current scoreboard IP: {scoreboardip}");
+        DEFAULTS.put("notice.admin.cleared-saved-layout-slots", "&7Cleared the saved {menuid} layout. The slots in gui/{menuid2}.yml are in charge again.");
+        DEFAULTS.put("notice.admin.no-saved-layout-gui", "&7No saved layout for {menuid} - gui/{menuid2}.yml is already in charge.");
+        DEFAULTS.put("notice.admin.usage-editgui-duelconfirm-mapselect", "&7Usage: /editgui <duelconfirm|mapselect> [reset]");
+        DEFAULTS.put("notice.admin.kit-display-name-set", "&7Kit {kit} display name set.");
+        DEFAULTS.put("notice.admin.no-kit-named-4", "&7No kit named {name}.");
+        DEFAULTS.put("notice.admin.usage-kitdisplayname-name-display", "&7Usage: /kitdisplayname <name> <display...>");
+        DEFAULTS.put("notice.admin.kit-icon-set", "&7Kit {kit} icon set to {value}.");
+        DEFAULTS.put("notice.admin.hold-item-want-use", "&7Hold the item you want to use as the icon.");
+        DEFAULTS.put("notice.admin.no-kit-named-5", "&7No kit named {name}.");
+        DEFAULTS.put("notice.admin.usage-kiticon-name", "&7Usage: /kiticon <name>");
+        DEFAULTS.put("notice.admin.kit-deleted", "&7Kit {name} deleted.");
+        DEFAULTS.put("notice.admin.no-kit-named-6", "&7No kit named {name}.");
+        DEFAULTS.put("notice.admin.usage-deletekit-name", "&7Usage: /deletekit <name>");
+        DEFAULTS.put("notice.admin.kit-saved-from-current", "&7Kit {name} saved from your current inventory.");
+        DEFAULTS.put("notice.admin.kit-named-already-exists", "&7A kit named {name} already exists.");
+        DEFAULTS.put("notice.admin.usage-kitcreate-name", "&7Usage: /kitcreate <name>");
+        DEFAULTS.put("notice.admin.arena-deleted", "&7Arena {name} deleted.");
+        DEFAULTS.put("notice.admin.no-arena-named", "&7No arena named {name}.");
+        DEFAULTS.put("notice.admin.usage-deletearena-name", "&7Usage: /deletearena <name>");
+        DEFAULTS.put("notice.admin.duel-spawn-set-current", "&7Duel spawn set to your current location. Players will be teleported here whenever a duel finishes.");
+        DEFAULTS.put("notice.admin.teleported", "&7Teleported to the {label} of {arenaname}.");
+        DEFAULTS.put("notice.admin.isn-t-set", "&7The {label} of {arenaname} isn't set.");
+        DEFAULTS.put("notice.admin.no-configured-arena-named", "&7No configured arena named {arenaname}.");
+        DEFAULTS.put("notice.admin.snapshot-saved-now-regen", "&7Snapshot saved for {arenaname}. This is now the regen baseline.");
+        DEFAULTS.put("notice.admin.no-configured-arena-named-2", "&7No configured arena named {arenaname}.");
+        DEFAULTS.put("notice.admin.regenerated-block-s", "&7Regenerated {written} block(s) in {arenaname}.");
+        DEFAULTS.put("notice.admin.no-snapshot-saved-yet", "&7No snapshot saved yet for {arenaname}. Run /arena {arenaname2} snapshot first.");
+        DEFAULTS.put("notice.admin.no-configured-arena-named-3", "&7No configured arena named {arenaname}.");
+        DEFAULTS.put("notice.admin.pasted-block-s-registered", "&7Pasted {value} block(s) and registered the new arena {value2} - it's ready to use immediately.");
+        DEFAULTS.put("notice.admin.clipboard-empty-run-arena", "&7Your clipboard is empty. Run /arena {arenaname} copy first.");
+        DEFAULTS.put("notice.admin.clipboard-empty-run-arena-2", "&7Your clipboard is empty. Run /arena {arenaname} copy first.");
+        DEFAULTS.put("notice.admin.copied-arena-clipboard-walk", "&7Copied arena {arena} to your clipboard. Walk to a new spot and run /arena {arenaname} paste.");
+        DEFAULTS.put("notice.admin.cloning-disabled-arena-enable", "&7Cloning is disabled for this arena. Enable it in /arena {arenaname}.");
+        DEFAULTS.put("notice.admin.no-configured-arena-named-4", "&7No configured arena named {arenaname}.");
+        DEFAULTS.put("notice.admin.no-arena-named-2", "&7No arena named {name}.");
+        DEFAULTS.put("notice.admin.usage-arena-name-tp", "&7Usage: /arena <name> [tp|copy|paste|regen|snapshot]");
+        DEFAULTS.put("notice.admin.arena-created-open-arena", "&7Arena {name} created. Open /arena {name2} to set it up.");
+        DEFAULTS.put("notice.admin.arena-named-already-exists", "&7An arena named {name} already exists.");
+        DEFAULTS.put("notice.admin.usage-createarena-name", "&7Usage: /createarena <name>");
+        // ---- The arena menu's own notices. ----
+        DEFAULTS.put("notice.arena.teleported", "&7Teleported to the {label} of {arena}.");
+        DEFAULTS.put("notice.arena.isn-t-set-yet", "&7The {label} isn't set yet.");
+        DEFAULTS.put("notice.arena.snapshot-saved", "&7Snapshot saved for {arena}.");
+        DEFAULTS.put("notice.arena.regenerated-block-s", "&7Regenerated {written} block(s).");
+        DEFAULTS.put("notice.arena.no-snapshot-saved-yet", "&7No snapshot saved yet - click Snapshot Now first.");
+        // ---- Kit editing and layouts. ----
+        DEFAULTS.put("notice.kit.kit-now-inventory-everyone", "&7The {kit} kit is now your inventory - for everyone.");
+        DEFAULTS.put("notice.kit.shift-click-replace-kit", "&7Shift-click to replace the {kit} kit with your inventory - for everyone.");
+        DEFAULTS.put("notice.kit.saved-s-items-everyone", "&7Saved {kit}'s items - for everyone.");
+        DEFAULTS.put("notice.kit.saved-own-layout", "&7Saved your own {kit} layout.");
+        DEFAULTS.put("notice.kit.isn-t-same-set", "&7That isn't the same set of items. You can rearrange the kit, but not change what's in it.");
+        DEFAULTS.put("notice.kit.reset-kit-s-saved", "&7Reset to the kit's saved layout.");
+        DEFAULTS.put("notice.kit.layout-was-reset-server", "&7Your {kit} layout was reset to the server default.");
+        // ---- FFA events. ----
+        DEFAULTS.put("notice.event.map-use-right-now", "&7That map is in use right now - pick another.");
+        // ---- The /editgui layout editor. ----
+        DEFAULTS.put("notice.editgui.saved-menu-layout", "&7Saved the {value} menu layout.");
+        DEFAULTS.put("notice.editgui.reset-default", "&7Reset {value} to default.");
+        DEFAULTS.put("notice.editgui.added-decoration-panes-inventory", "&7Added decoration panes to your inventory.");
+        DEFAULTS.put("notice.editgui.editor-closed-without-saving", "&7Editor closed without saving.");
+        DEFAULTS.put("notice.editgui.saved-menu-layout-2", "&7Saved the {value} menu layout.");
+        // ---- Parties: invites, leaving, teams, and starting a match. ----
+        DEFAULTS.put("notice.party.party-gone-pick-another", "&7That party is gone - pick another.");
+        DEFAULTS.put("notice.party.only-party-leader-start", "&7Only the party leader can start a match.");
+        DEFAULTS.put("notice.party.only-party-leader-invite", "&7Only the party leader can invite.");
+        DEFAULTS.put("notice.party.kits-outside-category-aren", "&7Kits outside a category aren't offered - add them with /category.");
+        DEFAULTS.put("notice.party.no-kits-category-yet", "&7No kits are in a category yet.");
+        DEFAULTS.put("notice.party.only-party-leader-pick", "&7Only the party leader can pick the kit.");
+        DEFAULTS.put("notice.party.only-party-leader-do", "&7Only the party leader can do that.");
+        DEFAULTS.put("notice.party.re-not-party", "&7You're not in a party.");
+        DEFAULTS.put("notice.party.only-party-leader-start-2", "&7Only the party leader can start a match.");
+        DEFAULTS.put("notice.party.re-not-party-2", "&7You're not in a party.");
+        DEFAULTS.put("notice.party.party-isn-t-available", "&7That party isn't available any more.");
+        DEFAULTS.put("notice.party.only-party-leader-start-3", "&7Only the party leader can start a match.");
+        DEFAULTS.put("notice.party.only-party-leader-change", "&7Only the party leader can change party settings.");
+        DEFAULTS.put("notice.party.only-party-leader-start-4", "&7Only the party leader can start a match.");
+        DEFAULTS.put("notice.party.only-party-leader-set", "&7Only the party leader can set the teams.");
+        DEFAULTS.put("notice.party.re-queue-type-queue", "&7You're in a queue - type /queue leave first.");
+        DEFAULTS.put("notice.party.re-spectating-type-leave", "&7You're spectating - type /leave first.");
+        DEFAULTS.put("notice.party.re-event-type-leave", "&7You're in an event - type /leave first.");
+        DEFAULTS.put("notice.party.re-duel-finish-first", "&7You're in a duel - finish it first.");
+        DEFAULTS.put("notice.party.try-again-after", "&7{target} is {what} - try again after.");
+        DEFAULTS.put("notice.party.re-party-leave-first", "&7You're in a party - leave it first to do that.");
+        DEFAULTS.put("notice.party.re-party-match-type", "&7You're in a party match - type /leave first.");
+        DEFAULTS.put("notice.party.left-party-match", "&7You left the party match.");
+        DEFAULTS.put("notice.party.no-free-arena-supports", "&7No free arena supports that kit right now.");
+        DEFAULTS.put("notice.party.both-parties-need-someone", "&7Both parties need someone online.");
+        DEFAULTS.put("notice.party.kit-no-longer-exists", "&7That kit no longer exists.");
+        DEFAULTS.put("notice.party.one-parties-already-match", "&7One of the parties is already in a match.");
+        DEFAULTS.put("notice.party.their-party-gone", "&7Their party is gone.");
+        DEFAULTS.put("notice.party.need-leading-party-accept", "&7You need to be leading a party to accept.");
+        DEFAULTS.put("notice.party.challenge-expired", "&7That challenge has expired.");
+        DEFAULTS.put("notice.party.turned-down-party-duel", "&7{leader} turned down your party duel.");
+        DEFAULTS.put("notice.party.turned-down-s-party", "&7You turned down {from}'s party duel.");
+        DEFAULTS.put("notice.party.no-challenge-from", "&7No challenge from {from}.");
+        DEFAULTS.put("notice.party.wait-s-before-challenging", "&7Wait {value}s before challenging again.");
+        DEFAULTS.put("notice.party.they-already-have-challenge", "&7They already have your challenge - give them a moment.");
+        DEFAULTS.put("notice.party.their-leader-offline", "&7Their leader is offline.");
+        DEFAULTS.put("notice.party.both-parties-need-someone-2", "&7Both parties need someone online.");
+        DEFAULTS.put("notice.party.pick-kit-first", "&7Pick a kit first.");
+        DEFAULTS.put("notice.party.party-just-started-match", "&7That party just started a match of their own.");
+        DEFAULTS.put("notice.party.party-gone-pick-another-2", "&7That party is gone - pick another.");
+        DEFAULTS.put("notice.party.party-already-fighting", "&7Your party is already fighting.");
+        DEFAULTS.put("notice.party.only-party-leader-start-5", "&7Only the party leader can start a match.");
+        DEFAULTS.put("notice.party.party-isn-t-match", "&7Your party isn't in a match.");
+        DEFAULTS.put("notice.party.only-party-leader-end", "&7Only the party leader can end the match.");
+        DEFAULTS.put("notice.party.re-not-party-3", "&7You're not in a party.");
+        DEFAULTS.put("notice.party.spectating-party-match-leave", "&7Spectating the party match. /leave to stop.");
+        DEFAULTS.put("notice.party.re-already-watching-leave", "&7You're already watching. /leave to stop.");
+        DEFAULTS.put("notice.party.re-match-t-spectate", "&7You're in the match - you can't spectate it.");
+        DEFAULTS.put("notice.party.party-isn-t-fighting", "&7Your party isn't fighting right now.");
+        DEFAULTS.put("notice.party.re-not-party-4", "&7You're not in a party.");
+        DEFAULTS.put("notice.party.re-out-watching-rest", "&7You're out - watching the rest. /leave to stop.");
+        DEFAULTS.put("notice.party.both-teams-need-at", "&7Both teams need at least one online player.");
+        DEFAULTS.put("notice.party.message", "&7{value}");
+        DEFAULTS.put("notice.party.no-free-arena-supports-2", "&7No free arena supports that kit.");
+        DEFAULTS.put("notice.party.not-enough-party-members", "&7Not enough party members are online.");
+        DEFAULTS.put("notice.party.pick-kit-first-2", "&7Pick a kit first.");
+        DEFAULTS.put("notice.party.need-at-least-2", "&7You need at least 2 players in the party.");
+        DEFAULTS.put("notice.party.party-already-fighting-2", "&7Your party is already fighting.");
+        DEFAULTS.put("notice.party.only-party-leader-start-6", "&7Only the party leader can start a match.");
+        DEFAULTS.put("notice.party.message-2", "&7{reason}");
+        DEFAULTS.put("notice.party.left-party", "&7You left the party.");
+        DEFAULTS.put("notice.party.re-not-party-5", "&7You're not in a party.");
+        DEFAULTS.put("notice.party.party-run-by-they", "&7The party is run by {leader} - they pick the kit and start the match.");
+        DEFAULTS.put("notice.party.party-mid-match-try", "&7That party is mid-match - try again when it ends.");
+        DEFAULTS.put("notice.party.haven-t-been-invited", "&7You haven't been invited to that party.");
+        DEFAULTS.put("notice.party.leave-current-party-first", "&7Leave your current party first.");
+        DEFAULTS.put("notice.party.party-no-longer-exists", "&7That party no longer exists.");
+        DEFAULTS.put("notice.party.wait-s-before-inviting", "&7Wait {value}s before inviting again.");
+        DEFAULTS.put("notice.party.party-invites-turned-off", "&7{target} has party invites turned off.");
+        DEFAULTS.put("notice.party.already-invite", "&7{target} already has your invite.");
+        DEFAULTS.put("notice.party.already-party", "&7{target} is already in a party.");
+        DEFAULTS.put("notice.party.they-re-already-party", "&7They're already in your party.");
+        DEFAULTS.put("notice.party.t-invite-during-party", "&7You can't invite during a party match.");
+        DEFAULTS.put("notice.party.only-party-leader-invite-2", "&7Only the party leader can invite.");
+        DEFAULTS.put("notice.party.re-not-party-6", "&7You're not in a party.");
+        DEFAULTS.put("notice.party.party-created-invite-someone", "&7Party created. Invite someone with /party invite <player>.");
+        DEFAULTS.put("notice.party.re-already-party", "&7You're already in a party.");
+        DEFAULTS.put("notice.party.have-no-invite-from", "&7You have no invite from {leader}.");
+        // ---- Armour trims. ----
+        DEFAULTS.put("notice.trim.cleared-trims", "&7Cleared your trims for {value}.");
+        DEFAULTS.put("notice.trim.applied-trim-all-armor", "&7Applied the trim to all your armor pieces (only you will wear it).");
+        DEFAULTS.put("notice.trim.no-armor-trim-trims", "&7No armor to trim (or trims unsupported).");
+        DEFAULTS.put("notice.trim.applied-trim-only-will", "&7Applied {value} {value2} trim (only you will wear it).");
+        DEFAULTS.put("notice.trim.could-not-apply-trim", "&7Could not apply the trim (this server may not support armor trims).");
+        DEFAULTS.put("notice.trim.kit-no-armor-slot", "&7That kit has no armor in that slot.");
+        // ---- Commands blocked during a match. ----
+        DEFAULTS.put("notice.guard.use-get-out-first", "&7Use {value} to get out first.");
+        DEFAULTS.put("notice.guard.t-use-commands", "&7You can't use commands {what}.");
+        // ---- Duel requests, queueing and match flow. ----
+        DEFAULTS.put("notice.duel.no-potions-until-fight", "&7No potions until the fight starts.");
+        DEFAULTS.put("notice.duel.no-potions-until-fight-2", "&7No potions until the fight starts.");
+        DEFAULTS.put("notice.duel.t-duel-while-re", "&7You can't duel while you're in the event.");
+        DEFAULTS.put("notice.duel.re-party-leave-first", "&7You're in a party - leave it first, or start a party match.");
+        DEFAULTS.put("notice.duel.they-re-already-duel", "&7They're already in a duel.");
+        DEFAULTS.put("notice.duel.player-no-longer-online", "&7That player is no longer online.");
+        DEFAULTS.put("notice.duel.no-recent-opponent-rematch", "&7No recent opponent to rematch.");
+        DEFAULTS.put("notice.duel.message", "&7{value}");
+        DEFAULTS.put("notice.duel.duel-t-start-someone", "&7That duel can't start - someone is in the event.");
+        DEFAULTS.put("notice.duel.wait-s-before-sending", "&7Wait {value}s before sending another challenge.");
+        DEFAULTS.put("notice.duel.already-challenge-give-them", "&7{target} already has your challenge - give them a moment.");
+        DEFAULTS.put("notice.duel.party-right-now", "&7{target} is in a party right now.");
+        DEFAULTS.put("notice.duel.re-party-leave-first-2", "&7You're in a party - leave it first, or start a party match.");
+        DEFAULTS.put("notice.duel.event-right-now", "&7{target} is in the event right now.");
+        DEFAULTS.put("notice.duel.t-duel-while-re-2", "&7You can't duel while you're in the event.");
+        // ---- Spawn items. ----
+        DEFAULTS.put("notice.spawn.re-event-type-leave", "&7You're in an event - type /leave first.");
+        DEFAULTS.put("notice.spawn.re-spectating-type-leave", "&7You're spectating - type /leave first.");
+        DEFAULTS.put("notice.spawn.re-already-duel", "&7You're already in a duel.");
+        DEFAULTS.put("notice.spawn.only-party-leader-do", "&7Only the party leader can do that.");
+        DEFAULTS.put("notice.spawn.re-not-party", "&7You're not in a party.");
+        // ---- The queue. ----
+        DEFAULTS.put("notice.queue.t-queue-while-re", "&7You can't queue while you're in the event.");
+        // ---- The arena setup wizard. Translate these and a non-English server can run setup. ----
+        DEFAULTS.put("notice.setup.tip-after-decorating-arena", "&7Tip: after decorating the arena, run /arena {arena} snapshot to update the baseline.");
+        DEFAULTS.put("notice.setup.arena-now-set-up", "&7Arena {arena} is now set up! A regen snapshot was captured automatically.");
+        DEFAULTS.put("notice.setup.message", "&7{prompt}");
+        DEFAULTS.put("notice.setup.corner-2-saved", "&7Corner 2 saved.");
+        DEFAULTS.put("notice.setup.corner-1-saved", "&7Corner 1 saved.");
+        DEFAULTS.put("notice.setup.player-2-spawn-saved", "&7Player 2 spawn saved.");
+        DEFAULTS.put("notice.setup.player-1-spawn-saved", "&7Player 1 spawn saved.");
+        DEFAULTS.put("notice.setup.type-done-when-standing", "&7Type done when you are standing in position, or cancel.");
+        DEFAULTS.put("notice.setup.setup-cancelled", "&7Setup cancelled.");
+        DEFAULTS.put("notice.setup.message-2", "&7{prompt}");
+        DEFAULTS.put("notice.setup.type-cancel-at-any", "&7Type cancel at any time to abort.");
+        DEFAULTS.put("notice.setup.setup-started-arena", "&7Setup started for arena {arena}.");
+        DEFAULTS.put("notice.setup.event-border-area-saved", "&7Event border area saved for {arena}.");
+        DEFAULTS.put("notice.setup.now-go-second-border", "&7Now go to the second border corner and type done.");
+        DEFAULTS.put("notice.setup.first-border-corner-saved", "&7First border corner saved.");
+        DEFAULTS.put("notice.setup.type-done-where-re", "&7Type done where you're standing, or cancel.");
+        DEFAULTS.put("notice.setup.border-setup-cancelled", "&7Border setup cancelled.");
+        DEFAULTS.put("notice.setup.type-cancel-abort", "&7Type cancel to abort.");
+        DEFAULTS.put("notice.setup.go-first-border-corner", "&7Go to the first border corner and type done in chat.");
+        DEFAULTS.put("notice.setup.event-spawn-saved", "&7Event spawn saved for {arena}.");
+        DEFAULTS.put("notice.setup.type-done-where-re-2", "&7Type done where you're standing, or cancel.");
+        DEFAULTS.put("notice.setup.event-spawn-setup-cancelled", "&7Event spawn setup cancelled.");
+        DEFAULTS.put("notice.setup.type-cancel-abort-2", "&7Type cancel to abort.");
+        DEFAULTS.put("notice.setup.go-event-arena-spawn", "&7Go to the event arena spawn (where event players start) and type done in chat.");
+        // ---- /spectate. ----
+        DEFAULTS.put("notice.spectate.spectators-turned-off", "&7{targetplayer} has spectators turned off.");
+        DEFAULTS.put("notice.spectate.t-spectate-while-re", "&7You can't spectate while you're in a party match.");
+        DEFAULTS.put("notice.spectate.t-spectate-duel-while", "&7You can't spectate a duel while you're in the event.");
+        // ---- /tabconfig. ----
+        DEFAULTS.put("notice.tab.tab-updated", "&7Tab {value} updated.");
+        DEFAULTS.put("notice.tab.cancelled", "&7Cancelled.");
+        DEFAULTS.put("notice.tab.type-cancel-abort", "&7Type cancel to abort.");
+        DEFAULTS.put("notice.tab.type-new-chat", "&7Type the new {label} in chat.");
     }
 }
 

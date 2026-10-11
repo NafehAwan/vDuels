@@ -112,16 +112,14 @@ extends Menu {
         }
         if ("capture".equals(button)) {
             if (!event.isShiftClick()) {
-                player.sendMessage(Text.prefixed("&eShift-click to replace the &d"
-                        + this.kit.getName() + "&e kit with your inventory &7- for everyone."));
+                player.sendMessage(this.plugin.messages().get("notice.kit.shift-click-replace-kit", "kit", this.kit.getName()));
                 return;
             }
             this.kit.captureFrom(player);
             this.plugin.getKitManager().put(this.kit);
             this.plugin.getKitManager().save();
             player.closeInventory();
-            player.sendMessage(Text.prefixed("&aThe &d" + this.kit.getName()
-                    + "&a kit is now your inventory &7- for everyone."));
+            player.sendMessage(this.plugin.messages().get("notice.kit.kit-now-inventory-everyone", "kit", this.kit.getName()));
             return;
         }
         try {

@@ -84,7 +84,7 @@ extends Menu {
     public void openFor(Player player) {
         Party party = this.plugin.getPartyManager().partyOf(player.getUniqueId());
         if (party == null) {
-            player.sendMessage(Text.prefixed("&cYou're not in a party."));
+            player.sendMessage(this.plugin.messages().get("notice.party.re-not-party"));
             return;
         }
         this.build();
@@ -347,7 +347,7 @@ extends Menu {
         // change while a window is open - the leader disbanding is the obvious
         // way - and a stale window must not be a way to act as one.
         if (!"party-leave-open".equals(id) && !party.isLeader(player.getUniqueId())) {
-            player.sendMessage(Text.prefixed("&cOnly the party leader can do that."));
+            player.sendMessage(this.plugin.messages().get("notice.party.only-party-leader-do"));
             player.closeInventory();
             return;
         }

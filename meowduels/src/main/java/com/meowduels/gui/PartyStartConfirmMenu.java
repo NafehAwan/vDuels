@@ -55,7 +55,7 @@ extends Menu {
     public void open(Player player) {
         Party party = this.plugin.getPartyManager().partyOf(player.getUniqueId());
         if (party == null || !party.isLeader(player.getUniqueId())) {
-            player.sendMessage(Text.prefixed("&cOnly the party leader can start a match."));
+            player.sendMessage(this.plugin.messages().get("notice.party.only-party-leader-start-4"));
             return;
         }
         // A chest rather than the hopper this used to be: five slots in a row

@@ -258,15 +258,15 @@ extends Menu {
             case 11: {
                 int written = this.plugin.getArenaManager().regenArena(this.arena);
                 if (written < 0) {
-                    player.sendMessage(Text.prefixed("&cNo snapshot saved yet - click &dSnapshot Now&c first."));
+                    player.sendMessage(this.plugin.messages().get("notice.arena.no-snapshot-saved-yet"));
                 } else {
-                    player.sendMessage(Text.prefixed("&aRegenerated &d" + written + "&a block(s)."));
+                    player.sendMessage(this.plugin.messages().get("notice.arena.regenerated-block-s", "written", String.valueOf(written)));
                 }
                 return;
             }
             case 12: {
                 this.plugin.getArenaManager().snapshotArena(this.arena);
-                player.sendMessage(Text.prefixed("&aSnapshot saved for &d" + this.arena.getName() + "&a."));
+                player.sendMessage(this.plugin.messages().get("notice.arena.snapshot-saved", "arena", this.arena.getName()));
                 return;
             }
             case 13: {
@@ -390,12 +390,12 @@ extends Menu {
 
     private void teleportTo(Player player, Location loc, String label) {
         if (loc == null) {
-            player.sendMessage(Text.prefixed("&cThe " + label + " isn't set yet."));
+            player.sendMessage(this.plugin.messages().get("notice.arena.isn-t-set-yet", "label", label));
             return;
         }
         player.closeInventory();
         player.teleport(loc);
-        player.sendMessage(Text.prefixed("&aTeleported to the " + label + " of &d" + this.arena.getName() + "&a."));
+        player.sendMessage(this.plugin.messages().get("notice.arena.teleported", "label", label, "arena", this.arena.getName()));
     }
 
     private static int clampCountdown(int v) {

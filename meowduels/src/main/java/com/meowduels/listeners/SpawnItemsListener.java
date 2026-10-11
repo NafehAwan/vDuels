@@ -162,11 +162,11 @@ implements Listener {
     private boolean partyLeader(Player player) {
         Party party = this.plugin.getPartyManager().partyOf(player.getUniqueId());
         if (party == null) {
-            player.sendMessage(Text.prefixed("&cYou're not in a party."));
+            player.sendMessage(this.plugin.messages().get("notice.spawn.re-not-party"));
             return false;
         }
         if (!party.isLeader(player.getUniqueId())) {
-            player.sendMessage(Text.prefixed("&cOnly the party leader can do that."));
+            player.sendMessage(this.plugin.messages().get("notice.spawn.only-party-leader-do"));
             return false;
         }
         return true;
@@ -178,15 +178,15 @@ implements Listener {
             return true;
         }
         if (this.plugin.getDuelManager().isInDuel(id)) {
-            p.sendMessage(Text.prefixed("&cYou're already in a duel."));
+            p.sendMessage(this.plugin.messages().get("notice.spawn.re-already-duel"));
             return true;
         }
         if (this.plugin.getSpectateManager().isSpectating(id)) {
-            p.sendMessage(Text.prefixed("&cYou're spectating - type &f/leave&c first."));
+            p.sendMessage(this.plugin.messages().get("notice.spawn.re-spectating-type-leave"));
             return true;
         }
         if (this.plugin.getEventManager().isInvolved(id)) {
-            p.sendMessage(Text.prefixed("&cYou're in an event - type &f/leave&c first."));
+            p.sendMessage(this.plugin.messages().get("notice.spawn.re-event-type-leave"));
             return true;
         }
         return false;

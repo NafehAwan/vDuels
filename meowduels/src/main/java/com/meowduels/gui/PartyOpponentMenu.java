@@ -56,7 +56,7 @@ extends Menu {
     public void open(Player player) {
         Party party = this.plugin.getPartyManager().partyOf(player.getUniqueId());
         if (party == null || !party.isLeader(player.getUniqueId())) {
-            player.sendMessage(Text.prefixed("&cOnly the party leader can start a match."));
+            player.sendMessage(this.plugin.messages().get("notice.party.only-party-leader-start-3"));
             return;
         }
         GuiConfigManager gui = this.plugin.gui();
@@ -180,7 +180,7 @@ extends Menu {
         // and that party may have started a match of its own since.
         Party target = this.plugin.getPartyManager().partyLedBy(leaderId);
         if (target == null || target == party || target.isFighting()) {
-            player.sendMessage(Text.prefixed("&cThat party isn't available any more."));
+            player.sendMessage(this.plugin.messages().get("notice.party.party-isn-t-available"));
             this.open(player);
             return;
         }

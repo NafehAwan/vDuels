@@ -150,9 +150,9 @@ extends Menu {
         if (slot == 51) {
             if (this.personal) {
                 this.plugin.getKitLayouts().clear(player.getUniqueId(), this.kit.getName());
-                player.sendMessage(Text.prefixed("&eYour &d" + this.kit.getName() + "&e layout was reset to the server default."));
+                player.sendMessage(this.plugin.messages().get("notice.kit.layout-was-reset-server", "kit", this.kit.getName()));
             } else {
-                player.sendMessage(Text.prefixed("&eReset to the kit's saved layout."));
+                player.sendMessage(this.plugin.messages().get("notice.kit.reset-kit-s-saved"));
             }
             this.restoreOriginalLayout();
             return;
@@ -160,14 +160,13 @@ extends Menu {
         if (slot == 52) {
             if (this.personal && !this.plugin.getKitLayouts().matchesKit(
                     this.kit, this.grid(), this.gridArmor(), this.inventory.getItem(45))) {
-                player.sendMessage(Text.prefixed("&cThat isn't the same set of items. "
-                        + "&7You can rearrange the kit, but not change what's in it."));
+                player.sendMessage(this.plugin.messages().get("notice.kit.isn-t-same-set"));
                 return;
             }
             this.saveToKit();
             player.sendMessage(this.personal
-                    ? Text.prefixed("&aSaved your own &d" + this.kit.getName() + "&a layout.")
-                    : Text.prefixed("&aSaved &d" + this.kit.getName() + "&a's items &7- for everyone."));
+                    ? this.plugin.messages().get("notice.kit.saved-own-layout", "kit", this.kit.getName())
+                    : this.plugin.messages().get("notice.kit.saved-s-items-everyone", "kit", this.kit.getName()));
             player.closeInventory();
             return;
         }

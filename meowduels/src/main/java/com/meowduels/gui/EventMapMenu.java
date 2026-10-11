@@ -102,7 +102,7 @@ extends Menu {
             return;
         }
         if (this.plugin.getDuelManager().isArenaInUse(arena.getName())) {
-            player.sendMessage(Text.prefixed("&cThat map is in use right now - pick another."));
+            player.sendMessage(this.plugin.messages().get("notice.event.map-use-right-now"));
             return;
         }
         player.closeInventory();

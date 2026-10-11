@@ -36,8 +36,8 @@ public class SetupManager {
 
     public void beginEventSpawn(Player player, Arena arena) {
         this.eventSpawnSession.put(player.getUniqueId(), arena);
-        player.sendMessage(Text.prefixed("&fGo to the &eevent arena spawn&f (where event players start) and type &edone&f in chat."));
-        player.sendMessage(Text.prefixed("&7Type &ccancel&7 to abort."));
+        player.sendMessage(this.plugin.messages().get("notice.setup.go-event-arena-spawn"));
+        player.sendMessage(this.plugin.messages().get("notice.setup.type-cancel-abort-2"));
     }
 
     public Arena handleEventSpawnInput(Player player, String message) {
@@ -48,17 +48,17 @@ public class SetupManager {
         }
         if (message.equalsIgnoreCase("cancel")) {
             this.eventSpawnSession.remove(id);
-            player.sendMessage(Text.prefixed("&cEvent spawn setup cancelled."));
+            player.sendMessage(this.plugin.messages().get("notice.setup.event-spawn-setup-cancelled"));
             return arena;
         }
         if (!message.equalsIgnoreCase("done")) {
-            player.sendMessage(Text.prefixed("&7Type &edone&7 where you're standing, or &ccancel&7."));
+            player.sendMessage(this.plugin.messages().get("notice.setup.type-done-where-re-2"));
             return null;
         }
         this.eventSpawnSession.remove(id);
         arena.setEventSpawn(player.getLocation());
         this.plugin.getArenaManager().save();
-        player.sendMessage(Text.prefixed("&aEvent spawn saved for &d" + arena.getName() + "&a."));
+        player.sendMessage(this.plugin.messages().get("notice.setup.event-spawn-saved", "arena", arena.getName()));
         return arena;
     }
 
@@ -69,8 +69,8 @@ public class SetupManager {
     public void beginBorder(Player player, Arena arena) {
         this.borderSession.put(player.getUniqueId(), arena);
         this.borderStep.put(player.getUniqueId(), 1);
-        player.sendMessage(Text.prefixed("&fGo to the &efirst border corner&f and type &edone&f in chat."));
-        player.sendMessage(Text.prefixed("&7Type &ccancel&7 to abort."));
+        player.sendMessage(this.plugin.messages().get("notice.setup.go-first-border-corner"));
+        player.sendMessage(this.plugin.messages().get("notice.setup.type-cancel-abort"));
     }
 
     public Arena handleBorderInput(Player player, String message) {
@@ -83,34 +83,34 @@ public class SetupManager {
         if (message.equalsIgnoreCase("cancel")) {
             this.borderSession.remove(id);
             this.borderStep.remove(id);
-            player.sendMessage(Text.prefixed("&cBorder setup cancelled."));
+            player.sendMessage(this.plugin.messages().get("notice.setup.border-setup-cancelled"));
             return arena;
         }
         if (!message.equalsIgnoreCase("done")) {
-            player.sendMessage(Text.prefixed("&7Type &edone&7 where you're standing, or &ccancel&7."));
+            player.sendMessage(this.plugin.messages().get("notice.setup.type-done-where-re"));
             return null;
         }
         if (step == 1) {
             arena.setBorderCorner1(player.getLocation());
             this.borderStep.put(id, 2);
-            player.sendMessage(Text.prefixed("&aFirst border corner saved."));
-            player.sendMessage(Text.prefixed("&fNow go to the &esecond border corner&f and type &edone&f."));
+            player.sendMessage(this.plugin.messages().get("notice.setup.first-border-corner-saved"));
+            player.sendMessage(this.plugin.messages().get("notice.setup.now-go-second-border"));
             return null;
         }
         arena.setBorderCorner2(player.getLocation());
         this.borderSession.remove(id);
         this.borderStep.remove(id);
         this.plugin.getArenaManager().save();
-        player.sendMessage(Text.prefixed("&aEvent border area saved for &d" + arena.getName() + "&a."));
+        player.sendMessage(this.plugin.messages().get("notice.setup.event-border-area-saved", "arena", arena.getName()));
         return arena;
     }
 
     public void begin(Player player, Arena arena) {
         this.sessionArena.put(player.getUniqueId(), arena);
         this.sessionStep.put(player.getUniqueId(), Step.SPAWN1);
-        player.sendMessage(Text.prefixed("&fSetup started for arena &d" + arena.getName() + "&f."));
-        player.sendMessage(Text.prefixed("&7Type &ccancel&7 at any time to abort."));
-        player.sendMessage(Text.prefixed(Step.SPAWN1.getPrompt()));
+        player.sendMessage(this.plugin.messages().get("notice.setup.setup-started-arena", "arena", arena.getName()));
+        player.sendMessage(this.plugin.messages().get("notice.setup.type-cancel-at-any"));
+        player.sendMessage(this.plugin.messages().get("notice.setup.message-2", "prompt", String.valueOf(Step.SPAWN1.getPrompt())));
     }
 
     public void cancel(Player player) {
@@ -127,35 +127,35 @@ public class SetupManager {
         }
         if (message.equalsIgnoreCase("cancel")) {
             this.cancel(player);
-            player.sendMessage(Text.prefixed("&cSetup cancelled."));
+            player.sendMessage(this.plugin.messages().get("notice.setup.setup-cancelled"));
             return null;
         }
         if (!message.equalsIgnoreCase("done")) {
-            player.sendMessage(Text.prefixed("&7Type &edone&7 when you are standing in position, or &ccancel&7."));
+            player.sendMessage(this.plugin.messages().get("notice.setup.type-done-when-standing"));
             return null;
         }
         switch (step.ordinal()) {
             case 0: {
                 arena.setSpawn1(player.getLocation());
-                player.sendMessage(Text.prefixed("&aPlayer 1 spawn saved."));
+                player.sendMessage(this.plugin.messages().get("notice.setup.player-1-spawn-saved"));
                 this.advance(player, Step.SPAWN2);
                 break;
             }
             case 1: {
                 arena.setSpawn2(player.getLocation());
-                player.sendMessage(Text.prefixed("&aPlayer 2 spawn saved."));
+                player.sendMessage(this.plugin.messages().get("notice.setup.player-2-spawn-saved"));
                 this.advance(player, Step.CORNER1);
                 break;
             }
             case 2: {
                 arena.setCorner1(player.getLocation());
-                player.sendMessage(Text.prefixed("&aCorner 1 saved."));
+                player.sendMessage(this.plugin.messages().get("notice.setup.corner-1-saved"));
                 this.advance(player, Step.CORNER2);
                 break;
             }
             case 3: {
                 arena.setCorner2(player.getLocation());
-                player.sendMessage(Text.prefixed("&aCorner 2 saved."));
+                player.sendMessage(this.plugin.messages().get("notice.setup.corner-2-saved"));
                 this.finish(player, arena);
                 return arena;
             }
@@ -165,15 +165,15 @@ public class SetupManager {
 
     private void advance(Player player, Step next) {
         this.sessionStep.put(player.getUniqueId(), next);
-        player.sendMessage(Text.prefixed(next.getPrompt()));
+        player.sendMessage(this.plugin.messages().get("notice.setup.message", "prompt", String.valueOf(next.getPrompt())));
     }
 
     private void finish(Player player, Arena arena) {
         this.cancel(player);
         this.plugin.getArenaManager().save();
         this.plugin.getArenaManager().snapshotArena(arena);
-        player.sendMessage(Text.prefixed("&aArena &d" + arena.getName() + "&a is now set up! A regen snapshot was captured automatically."));
-        player.sendMessage(Text.prefixed("&7Tip: after decorating the arena, run &e/arena " + arena.getName() + " snapshot&7 to update the baseline."));
+        player.sendMessage(this.plugin.messages().get("notice.setup.arena-now-set-up", "arena", arena.getName()));
+        player.sendMessage(this.plugin.messages().get("notice.setup.tip-after-decorating-arena", "arena", arena.getName()));
     }
 
     public static enum Step {

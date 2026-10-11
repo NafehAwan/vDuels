@@ -63,7 +63,7 @@ extends Menu {
         // Not just a click guard: the window itself is the leader's. Opening it
         // read-only would show a member two toggles that look like theirs.
         if (!party.isLeader(player.getUniqueId())) {
-            player.sendMessage(com.meowduels.util.Text.prefixed("&cOnly the party leader can change party settings."));
+            player.sendMessage(this.plugin.messages().get("notice.party.only-party-leader-change"));
             return;
         }
         GuiConfigManager gui = this.plugin.gui();

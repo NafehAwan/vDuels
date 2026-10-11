@@ -130,11 +130,11 @@ public class DuelManager {
             return;
         }
         if (this.plugin.getEventManager().isInvolved(sender.getUniqueId())) {
-            sender.sendMessage(Text.prefixed("&cYou can't duel while you're in the event."));
+            sender.sendMessage(this.plugin.messages().get("notice.duel.t-duel-while-re-2"));
             return;
         }
         if (this.plugin.getEventManager().isInvolved(target.getUniqueId())) {
-            sender.sendMessage(Text.prefixed("&c" + target.getName() + " is in the event right now."));
+            sender.sendMessage(this.plugin.messages().get("notice.duel.event-right-now", "target", target.getName()));
             return;
         }
         if (!this.plugin.getPlayerSettings().isDuelRequests(target.getUniqueId())) {
@@ -142,11 +142,11 @@ public class DuelManager {
             return;
         }
         if (this.plugin.getPartyManager().inParty(sender.getUniqueId())) {
-            sender.sendMessage(Text.prefixed("&cYou're in a party - leave it first, or start a party match."));
+            sender.sendMessage(this.plugin.messages().get("notice.duel.re-party-leave-first-2"));
             return;
         }
         if (this.plugin.getPartyManager().inParty(target.getUniqueId())) {
-            sender.sendMessage(Text.prefixed("&c" + target.getName() + " is in a party right now."));
+            sender.sendMessage(this.plugin.messages().get("notice.duel.party-right-now", "target", target.getName()));
             return;
         }
         // Spam control. A duel request is a message in somebody else's chat
@@ -156,15 +156,13 @@ public class DuelManager {
         Map<UUID, DuelRequest> pending = this.requests.get(target.getUniqueId());
         DuelRequest existing = pending == null ? null : pending.get(sender.getUniqueId());
         if (existing != null && !existing.isExpired(this.requestTtlMs)) {
-            sender.sendMessage(Text.prefixed("&c" + target.getName()
-                    + " already has your challenge - give them a moment."));
+            sender.sendMessage(this.plugin.messages().get("notice.duel.already-challenge-give-them", "target", target.getName()));
             Sounds.deny(sender);
             return;
         }
         long left = Cooldowns.remaining(sender, REQUEST_COOLDOWN);
         if (left > 0L) {
-            sender.sendMessage(Text.prefixed("&cWait &f" + Cooldowns.seconds(left)
-                    + "s&c before sending another challenge."));
+            sender.sendMessage(this.plugin.messages().get("notice.duel.wait-s-before-sending", "value", String.valueOf(Cooldowns.seconds(left))));
             Sounds.deny(sender);
             return;
         }
@@ -226,7 +224,7 @@ public class DuelManager {
             return;
         }
         if (this.plugin.getEventManager().isInvolved(sender.getUniqueId()) || this.plugin.getEventManager().isInvolved(target.getUniqueId())) {
-            target.sendMessage(Text.prefixed("&cThat duel can't start - someone is in the event."));
+            target.sendMessage(this.plugin.messages().get("notice.duel.duel-t-start-someone"));
             return;
         }
         Arena arena = this.resolveArena(request);
@@ -947,7 +945,7 @@ public class DuelManager {
      *  whether they are all busy, all unconfigured, or none support the kit. */
     public void explainNoArena(Player who, String kit) {
         if (who != null && who.hasPermission("meowduels.admin")) {
-            who.sendMessage(Text.prefixed("&8" + this.arenaAvailability(kit)));
+            who.sendMessage(this.plugin.messages().get("notice.duel.message", "value", String.valueOf(this.arenaAvailability(kit))));
         }
     }
 
@@ -1094,16 +1092,16 @@ public class DuelManager {
     public void requestRematch(Player player) {
         UUID opp = this.lastOpponent.get(player.getUniqueId());
         if (opp == null) {
-            player.sendMessage(Text.prefixed("&cNo recent opponent to rematch."));
+            player.sendMessage(this.plugin.messages().get("notice.duel.no-recent-opponent-rematch"));
             return;
         }
         Player opponent = Bukkit.getPlayer((UUID)opp);
         if (opponent == null || !opponent.isOnline()) {
-            player.sendMessage(Text.prefixed("&cThat player is no longer online."));
+            player.sendMessage(this.plugin.messages().get("notice.duel.player-no-longer-online"));
             return;
         }
         if (this.isInDuel(opponent.getUniqueId())) {
-            player.sendMessage(Text.prefixed("&cThey're already in a duel."));
+            player.sendMessage(this.plugin.messages().get("notice.duel.they-re-already-duel"));
             return;
         }
         // The clicker, not just the opponent. The summary window outlives the
@@ -1116,11 +1114,11 @@ public class DuelManager {
             return;
         }
         if (this.plugin.getPartyManager().inParty(player.getUniqueId())) {
-            player.sendMessage(Text.prefixed("&cYou're in a party - leave it first, or start a party match."));
+            player.sendMessage(this.plugin.messages().get("notice.duel.re-party-leave-first"));
             return;
         }
         if (this.plugin.getEventManager().isInvolved(player.getUniqueId())) {
-            player.sendMessage(Text.prefixed("&cYou can't duel while you're in the event."));
+            player.sendMessage(this.plugin.messages().get("notice.duel.t-duel-while-re"));
             return;
         }
         // Through the kit picker, same as /duel: Round Selection has no kit

@@ -64,7 +64,7 @@ public class SpectateManager {
             return;
         }
         if (this.plugin.getEventManager().isInvolved(id)) {
-            viewer.sendMessage(Text.prefixed("&cYou can't spectate a duel while you're in the event."));
+            viewer.sendMessage(this.plugin.messages().get("notice.spectate.t-spectate-duel-while"));
             return;
         }
         if (id.equals(targetPlayer.getUniqueId())) {
@@ -83,7 +83,7 @@ public class SpectateManager {
             return;
         }
         if (this.plugin.getPartyManager().inPartyMatch(id)) {
-            viewer.sendMessage(Text.prefixed("&cYou can't spectate while you're in a party match."));
+            viewer.sendMessage(this.plugin.messages().get("notice.spectate.t-spectate-while-re"));
             return;
         }
         Arena arena = duel != null ? duel.getArena() : party.getArena();
@@ -95,7 +95,7 @@ public class SpectateManager {
         // arena flag above, and the same silence towards the fighter: they
         // turned spectators off so they would stop hearing about them.
         if (!this.plugin.getPlayerSettings().isSpectators(targetPlayer.getUniqueId()) && !viewer.hasPermission("meowduels.admin")) {
-            viewer.sendMessage(Text.prefixed("&c" + targetPlayer.getName() + " has spectators turned off."));
+            viewer.sendMessage(this.plugin.messages().get("notice.spectate.spectators-turned-off", "targetplayer", targetPlayer.getName()));
             return;
         }
         UUID previous = this.target.get(id);

@@ -27,8 +27,8 @@ public class TabEditManager {
 
     public void begin(Player player, Field field) {
         this.pending.put(player.getUniqueId(), field);
-        player.sendMessage(Text.prefixed("&fType the new &e" + field.getLabel() + "&f in chat."));
-        player.sendMessage(Text.prefixed("&7Type &ccancel&7 to abort."));
+        player.sendMessage(this.plugin.messages().get("notice.tab.type-new-chat", "label", String.valueOf(field.getLabel())));
+        player.sendMessage(this.plugin.messages().get("notice.tab.type-cancel-abort"));
     }
 
     public void cancel(Player player) {
@@ -41,7 +41,7 @@ public class TabEditManager {
             return;
         }
         if (message.equalsIgnoreCase("cancel")) {
-            player.sendMessage(Text.prefixed("&cCancelled."));
+            player.sendMessage(this.plugin.messages().get("notice.tab.cancelled"));
             return;
         }
         switch (field.ordinal()) {
@@ -57,7 +57,7 @@ public class TabEditManager {
                 this.plugin.setTabStore(message);
             }
         }
-        player.sendMessage(Text.prefixed("&aTab " + field.name().toLowerCase() + " updated."));
+        player.sendMessage(this.plugin.messages().get("notice.tab.tab-updated", "value", String.valueOf(field.name().toLowerCase())));
     }
 
     public static enum Field {
