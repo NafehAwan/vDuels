@@ -103,7 +103,7 @@ Field org/bukkit/scoreboard/DisplaySlot.BELOW_NAME:Lorg/bukkit/scoreboard/Displa
 Field org/bukkit/scoreboard/DisplaySlot.SIDEBAR:Lorg/bukkit/scoreboard/DisplaySlot;
 InterfaceMethod com/destroystokyo/paper/profile/PlayerProfile.setProperty:(Lcom/destroystokyo/paper/profile/ProfileProperty;)V
 InterfaceMethod io/papermc/paper/scoreboard/numbers/NumberFormat.blank:()Lio/papermc/paper/scoreboard/numbers/NumberFormat;
-InterfaceMethod io/papermc/paper/scoreboard/numbers/NumberFormat.fixed:(Lnet/kyori/adventure/text/ComponentLike;)Lio/papermc/paper/scoreboard/numbers/NumberFormat;
+InterfaceMethod io/papermc/paper/scoreboard/numbers/NumberFormat.fixed:(Lnet/kyori/adventure/text/ComponentLike;)Lio/papermc/paper/scoreboard/numbers/FixedFormat;
 InterfaceMethod net/kyori/adventure/text/Component.append:(Lnet/kyori/adventure/text/Component;)Lnet/kyori/adventure/text/Component;
 InterfaceMethod net/kyori/adventure/text/Component.colorIfAbsent:(Lnet/kyori/adventure/text/format/TextColor;)Lnet/kyori/adventure/text/Component;
 InterfaceMethod net/kyori/adventure/text/Component.decoration:(Lnet/kyori/adventure/text/format/TextDecoration;Z)Lnet/kyori/adventure/text/Component;
